@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <router-view />
+    <div v-if="$root.loading">Loading...</div>
+    <router-view v-else />
   </div>
 </template>
 
