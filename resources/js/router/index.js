@@ -8,12 +8,31 @@ const router = new VueRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
       component: require('../views/Home.vue').default,
       meta: {
         auth: true,
         title: 'Trang chủ'
-      }
+      },
+      children: [
+        {
+          path: '',
+          name: 'dashboard',
+          component: require('../views/DashBoard.vue').default,
+          meta: {
+            auth: true,
+            title: 'Thống kê'
+          }
+        },
+        {
+          path: 'nguoi-dung',
+          name: 'user',
+          component: require('../views/User.vue').default,
+          meta: {
+            auth: true,
+            title: 'Người dùng'
+          }
+        },
+      ]
     },
     {
       path: '/dang-nhap',
@@ -22,6 +41,15 @@ const router = new VueRouter({
       meta: {
         guest: true,
         title: 'Đăng nhập'
+      }
+    },
+    {
+      path: '/quen-mat-khau',
+      'name': 'forget-password',
+      component: require('../views/ForgetPassword.vue').default,
+      meta: {
+        guest: true,
+        title: 'Quên mật khẩu'
       }
     },
     {

@@ -25,7 +25,8 @@ new Vue({
     loading: true,
     config: null,
     auth: null,
-    page_title: ''
+    page_title: '',
+		avatar_default: '/images/avatar-default.jpg'
   },
   methods: {
     setAuth(auth) { // Gán thông tin của 1 user

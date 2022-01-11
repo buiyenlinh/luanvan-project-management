@@ -5,6 +5,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Functions;
+use App\Http\Resources\UserLoginResource;
 
 use App\Model\User;
 use App\Model\Role;
@@ -45,8 +46,9 @@ class AppController extends Controller
         if ($token) {
             $user = User::where('token', $token)->first();
             if ($user) {
+                $role = Role::find($user->role_id);
                 $this->user = $user->toArray();
-                $data['auth'] = $user->toArray();
+                $data['auth'] = new UserLoginResource($user);
             }
         }
 
@@ -88,4 +90,5 @@ class AppController extends Controller
 
         return $this->success('Đăng nhập thành công', $data);
     }
+
 }
