@@ -1,9 +1,92 @@
-<template>
-  <div>Home</div>
-</template>
-
 <script>
-  export default {
-    
+export default {
+  data() {
+    return {
+      change_bar: false,
+      menu: [
+        {
+          label: 'Thống kê',
+          link: "dashboard",
+          icon: "fas fa-tachometer-alt",
+        },
+        {
+          label: 'Người dùng',
+          link: "user",
+          icon: "fas fa-users",
+        }
+      ],
+      name_route: '',
+    }
+  },
+  methods: {
+    handleSideBar() {
+      this.change_bar = !this.change_bar;
+    },
+    handleCloseSideBar() {
+      this.change_bar = false;
+    }
+  },
+  watch: {
+    '$route': function(_new, _old) {
+      this.name_route = _new.name;
+    }
+  },
+  mounted() {
+    this.name_route = this.$root.$route.name;
   }
+}
 </script>
+
+<template>
+  <div :class="[change_bar ? 'side-bar-small' : '' , 'wrap']">
+    <div class="wrap-bg" @click="handleCloseSideBar"></div>
+    <div id="side-bar">
+      <div class="top text-center mt-3 pb-3">
+        <div class="avatar">
+          <img v-if="$root.auth.avatar" :src="$root.auth.avatar" alt="">
+          <img v-else :src="$root.avatar_default" alt="">
+        </div>
+        <div class="role pt-1">
+          <b>{{ $root.auth.fullname }}</b><br>
+          <span class="text-light">( {{ $root.auth.role.name }} )</span>
+        </div>
+      </div>
+      
+      <ul class="nav flex-column" role="tablist">
+        <li v-for="(item, index) in menu"
+          :key="index"
+          :class="[ name_route == item.link ? 'router-link-exact-active' : '' ]"
+          :title="item.label"
+        >
+          <router-link :to="{ name: item.link }" class="nav-link">
+            <i :class="item.icon"></i>
+            <span class="ml-2">{{ item.label }}</span>
+          </router-link>
+        </li>
+      </ul>
+    </div>
+    <div id="main">
+      <div class="header">
+        <div class="d-flex justify-content-between">
+          <i class="fas fa-bars pt-2" style="font-size: 25px" @click="handleSideBar"></i>
+          <div class="btn-group">
+            <div class="avatar" data-toggle="dropdown">
+              <img v-if="$root.auth.avatar" :src="$root.auth.avatar" alt="">
+              <img v-else :src="$root.avatar_default" alt="">
+              <b> {{ $root.auth.fullname }}</b>
+            </div>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="#">Đăng xuất</a>
+              <a class="dropdown-item" href="#">Trang cá nhân</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="main-relative">
+        <div class="main">
+          <router-view />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
