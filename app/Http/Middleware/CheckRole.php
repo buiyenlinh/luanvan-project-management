@@ -6,7 +6,7 @@ use Closure;
 use App\Model\Role;
 use App\Model\User;
 
-class IsToken
+class CheckRole
 {
     /**
      * Handle an incoming request.
@@ -15,22 +15,20 @@ class IsToken
      * @param  \Closure  $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle($request, Closure $next, $level = null)
     {
-        $check = 0;
         $user = User::where('token', $request->bearerToken())->first();
         if (isset($user->active)) {
             if ($user->active) {
                 $role = Role::find($user->role_id);
-                $check = $role->level;
+                $list = explode("|", $level);
+                if (!in_array($role->level, $list)) {
+                    return response()->json([
+                        'status' => 'ERR',
+                        'message' => 'Không có quyền truy cập'
+                    ]);
+                }
             }
-        }
-
-        if ($check == 0) {
-            return response()->json([
-                'message' => 'Bạn chưa đăng nhập',
-                'status' => 'ERR'
-            ]);
         }
         return $next($request);
     }

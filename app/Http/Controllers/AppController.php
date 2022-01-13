@@ -14,18 +14,6 @@ class AppController extends Controller
 {
     use Functions;
 
-    private $auth = null;
-
-    public function __contructor() {
-        $token = request()->bearerToken();
-        if ($token) {
-            $user = User::where('token', $token)->first();
-            if ($user) {
-                $this->auth = $user->toArray();
-            }
-        }
-    }
-
     public function index() {
         $data = [
             'page_title' => 'Quản lý dự án',
@@ -39,16 +27,15 @@ class AppController extends Controller
     public function getConfig(Request $request) {
         $data = [
             'config' => [],
-            'auth' => null
+            'auth' => null,
         ];
 
         $token = $request->header('User-Token');
         if ($token) {
             $user = User::where('token', $token)->first();
             if ($user) {
-                $role = Role::find($user->role_id);
                 $this->user = $user->toArray();
-                $data['auth'] = new UserLoginResource($user);
+                $data['auth'] = $this->_createAuth($user);
             }
         }
 
@@ -63,9 +50,9 @@ class AppController extends Controller
         $password = $request->password;
 
         if (!$username) {
-            return $this->error('');
+            return $this->error('Tên đăng nhập là bắt buộc');
         } elseif (!$password) {
-            return $this->error('');
+            return $this->error('Mật khẩu là bắt buộc');
         }
 
         $user = User::where('username', $username)->first();
@@ -85,7 +72,7 @@ class AppController extends Controller
         $this->auth = $user->toArray();
 
         $data = [
-            'auth' => $user->toArray()
+            'auth' => $this->_createAuth($user)
         ];
 
         return $this->success('Đăng nhập thành công', $data);

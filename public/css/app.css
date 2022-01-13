@@ -580,6 +580,24 @@
   }
 }
 
+body {
+  color: #494949;
+}
+
+.bg-fff {
+  background-color: #fff;
+}
+
+.error.text-danger.font-italic {
+  font-size: 14px;
+  padding-top: 5px;
+}
+
+.modal-backdrop.fade,
+.fade {
+  pointer-events: none;
+}
+
 .login-form {
   display: flex;
   width: 100%;
@@ -659,7 +677,15 @@
   border: 1px solid #369;
 }
 
-#side-bar .top .role b {
+#side-bar .top .role {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all ease-in-out 0.4s;
+}
+
+#side-bar .top .role b,
+#side-bar .top .role span {
   color: #fff;
   text-transform: capitalize;
 }
@@ -690,7 +716,6 @@
 }
 
 #main .header {
-  background: #ddd;
   position: fixed;
   top: 0;
   width: calc(100% - 230px);
@@ -698,6 +723,8 @@
   z-index: 10;
   padding: 12px 20px;
   transition: all ease-in-out 0.4s;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
 }
 
 #main .header .fas.fa-bars {
@@ -730,10 +757,15 @@
   width: 100%;
   min-height: 90vh;
   padding: 30px;
+  background: #fafafa;
 }
 
 .side-bar-small #side-bar {
   width: 65px;
+}
+
+.side-bar-small #side-bar .role {
+  width: 0;
 }
 
 .side-bar-small #side-bar li a {

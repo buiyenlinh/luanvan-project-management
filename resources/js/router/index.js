@@ -31,7 +31,7 @@ const router = new VueRouter({
             auth: true,
             title: 'Người dùng'
           }
-        },
+        }
       ]
     },
     {

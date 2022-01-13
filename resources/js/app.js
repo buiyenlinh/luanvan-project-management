@@ -9,6 +9,7 @@ import router from './router/index';
 
 Vue.component('m-spinner', require('./components/Spinner.vue').default);
 Vue.component('m-loading', require('./components/Loading.vue').default);
+Vue.component('m-pagination', require('./components/Pagination.vue').default);
 
 new Vue({
   router,
@@ -26,7 +27,7 @@ new Vue({
     config: null,
     auth: null,
     page_title: '',
-		avatar_default: '/images/avatar-default.jpg'
+		avatar_default: '/images/avatar-default.jpg',
   },
   methods: {
     setAuth(auth) { // Gán thông tin của 1 user
@@ -34,9 +35,8 @@ new Vue({
         this.auth = auth;
         localStorage.setItem('yl_token', auth.token);
         this.api.defaults.headers.common['Authorization'] = 'Bearer ' + auth.token;
-
         if (this.$route.meta.guest) {
-          this.$router.replace({name: 'home'});
+          this.$router.replace({name: 'dashboard'});
         }
       } else {
         this.auth = null;
@@ -364,6 +364,22 @@ new Vue({
 			}
 
 			this.alert(error, '', 'error');
+		},
+		checkEmail(str) {
+			let re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+			return re.test(str);
+		},
+		checkPhone(str) {
+			let re = /^0[35789][0-9]{8}$/;
+			return re.test(str);
+		},
+		isAdmin() {
+			if (!this.auth) return false;
+			return (this.auth.role.level == 1 || this.auth.role.level == 2);
+		},
+		isSuperAdmin() {
+			if (!this.auth) return false;
+			return this.auth.role.level == 1;
 		}
   },
   created() {
