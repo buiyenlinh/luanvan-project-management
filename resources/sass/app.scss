@@ -527,6 +527,17 @@
     }
 }
 
+body { color: #494949; }
+.bg-fff { background-color: #fff; }
+.error.text-danger.font-italic {
+    font-size: 14px;
+    padding-top: 5px;
+}
+
+.modal-backdrop.fade, .fade {
+    pointer-events: none;
+}
+
 // Login
 .login-form {
     display: flex;
@@ -601,9 +612,15 @@ $side-bar-width-small: 65px;
             border-radius: 50%;
             border: 1px solid #369;
         }
-        .role b{
-            color: #fff;
-            text-transform: capitalize;
+        .role {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all ease-in-out 0.4s;
+            b, span {
+                color: #fff;
+                text-transform: capitalize;
+            }
         }
     }
     li {
@@ -620,9 +637,7 @@ $side-bar-width-small: 65px;
             text-decoration: none;
         }
     }
-    .router-link-exact-active {
-        background-color: #117a8b;
-    }
+    .router-link-exact-active { background-color: #117a8b; }
 }
 
 #main {
@@ -631,7 +646,6 @@ $side-bar-width-small: 65px;
     position: relative;
     transition: all ease-in-out 0.4s;
     .header {
-        background: #ddd;
         position: fixed;
         top: 0;
         width: calc(100% - $side-bar-width);
@@ -639,7 +653,8 @@ $side-bar-width-small: 65px;
         z-index: 10;
         padding: 12px 20px;
         transition: all ease-in-out 0.4s;
-
+        border-bottom: 1px solid #ddd;
+        background-color: #fff;
         .fas.fa-bars {
             cursor: pointer;
         }
@@ -665,6 +680,7 @@ $side-bar-width-small: 65px;
             width: 100%;
             min-height: 90vh;
             padding: 30px;
+            background: #fafafa;
         }
     }
 }
@@ -672,18 +688,15 @@ $side-bar-width-small: 65px;
 .side-bar-small {
     #side-bar {
         width: $side-bar-width-small;
+        .role { width: 0; }
         li {
-            a {
-                width: $side-bar-width-small;
-            }
+            a { width: $side-bar-width-small; }
         }
     }
     #main {
         width: calc(100% - $side-bar-width-small);
         margin-left: $side-bar-width-small;
-        .header {
-            width: calc(100% - $side-bar-width-small);
-        }
+        .header { width: calc(100% - $side-bar-width-small); }
     }
 }
 
