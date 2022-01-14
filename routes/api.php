@@ -7,10 +7,12 @@ Route::get('/config', 'AppController@getConfig');
 
 Route::middleware(['is-token', 'check-role:1|2'])->group(function() {
   Route::post('/login', 'AppController@login')->withoutMiddleware(['is-token', 'check-role']);
+  Route::get('/logout', 'AppController@logout')->withoutMiddleware('check-role:1|2');
   Route::prefix("/user")->group(function() {
     Route::get('list', 'UserController@getUserList')->withoutMiddleware('check-role:1|2');
     Route::post('add', 'UserController@addUser');
     Route::post('update', 'UserController@updateUser');
+    Route::delete('delete/{id}', 'UserController@deleteUser');
   });
 
   Route::prefix('/role')->group(function() {

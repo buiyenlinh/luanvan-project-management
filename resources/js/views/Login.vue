@@ -58,7 +58,7 @@ export default {
 <template>
   <div class="login">
     <div class="login-form">
-      <form action="">
+      <form @submit.prevent="submitForm">
         <div class="text-center mb-3">
           <h3 style="font-weight: bold">WELCOME</h3>
           <p>Vui lòng nhập thông tin bên dưới</p>
@@ -91,10 +91,9 @@ export default {
             <router-link :to="{ name: 'forget-password' }">Quên mật khẩu</router-link>
           </div>
           <button 
-            type="button"
+            type="submit"
             class="btn btn-primary"
             style="width: 100%"
-            @click="submitForm"
           >
             Đăng nhập
           </button>

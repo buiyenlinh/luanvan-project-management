@@ -1,3 +1,7 @@
+<script>
+  export default {}
+</script>
+
 <template>
   <div class="forget-password">
     <div class="forget-password-form">

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\RoleResource;
+use Illuminate\Support\Facades\Storage;
 
 class UserResource extends JsonResource
 {
@@ -15,6 +16,11 @@ class UserResource extends JsonResource
      */
     public function toArray($request)
     {
+        $avatar = $this->avatar;
+        if (!empty($avatar) && !preg_match('/^https?:/', $avatar)) {
+            $avatar = Storage::url($this->avatar);
+        }
+
         return [
             'id' => $this->id,
             'fullname' => $this->fullname,
@@ -24,7 +30,7 @@ class UserResource extends JsonResource
             'active' => $this->active,
             'gender' => $this->gender,
             'birthday' => date("Y-m-d", $this->birthday),
-            'avatar' => $this->avatar,
+            'avatar' => $avatar,
             'role' => new RoleResource($this->role()->first()), // role () là function được khai báo trong Model User
             'created_at' => $this->created_at->format('h:i:s, d-m-Y'),
             'updated_at' => $this->updated_at->format('H:i:s, d-m-Y')

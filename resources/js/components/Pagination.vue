@@ -124,3 +124,14 @@
 		}
 	}
 </script>
+
+<style scoped>
+.page-item.active .page-link {
+	background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+
+.page-link {
+	color: #17a2b8;
+}
+</style>

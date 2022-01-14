@@ -1,3 +1,10 @@
+<script>
+  export default {
+  }
+</script>
+
 <template>
-  <h3>Dashboard page</h3>
+  <div>
+    <h3>Dashboard page</h3>
+  </div>
 </template>

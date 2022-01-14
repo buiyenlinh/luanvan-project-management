@@ -3,19 +3,23 @@
 namespace App\Http;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Model\User;
 use App\Http\Resources\RoleResource;
+use App\Http\Resources\UserResource;
 use App\Model\Role;
 
 trait Functions {
   private $auth = null;
 
-  public function __contructor() {
+  public function __construct() {
     $token = request()->bearerToken();
     if ($token) {
       $user = User::where('token', $token)->first();
-      if ($user) {
-        $this->auth = $user->toArray();
+      if ($user AND $user->active) {
+        $this->auth = new UserResource($user);
+      } else {
+        abort(401, 'Vui lòng đăng nhập');
       }
     }
   }
@@ -37,6 +41,11 @@ trait Functions {
   }
 
   public function _createAuth($user) {
+    $avatar = $user->avatar;
+    if (!empty($avatar) && !preg_match('/^https?:/', $avatar)) {
+        $avatar = Storage::url($avatar);
+    }
+
     return [
       'id' => $user->id,
       'fullname' => $user->fullname,
@@ -45,7 +54,7 @@ trait Functions {
       'active' => $user->active,
       'gender' => $user->gender,
       'birthday' => $user->birthday,
-      'avatar' => $user->avatar,
+      'avatar' => $avatar,
       'role' => new RoleResource($user->role()->first()),
       'token' => $user->token,
       'created_at' => $user->created_at,
