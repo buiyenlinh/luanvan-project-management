@@ -78,4 +78,17 @@ class AppController extends Controller
         return $this->success('Đăng nhập thành công', $data);
     }
 
+    /**
+     * Đăng xuất
+     */
+    public function logout(Request $request) {
+        $user = User::where('token', $request->bearerToken())->first();
+        if (!$user) {
+            return $this->error('Vui lòng thử lại');
+        }
+
+        $user->update(['token' => '']);
+        return $this->success("Đăng xuất thành công");
+    }
+
 }

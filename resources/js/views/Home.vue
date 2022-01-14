@@ -16,6 +16,7 @@ export default {
         }
       ],
       name_route: '',
+      loading_logout: false
     }
   },
   methods: {
@@ -24,6 +25,22 @@ export default {
     },
     handleCloseSideBar() {
       this.change_bar = false;
+    },
+    handleLogout() {
+      this.loading_logout = true;
+      this.$root.api.get('logout').then(res => {
+        if (res.data.status == "OK") {
+          this.$root.setAuth(null);
+          localStorage.removeItem('yl_token');
+          this.$notify(res.data.message, 'success');
+        } else {
+          this.$alert(res.data.error, '', 'error');
+        }
+        this.loading_logout = false;
+      }).catch(err => {
+        this.loading_logout = false;
+        this.$root.showError(err);
+      })
     }
   },
   watch: {
@@ -76,7 +93,7 @@ export default {
               <b> {{ $root.auth.fullname }}</b>
             </div>
             <div class="dropdown-menu">
-              <a class="dropdown-item" href="#">Đăng xuất</a>
+              <a class="dropdown-item" @click="handleLogout">Đăng xuất</a>
               <a class="dropdown-item" href="#">Trang cá nhân</a>
             </div>
           </div>

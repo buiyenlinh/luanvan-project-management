@@ -15,7 +15,7 @@ const router = new VueRouter({
       },
       children: [
         {
-          path: '',
+          path: '/',
           name: 'dashboard',
           component: require('../views/DashBoard.vue').default,
           meta: {
@@ -36,7 +36,7 @@ const router = new VueRouter({
     },
     {
       path: '/dang-nhap',
-      'name': 'login',
+      name: 'login',
       component: require('../views/Login.vue').default,
       meta: {
         guest: true,
@@ -45,7 +45,7 @@ const router = new VueRouter({
     },
     {
       path: '/quen-mat-khau',
-      'name': 'forget-password',
+      name: 'lostpass',
       component: require('../views/ForgetPassword.vue').default,
       meta: {
         guest: true,
@@ -54,8 +54,8 @@ const router = new VueRouter({
     },
     {
       path: '*',
-      name: '404',
-      component: require('../views/404.vue').default,
+      name: 'page_404',
+      component: require('../views/Page404.vue').default,
       meta: {
         title: 'Trang không tồn tại'
       }
@@ -66,19 +66,15 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   let token = localStorage.getItem('yl_token');
   if (to.meta) {
-    if (to.meta.auth) {
-      if (!token) {
-        next({name: 'login'});
-      } else {
-        next();
-      }
-    } else if (to.meta.guest) {
-      if (token) {
-        next({name: 'home'});
-      } else {
-        next();
-      }
+    if (to.meta.auth && !token) {
+      next({name: 'login'});
+    } else if (to.meta.guest && token) {
+      next({name: 'dashboard'});
+    } else {
+      next();
     }
+  } else {
+    next();
   }
 })
 

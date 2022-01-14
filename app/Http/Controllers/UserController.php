@@ -9,6 +9,8 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Storage;
 use App\Model\User;
 use App\Model\Role;
+use App\Model\Project;
+use App\Model\GroupUser;
 
 class UserController extends Controller
 {
@@ -18,14 +20,14 @@ class UserController extends Controller
      * Kiểm tra quyền người dùng thao tác user
      */
     public function checkUserLogin($role_id) {
-        $user_login = new UserResource(User::where('token', request()->bearerToken())->first());
         $role = Role::find($role_id);
         if (!$role) {
-            return $this->error('Quyền tài khoản này không tồn tại');
+            return false;
         }
-        if ($user_login->role->level >= $role->level) {
-            return $this->error('Tài khoản không có quyền');
+        if ($this->auth->role->level >= $role->level) {
+            return false;
         }
+        return true;
     }
 
     /**
@@ -46,7 +48,7 @@ class UserController extends Controller
      * Lấy danh sách người dùng
      */
     public function getUserList() {
-        $users = User::paginate(4);
+        $users = User::orderby('id', 'desc')->paginate(4);
         $data = UserResource::collection($users)->response()->getData();
         return $this->success('Danh sách người dùng', $data);
     }
@@ -55,7 +57,10 @@ class UserController extends Controller
      * Thêm người dùng
      */
     public function addUser(Request $request) {
-        $this->checkUserLogin($request->role);
+        if (!$this->checkUserLogin($request->role)) {
+            return $this->error('Tài khoản không có quyền');
+        }
+
         if ($this->checkExist('username', $request->username)) {
             return $this->error('Tên đăng nhập đã tồn tại');
         }
@@ -86,7 +91,7 @@ class UserController extends Controller
         $avatar = '';
         if ($request->file('avatar')) {
             $avatar = $request->file('avatar')->store('public/images');
-            $avatar = Storage::url($avatar);
+            $avatar = str_replace('public/', '', $avatar);
         }
 
         $fullname = '';
@@ -106,14 +111,16 @@ class UserController extends Controller
             'avatar' => $avatar,
         ]);
 
-        return $this->success('Tạo tài khoản thành công', $user);
+        return $this->success('Tạo tài khoản thành công');
     }
 
     /**
      * Cập nhật người dùng
      */
     public function updateUser(Request $request) {
-        $this->checkUserLogin($request->role);
+        if (!$this->checkUserLogin($request->role)) {
+            return $this->error('Tài khoản không có quyền');
+        }
         
         if ($this->checkExist('username', $request->username, $request->id)) {
             return $this->error('Tên đăng nhập đã tồn tại');
@@ -155,9 +162,13 @@ class UserController extends Controller
         }
 
         if ($request->file('avatar')) {
-            Storage::delete($avatar);
-            $avatar = $request->file('avatar')->store('public/images');
-            $avatar = Storage::url($avatar);
+            if (!empty($avatar)) {
+                Storage::disk('public')->delete($avatar);
+            }
+
+            $file = $request->file('avatar');
+            $avatar = $file->store('public/images');
+            $avatar = str_replace('public/', '', $avatar);
         }
 
         if ($request->has('birthday')) {
@@ -178,5 +189,34 @@ class UserController extends Controller
         ]);
 
         return $this->success('Cập nhật thành công', $user);
+    }
+
+    /**
+     * Xóa người dùng
+     */
+    public function deleteUser(Request $request, $id) {
+        $user = User::find($id);
+        if (!$user) {
+            return $this->error('Người dùng không tồn tại');
+        }
+        if (!$this->checkUserLogin($user->role_id)) {
+            return $this->error('Tài khoản không có quyền');
+        }
+
+        $count_project = Project::where('manager', $user->id)
+            ->orwhere('created_by', $user->id)
+            ->count();
+        if ($count_project > 0) {
+            return $this->error('Người dùng đã thuộc một dự án nào đó. Không thể xóa');
+        }
+
+        $count_group_user = GroupUser::where('user_id', $user->id)->count();
+        if ($count_group_user > 0) {
+            return $this->error('Người dùng đã thuộc một nhóm nào đó. Không thể xóa');
+        }
+        // Storage::delete($user->avatar);
+        $user->delete();
+
+        return $this->success('Xóa người dùng thành công');
     }
 }

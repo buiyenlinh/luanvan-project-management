@@ -11,17 +11,33 @@ export default {
       validate_form: false,
       avatar_preview: '',
       loading_get_user: true,
-      loading_add: false
+      loading_add: false,
+      loading_delete: false,
+      current_page: 1,
+			last_page: 1
     }
   },
   methods: {
-    getUserList(page) {
+    getUserList() {
       this.loading_get_user = true;
       this.$root.api('user/list', {
-        params: { page }
+        params: {
+					page: this.current_page
+				}
       }).then(res => {
         if (res.data.status == "OK") {
-          this.list = res.data.data
+          this.list = res.data.data;
+					this.last_page = res.data.data.meta.last_page;
+
+					if (this.current_page > 1 && !this.list.data.length) {
+						this.$router.replace({
+							name: 'user',
+							query: {
+								page: this.current_page - 1
+							}
+						})
+						this.changePage(this.current_page - 1);
+					}
         }
         this.loading_get_user = false;
       }).catch(err => {
@@ -29,6 +45,10 @@ export default {
         this.$root.showError(err);
       })
     },
+		changePage(page) {
+			this.current_page = page;
+			this.getUserList();
+		},
     getRole() {
 			this.$root.api.get('role/list').then(res => {
 				this.role_list = res.data.data;
@@ -69,14 +89,13 @@ export default {
             formData.append('password', this.user.password);
             formData.append('avatar', this.user.avatar);
             this.$root.api.post('user/add',  formData).then(res => {
+							this.loading_add = false;
               if (res.data.status == 'OK') {
-                this.getUserList();
-                this.loading_add = false;
                 this.$notify(res.data.message, 'success');
-                $('#user-modal').modal('hide');
+                $('#user_modal').modal('hide');
+								this.changePage(1);
               } else {
                 this.$alert(res.data.error, '', 'error');
-                this.loading_add = false;
               }
             }).catch(err => {
               this.loading_add = false;
@@ -93,20 +112,38 @@ export default {
           formData.append('id', this.user.id);
           this.loading_add = true;
           this.$root.api.post('user/update', formData).then(res => {
+            this.loading_add = false;
             if (res.data.status == "OK") {
               this.$notify(res.data.message, 'success');
-              this.getUserList();
               $('#user_modal').modal('hide');
             } else {
               this.$alert(res.data.error, '', 'error');
             }
-            this.loading_add = false;
           }).catch(err => {
             this.loading_add = false;
             this.$root.showError(err);
           })
         }
       }
+    },
+    onSubmitDelete() {
+      this.loading_delete = true;
+      this.$root.api.delete(`user/delete/${this.user.id}`).then(res => {
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#delete_user_modal').modal('hide');
+          this.loading_delete = false;
+          this.getUserList();
+        } else {
+          this.$alert(res.data.error, '', 'error');
+          this.loading_add = false;
+          this.loading_delete = false;
+        }
+      }).catch(err => {
+        this.loading_add = false;
+        this.$root.showError(err);
+        this.loading_delete = false;
+      })
     },
     checkUserName() {
       if (this.user.username == '') {
@@ -213,8 +250,8 @@ export default {
     this.handleCloseModal();
   },
   mounted() {
-    let page = this.$route.query.page || 1;
-    this.getUserList(page);
+    this.current_page = parseInt(this.$route.query.page || 1);
+    this.getUserList();
     this.getRole();
     
     $(document).on('hidden.bs.modal', '#user_modal', () => {
@@ -320,8 +357,16 @@ export default {
                 <td>{{ item.created_at }}</td>
                 <td>
                   <div v-if="$root.auth.role.level < item.role.level && $root.auth.role.level > 0" class="icon">
-                    <i class="fas fa-edit text-info" title="Cập nhật" @click="getInfoUpdate(item)" data-toggle="modal" data-target="#user_modal"></i>
-                    <i class="fas fa-trash-alt text-danger" title="Xóa"></i>
+                    <i class="fas fa-edit text-info"
+                      title="Cập nhật"
+                      @click="getInfoUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#user_modal"></i>
+                    <i class="fas fa-trash-alt text-danger"
+                      title="Xóa"
+                      @click="getInfoUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#delete_user_modal"></i>
                   </div>
                 </td>
               </tr>
@@ -331,8 +376,8 @@ export default {
       </div>
     </div>
 
-    <div class="text-center mt-3" v-if="list && list.meta.last_page > 1">
-      <m-pagination :last-page="list.meta.last_page" :is-url="true" @change="getUserList" />
+    <div class="text-center mt-3" v-if="last_page > 1">
+      <m-pagination :last-page="last_page" :is-url="true" @change="changePage" />
     </div>
 
     <div class="modal fade" id="user_modal">
@@ -343,7 +388,7 @@ export default {
             <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body">
-            <form action="" v-if="$root.auth.role.level == 2 || $root.auth.role.level == 1">
+            <form action="" v-if="$root.isAdmin()">
               <div class="row">
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
@@ -462,7 +507,27 @@ export default {
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="delete_user_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Xóa tài khoản</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body" v-if="$root.isAdmin()">
+           <div v-if="user.username"> Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?</div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" @click="onSubmitDelete">Xóa</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add" :title="this.user.id != null ? 'Đang cập nhật tài khoản' : 'Đang thêm tài khoản'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa tài khoản" :full="true" />
   </div>
 </template>
 
