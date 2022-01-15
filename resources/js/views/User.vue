@@ -3,8 +3,6 @@ export default {
   data() {
     return {
       list: null,
-      key_word: '',
-      active: '',
       role_list: null,
       user: null,
       error: null,
@@ -14,7 +12,11 @@ export default {
       loading_add: false,
       loading_delete: false,
       current_page: 1,
-			last_page: 1
+			last_page: 1,
+      search: {
+        keyword: '',
+        active: -1
+      }
     }
   },
   methods: {
@@ -22,7 +24,9 @@ export default {
       this.loading_get_user = true;
       this.$root.api('user/list', {
         params: {
-					page: this.current_page
+					page: this.current_page,
+          keyword: this.search.keyword,
+          active: this.search.active
 				}
       }).then(res => {
         if (res.data.status == "OK") {
@@ -244,6 +248,10 @@ export default {
       this.user.active= item.active;
       this.user.role = item.role.id;
       this.avatar_preview = item.avatar;
+    },
+    handleSearch() {
+      this.last_page = 1;
+      this.changePage(1);
     }
   },
   created() {
@@ -301,26 +309,28 @@ export default {
 
 <template>
   <div class="user">
-    <div class="row">
-      <div class="col-md-3 col-sm-5 col-12 mb-2">
-        <input type="text" class="form-control form-control-sm" placeholder="Từ khóa..." v-model="key_word">
+    <form @submit.prevent="handleSearch">
+      <div class="row">
+        <div class="col-md-3 col-sm-5 col-12 mb-2">
+          <input type="text" class="form-control form-control-sm" placeholder="Tìm tên hoặc tên đăng nhập..." v-model="search.keyword">
+        </div>
+        <div class="col-md-3 col-sm-5 col-12 mb-2">
+          <select class="form-control form-control-sm" v-model.number="search.active">
+            <option value="-1">  -- Trạng thái --</option>
+            <option value="1">Kích hoạt</option>
+            <option value="0">Khóa</option>
+          </select>
+        </div>
+        <div class="col-md-2 col-sm-2 col-6 mb-2"> 
+          <button type="submit" class="btn btn-info btn-sm">
+            <i class="fas fa-search"></i> Tìm
+          </button> 
+        </div>
+        <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isAdmin()">
+          <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#user_modal">Thêm</button>
+        </div>
       </div>
-      <div class="col-md-3 col-sm-5 col-12 mb-2">
-        <select class="form-control form-control-sm">
-          <option value="">  -- Trạng thái --</option>
-          <option value="1">Kích hoạt</option>
-          <option value="0">Khóa</option>
-        </select>
-      </div>
-      <div class="col-md-2 col-sm-2 col-6 mb-2"> 
-        <button class="btn btn-info btn-sm">
-          <i class="fas fa-search"></i> Tìm
-        </button> 
-      </div>
-      <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isAdmin()">
-        <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#user_modal">Thêm</button>
-      </div>
-    </div>
+    </form>
     <div class="card">
       <div class="card-header bg-info text-white">Danh sách người dùng</div>
       <div class="table-responsive">
@@ -377,18 +387,18 @@ export default {
     </div>
 
     <div class="text-center mt-3" v-if="last_page > 1">
-      <m-pagination :last-page="last_page" :is-url="true" @change="changePage" />
+      <m-pagination :page="current_page" :last-page="last_page" @change="changePage" />
     </div>
 
     <div class="modal fade" id="user_modal">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Tài khoản</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form action="" v-if="$root.isAdmin()">
+          <form @submit.prevent="onSubmit" v-if="$root.isAdmin()">
+            <div class="modal-header">
+              <h4 class="modal-title">Tài khoản</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
               <div class="row">
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
@@ -496,14 +506,14 @@ export default {
                   </div>
                 </div>
               </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-info" @click="onSubmit">
-              {{ user.id > 0 ? 'Cập nhật' : 'Thêm'}}
-            </button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-          </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-info">
+                {{ user.id > 0 ? 'Cập nhật' : 'Thêm'}}
+              </button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -511,17 +521,19 @@ export default {
     <div class="modal fade" id="delete_user_modal">
       <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Xóa tài khoản</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body" v-if="$root.isAdmin()">
-           <div v-if="user.username"> Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?</div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-danger" @click="onSubmitDelete">Xóa</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-          </div>
+          <form @submit.prevent="onSubmitDelete">
+            <div class="modal-header">
+              <h4 class="modal-title">Xóa tài khoản</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" v-if="$root.isAdmin()">
+            <div v-if="user.username"> Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?</div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger">Xóa</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

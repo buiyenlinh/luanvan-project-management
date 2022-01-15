@@ -4,8 +4,8 @@ namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GroupUser extends Model
+class DepartmentUser extends Model
 {
-    protected $table = 'yl_group_user';
+    protected $table = 'yl_department_user';
     protected $guarded = [];
 }

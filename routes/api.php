@@ -13,6 +13,7 @@ Route::middleware(['is-token', 'check-role:1|2'])->group(function() {
     Route::post('add', 'UserController@addUser');
     Route::post('update', 'UserController@updateUser');
     Route::delete('delete/{id}', 'UserController@deleteUser');
+    Route::post('search', 'UserController@search');
   });
 
   Route::prefix('/role')->group(function() {

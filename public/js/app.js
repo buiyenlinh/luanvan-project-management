@@ -2339,8 +2339,6 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       list: null,
-      key_word: '',
-      active: '',
       role_list: null,
       user: null,
       error: null,
@@ -2350,7 +2348,11 @@ __webpack_require__.r(__webpack_exports__);
       loading_add: false,
       loading_delete: false,
       current_page: 1,
-      last_page: 1
+      last_page: 1,
+      search: {
+        keyword: '',
+        active: -1
+      }
     };
   },
   methods: {
@@ -2360,7 +2362,9 @@ __webpack_require__.r(__webpack_exports__);
       this.loading_get_user = true;
       this.$root.api('user/list', {
         params: {
-          page: this.current_page
+          page: this.current_page,
+          keyword: this.search.keyword,
+          active: this.search.active
         }
       }).then(function (res) {
         if (res.data.status == "OK") {
@@ -2609,6 +2613,10 @@ __webpack_require__.r(__webpack_exports__);
       this.user.active = item.active;
       this.user.role = item.role.id;
       this.avatar_preview = item.avatar;
+    },
+    handleSearch: function handleSearch() {
+      this.last_page = 1;
+      this.changePage(1);
     }
   },
   created: function created() {
@@ -21822,55 +21830,117 @@ var render = function () {
     "div",
     { staticClass: "user" },
     [
-      _c("div", { staticClass: "row" }, [
-        _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
-          _c("input", {
-            directives: [
-              {
-                name: "model",
-                rawName: "v-model",
-                value: _vm.key_word,
-                expression: "key_word",
-              },
-            ],
-            staticClass: "form-control form-control-sm",
-            attrs: { type: "text", placeholder: "Từ khóa..." },
-            domProps: { value: _vm.key_word },
-            on: {
-              input: function ($event) {
-                if ($event.target.composing) {
-                  return
-                }
-                _vm.key_word = $event.target.value
-              },
+      _c(
+        "form",
+        {
+          on: {
+            submit: function ($event) {
+              $event.preventDefault()
+              return _vm.handleSearch.apply(null, arguments)
             },
-          }),
-        ]),
-        _vm._v(" "),
-        _vm._m(0),
-        _vm._v(" "),
-        _vm._m(1),
-        _vm._v(" "),
-        _vm.$root.isAdmin()
-          ? _c(
-              "div",
-              { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
-              [
-                _c(
-                  "button",
+          },
+        },
+        [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
+              _c("input", {
+                directives: [
                   {
-                    staticClass: "btn btn-info btn-sm",
-                    attrs: {
-                      "data-toggle": "modal",
-                      "data-target": "#user_modal",
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.search.keyword,
+                    expression: "search.keyword",
+                  },
+                ],
+                staticClass: "form-control form-control-sm",
+                attrs: {
+                  type: "text",
+                  placeholder: "Tìm tên hoặc tên đăng nhập...",
+                },
+                domProps: { value: _vm.search.keyword },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.$set(_vm.search, "keyword", $event.target.value)
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
+              _c(
+                "select",
+                {
+                  directives: [
+                    {
+                      name: "model",
+                      rawName: "v-model.number",
+                      value: _vm.search.active,
+                      expression: "search.active",
+                      modifiers: { number: true },
+                    },
+                  ],
+                  staticClass: "form-control form-control-sm",
+                  on: {
+                    change: function ($event) {
+                      var $$selectedVal = Array.prototype.filter
+                        .call($event.target.options, function (o) {
+                          return o.selected
+                        })
+                        .map(function (o) {
+                          var val = "_value" in o ? o._value : o.value
+                          return _vm._n(val)
+                        })
+                      _vm.$set(
+                        _vm.search,
+                        "active",
+                        $event.target.multiple
+                          ? $$selectedVal
+                          : $$selectedVal[0]
+                      )
                     },
                   },
-                  [_vm._v("Thêm")]
-                ),
-              ]
-            )
-          : _vm._e(),
-      ]),
+                },
+                [
+                  _c("option", { attrs: { value: "-1" } }, [
+                    _vm._v("  -- Trạng thái --"),
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "1" } }, [
+                    _vm._v("Kích hoạt"),
+                  ]),
+                  _vm._v(" "),
+                  _c("option", { attrs: { value: "0" } }, [_vm._v("Khóa")]),
+                ]
+              ),
+            ]),
+            _vm._v(" "),
+            _vm._m(0),
+            _vm._v(" "),
+            _vm.$root.isAdmin()
+              ? _c(
+                  "div",
+                  { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
+                  [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-info btn-sm",
+                        attrs: {
+                          "data-toggle": "modal",
+                          "data-target": "#user_modal",
+                        },
+                      },
+                      [_vm._v("Thêm")]
+                    ),
+                  ]
+                )
+              : _vm._e(),
+          ]),
+        ]
+      ),
       _vm._v(" "),
       _c("div", { staticClass: "card" }, [
         _c("div", { staticClass: "card-header bg-info text-white" }, [
@@ -21882,7 +21952,7 @@ var render = function () {
             "table",
             { staticClass: "table table-bordered table-stripped mb-0" },
             [
-              _vm._m(2),
+              _vm._m(1),
               _vm._v(" "),
               _c(
                 "tbody",
@@ -21978,7 +22048,7 @@ var render = function () {
             { staticClass: "text-center mt-3" },
             [
               _c("m-pagination", {
-                attrs: { "last-page": _vm.last_page, "is-url": true },
+                attrs: { page: _vm.current_page, "last-page": _vm.last_page },
                 on: { change: _vm.changePage },
               }),
             ],
@@ -21992,620 +22062,684 @@ var render = function () {
           { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
           [
             _c("div", { staticClass: "modal-content" }, [
-              _vm._m(3),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-body" }, [
-                _vm.$root.isAdmin()
-                  ? _c("form", { attrs: { action: "" } }, [
-                      _c("div", { staticClass: "row" }, [
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(4),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.fullname,
-                                    expression: "user.fullname",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "text" },
-                                domProps: { value: _vm.user.fullname },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "fullname",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(5),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.username,
-                                    expression: "user.username",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "text" },
-                                domProps: { value: _vm.user.username },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "username",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.username))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(6),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.password,
-                                    expression: "user.password",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "password" },
-                                domProps: { value: _vm.user.password },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "password",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.password))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(7),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.email,
-                                    expression: "user.email",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "email" },
-                                domProps: { value: _vm.user.email },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "email",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.email))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(8),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.phone,
-                                    expression: "user.phone",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "tel" },
-                                domProps: { value: _vm.user.phone },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "phone",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.phone))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(9),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.user.birthday,
-                                    expression: "user.birthday",
-                                  },
-                                ],
-                                staticClass: "form-control",
-                                attrs: { type: "date" },
-                                domProps: { value: _vm.user.birthday },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.user,
-                                      "birthday",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(10),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.user.gender,
-                                          expression: "user.gender",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "F" },
-                                      domProps: {
-                                        checked: _vm._q(_vm.user.gender, "F"),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          return _vm.$set(
-                                            _vm.user,
-                                            "gender",
-                                            "F"
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Nữ\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.user.gender,
-                                          expression: "user.gender",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "M" },
-                                      domProps: {
-                                        checked: _vm._q(_vm.user.gender, "M"),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          return _vm.$set(
-                                            _vm.user,
-                                            "gender",
-                                            "M"
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Nam\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.user.gender,
-                                          expression: "user.gender",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "N" },
-                                      domProps: {
-                                        checked: _vm._q(_vm.user.gender, "N"),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          return _vm.$set(
-                                            _vm.user,
-                                            "gender",
-                                            "N"
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Khác\n                    "),
-                                  ]
-                                ),
-                              ]),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(11),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.user.active,
-                                          expression: "user.active",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "1" },
-                                      domProps: {
-                                        checked: _vm._q(_vm.user.active, "1"),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          return _vm.$set(
-                                            _vm.user,
-                                            "active",
-                                            "1"
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Kích hoạt\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model",
-                                          value: _vm.user.active,
-                                          expression: "user.active",
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "0" },
-                                      domProps: {
-                                        checked: _vm._q(_vm.user.active, "0"),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          return _vm.$set(
-                                            _vm.user,
-                                            "active",
-                                            "0"
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Khóa\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.active))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(12),
-                              _vm._v(" "),
-                              _c(
-                                "select",
-                                {
+              _vm.$root.isAdmin()
+                ? _c(
+                    "form",
+                    {
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.onSubmit.apply(null, arguments)
+                        },
+                      },
+                    },
+                    [
+                      _vm._m(2),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "modal-body" }, [
+                        _c("div", { staticClass: "row" }, [
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(3),
+                                _vm._v(" "),
+                                _c("input", {
                                   directives: [
                                     {
                                       name: "model",
                                       rawName: "v-model",
-                                      value: _vm.user.role,
-                                      expression: "user.role",
+                                      value: _vm.user.fullname,
+                                      expression: "user.fullname",
                                     },
                                   ],
                                   staticClass: "form-control",
+                                  attrs: { type: "text" },
+                                  domProps: { value: _vm.user.fullname },
                                   on: {
-                                    change: function ($event) {
-                                      var $$selectedVal = Array.prototype.filter
-                                        .call(
-                                          $event.target.options,
-                                          function (o) {
-                                            return o.selected
-                                          }
-                                        )
-                                        .map(function (o) {
-                                          var val =
-                                            "_value" in o ? o._value : o.value
-                                          return val
-                                        })
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
                                       _vm.$set(
                                         _vm.user,
-                                        "role",
-                                        $event.target.multiple
-                                          ? $$selectedVal
-                                          : $$selectedVal[0]
+                                        "fullname",
+                                        $event.target.value
                                       )
                                     },
                                   },
-                                },
-                                [
-                                  _c("option", { attrs: { value: "" } }, [
-                                    _vm._v("   -- Chọn quyền --"),
-                                  ]),
-                                  _vm._v(" "),
-                                  _vm._l(_vm.role_list, function (item, index) {
-                                    return [
-                                      item.level > _vm.$root.auth.role.level &&
-                                      item.level != 1
-                                        ? _c(
-                                            "option",
+                                }),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(4),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.user.username,
+                                      expression: "user.username",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: { type: "text" },
+                                  domProps: { value: _vm.user.username },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.user,
+                                        "username",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.username))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(5),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.user.password,
+                                      expression: "user.password",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: { type: "password" },
+                                  domProps: { value: _vm.user.password },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.user,
+                                        "password",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.password))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(6),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.user.email,
+                                      expression: "user.email",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: { type: "email" },
+                                  domProps: { value: _vm.user.email },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.user,
+                                        "email",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.email))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(7),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.user.phone,
+                                      expression: "user.phone",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: { type: "tel" },
+                                  domProps: { value: _vm.user.phone },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.user,
+                                        "phone",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.phone))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(8),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.user.birthday,
+                                      expression: "user.birthday",
+                                    },
+                                  ],
+                                  staticClass: "form-control",
+                                  attrs: { type: "date" },
+                                  domProps: { value: _vm.user.birthday },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.user,
+                                        "birthday",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(9),
+                                _c("br"),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "form-check-inline" },
+                                  [
+                                    _c(
+                                      "label",
+                                      { staticClass: "form-check-label" },
+                                      [
+                                        _c("input", {
+                                          directives: [
                                             {
-                                              key: index,
-                                              domProps: { value: item.id },
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.user.gender,
+                                              expression: "user.gender",
                                             },
-                                            [_vm._v(_vm._s(item.name))]
-                                          )
-                                        : _vm._e(),
-                                    ]
-                                  }),
-                                ],
-                                2
-                              ),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.role))]
-                              ),
-                            ]),
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "radio", value: "F" },
+                                          domProps: {
+                                            checked: _vm._q(
+                                              _vm.user.gender,
+                                              "F"
+                                            ),
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              return _vm.$set(
+                                                _vm.user,
+                                                "gender",
+                                                "F"
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v("Nữ\n                    "),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "form-check-inline" },
+                                  [
+                                    _c(
+                                      "label",
+                                      { staticClass: "form-check-label" },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.user.gender,
+                                              expression: "user.gender",
+                                            },
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "radio", value: "M" },
+                                          domProps: {
+                                            checked: _vm._q(
+                                              _vm.user.gender,
+                                              "M"
+                                            ),
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              return _vm.$set(
+                                                _vm.user,
+                                                "gender",
+                                                "M"
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v("Nam\n                    "),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "form-check-inline" },
+                                  [
+                                    _c(
+                                      "label",
+                                      { staticClass: "form-check-label" },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.user.gender,
+                                              expression: "user.gender",
+                                            },
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "radio", value: "N" },
+                                          domProps: {
+                                            checked: _vm._q(
+                                              _vm.user.gender,
+                                              "N"
+                                            ),
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              return _vm.$set(
+                                                _vm.user,
+                                                "gender",
+                                                "N"
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v("Khác\n                    "),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(10),
+                                _c("br"),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "form-check-inline" },
+                                  [
+                                    _c(
+                                      "label",
+                                      { staticClass: "form-check-label" },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.user.active,
+                                              expression: "user.active",
+                                            },
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "radio", value: "1" },
+                                          domProps: {
+                                            checked: _vm._q(
+                                              _vm.user.active,
+                                              "1"
+                                            ),
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              return _vm.$set(
+                                                _vm.user,
+                                                "active",
+                                                "1"
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v(
+                                          "Kích hoạt\n                    "
+                                        ),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "form-check-inline" },
+                                  [
+                                    _c(
+                                      "label",
+                                      { staticClass: "form-check-label" },
+                                      [
+                                        _c("input", {
+                                          directives: [
+                                            {
+                                              name: "model",
+                                              rawName: "v-model",
+                                              value: _vm.user.active,
+                                              expression: "user.active",
+                                            },
+                                          ],
+                                          staticClass: "form-check-input",
+                                          attrs: { type: "radio", value: "0" },
+                                          domProps: {
+                                            checked: _vm._q(
+                                              _vm.user.active,
+                                              "0"
+                                            ),
+                                          },
+                                          on: {
+                                            change: function ($event) {
+                                              return _vm.$set(
+                                                _vm.user,
+                                                "active",
+                                                "0"
+                                              )
+                                            },
+                                          },
+                                        }),
+                                        _vm._v("Khóa\n                    "),
+                                      ]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.active))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(11),
+                                _vm._v(" "),
+                                _c(
+                                  "select",
+                                  {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.user.role,
+                                        expression: "user.role",
+                                      },
+                                    ],
+                                    staticClass: "form-control",
+                                    on: {
+                                      change: function ($event) {
+                                        var $$selectedVal =
+                                          Array.prototype.filter
+                                            .call(
+                                              $event.target.options,
+                                              function (o) {
+                                                return o.selected
+                                              }
+                                            )
+                                            .map(function (o) {
+                                              var val =
+                                                "_value" in o
+                                                  ? o._value
+                                                  : o.value
+                                              return val
+                                            })
+                                        _vm.$set(
+                                          _vm.user,
+                                          "role",
+                                          $event.target.multiple
+                                            ? $$selectedVal
+                                            : $$selectedVal[0]
+                                        )
+                                      },
+                                    },
+                                  },
+                                  [
+                                    _c("option", { attrs: { value: "" } }, [
+                                      _vm._v("   -- Chọn quyền --"),
+                                    ]),
+                                    _vm._v(" "),
+                                    _vm._l(
+                                      _vm.role_list,
+                                      function (item, index) {
+                                        return [
+                                          item.level >
+                                            _vm.$root.auth.role.level &&
+                                          item.level != 1
+                                            ? _c(
+                                                "option",
+                                                {
+                                                  key: index,
+                                                  domProps: { value: item.id },
+                                                },
+                                                [_vm._v(_vm._s(item.name))]
+                                              )
+                                            : _vm._e(),
+                                        ]
+                                      }
+                                    ),
+                                  ],
+                                  2
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.role))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(12),
+                                _c("br"),
+                                _vm._v(" "),
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-info btn-sm",
+                                    attrs: { type: "button" },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.$refs.RefAvatar.click()
+                                      },
+                                    },
+                                  },
+                                  [_vm._v("Chọn ảnh")]
+                                ),
+                                _vm._v(" "),
+                                _c("input", {
+                                  ref: "RefAvatar",
+                                  staticStyle: { display: "none" },
+                                  attrs: { type: "file" },
+                                  on: { change: _vm.handleChangeAvatar },
+                                }),
+                                _vm._v(" "),
+                                _vm.avatar_preview
+                                  ? _c("img", {
+                                      staticClass: "pl-2",
+                                      staticStyle: {
+                                        width: "150px",
+                                        height: "auto",
+                                      },
+                                      attrs: {
+                                        src: _vm.avatar_preview,
+                                        alt: "",
+                                      },
+                                    })
+                                  : _vm._e(),
+                                _c("br"),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "error text-danger font-italic",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.avatar))]
+                                ),
+                              ]),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "modal-footer" }, [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-info",
+                            attrs: { type: "submit" },
+                          },
+                          [
+                            _vm._v(
+                              "\n              " +
+                                _vm._s(_vm.user.id > 0 ? "Cập nhật" : "Thêm") +
+                                "\n            "
+                            ),
                           ]
                         ),
                         _vm._v(" "),
                         _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(13),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-info btn-sm",
-                                  attrs: { type: "button" },
-                                  on: {
-                                    click: function ($event) {
-                                      return _vm.$refs.RefAvatar.click()
-                                    },
-                                  },
-                                },
-                                [_vm._v("Chọn ảnh")]
-                              ),
-                              _vm._v(" "),
-                              _c("input", {
-                                ref: "RefAvatar",
-                                staticStyle: { display: "none" },
-                                attrs: { type: "file" },
-                                on: { change: _vm.handleChangeAvatar },
-                              }),
-                              _vm._v(" "),
-                              _vm.avatar_preview
-                                ? _c("img", {
-                                    staticClass: "pl-2",
-                                    staticStyle: {
-                                      width: "150px",
-                                      height: "auto",
-                                    },
-                                    attrs: { src: _vm.avatar_preview, alt: "" },
-                                  })
-                                : _vm._e(),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.avatar))]
-                              ),
-                            ]),
-                          ]
+                          "button",
+                          {
+                            staticClass: "btn btn-secondary",
+                            attrs: { type: "button", "data-dismiss": "modal" },
+                          },
+                          [_vm._v("Đóng")]
                         ),
                       ]),
-                    ])
-                  : _vm._e(),
-              ]),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-footer" }, [
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-info",
-                    attrs: { type: "button" },
-                    on: { click: _vm.onSubmit },
-                  },
-                  [
-                    _vm._v(
-                      "\n            " +
-                        _vm._s(_vm.user.id > 0 ? "Cập nhật" : "Thêm") +
-                        "\n          "
-                    ),
-                  ]
-                ),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-secondary",
-                    attrs: { type: "button", "data-dismiss": "modal" },
-                  },
-                  [_vm._v("Đóng")]
-                ),
-              ]),
+                    ]
+                  )
+                : _vm._e(),
             ]),
           ]
         ),
@@ -22617,40 +22751,34 @@ var render = function () {
         [
           _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
             _c("div", { staticClass: "modal-content" }, [
-              _vm._m(14),
-              _vm._v(" "),
-              _vm.$root.isAdmin()
-                ? _c("div", { staticClass: "modal-body" }, [
-                    _vm.user.username
-                      ? _c("div", [
-                          _vm._v(" Bạn có muốn xóa người dùng "),
-                          _c("b", [_vm._v(_vm._s(_vm.user.username))]),
-                          _vm._v(" không?"),
-                        ])
-                      : _vm._e(),
-                  ])
-                : _vm._e(),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-footer" }, [
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-danger",
-                    attrs: { type: "button" },
-                    on: { click: _vm.onSubmitDelete },
+              _c(
+                "form",
+                {
+                  on: {
+                    submit: function ($event) {
+                      $event.preventDefault()
+                      return _vm.onSubmitDelete.apply(null, arguments)
+                    },
                   },
-                  [_vm._v("Xóa")]
-                ),
-                _vm._v(" "),
-                _c(
-                  "button",
-                  {
-                    staticClass: "btn btn-secondary",
-                    attrs: { type: "button", "data-dismiss": "modal" },
-                  },
-                  [_vm._v("Đóng")]
-                ),
-              ]),
+                },
+                [
+                  _vm._m(13),
+                  _vm._v(" "),
+                  _vm.$root.isAdmin()
+                    ? _c("div", { staticClass: "modal-body" }, [
+                        _vm.user.username
+                          ? _c("div", [
+                              _vm._v(" Bạn có muốn xóa người dùng "),
+                              _c("b", [_vm._v(_vm._s(_vm.user.username))]),
+                              _vm._v(" không?"),
+                            ])
+                          : _vm._e(),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm._m(14),
+                ]
+              ),
             ]),
           ]),
         ]
@@ -22682,25 +22810,12 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
-      _c("select", { staticClass: "form-control form-control-sm" }, [
-        _c("option", { attrs: { value: "" } }, [_vm._v("  -- Trạng thái --")]),
-        _vm._v(" "),
-        _c("option", { attrs: { value: "1" } }, [_vm._v("Kích hoạt")]),
-        _vm._v(" "),
-        _c("option", { attrs: { value: "0" } }, [_vm._v("Khóa")]),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
     return _c("div", { staticClass: "col-md-2 col-sm-2 col-6 mb-2" }, [
-      _c("button", { staticClass: "btn btn-info btn-sm" }, [
-        _c("i", { staticClass: "fas fa-search" }),
-        _vm._v(" Tìm\n      "),
-      ]),
+      _c(
+        "button",
+        { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
+        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n        ")]
+      ),
     ])
   },
   function () {
@@ -22846,6 +22961,27 @@ var staticRenderFns = [
           attrs: { type: "button", "data-dismiss": "modal" },
         },
         [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-danger", attrs: { type: "submit" } },
+        [_vm._v("Xóa")]
+      ),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Đóng")]
       ),
     ])
   },

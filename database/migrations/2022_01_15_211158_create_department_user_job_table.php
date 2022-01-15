@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGroupTaskTable extends Migration
+class CreateDepartmentUserJobTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateGroupTaskTable extends Migration
      */
     public function up()
     {
-        Schema::create('yl_group_task', function (Blueprint $table) {
+        Schema::create('yl_department_user_job', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('group_id')->constrained('yl_groups')->unsigned();
-            $table->foreignId('task_id')->constrained('yl_tasks')->unsigned();
+            $table->foreignId('department_user_id')->constrained('yl_department_user')->unsigned();
+            $table->foreignId('job_id')->constrained('yl_jobs')->unsigned();
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ class CreateGroupTaskTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('yl_group_task');
+        Schema::dropIfExists('yl_department_user_job');
     }
 }
