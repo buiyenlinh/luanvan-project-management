@@ -527,7 +527,16 @@
     }
 }
 
-body { color: #494949; }
+body {
+    color: #494949; 
+    font-size: 14px;
+}
+
+.table-bordered td,
+.table-bordered th { padding: 8px; }
+.table-bordered thead td,
+.table-bordered thead th { border-bottom-width: 0px;}
+
 .bg-fff { background-color: #fff; }
 .error.text-danger.font-italic {
     font-size: 14px;

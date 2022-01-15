@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Model\User;
 use App\Model\Role;
 use App\Model\Project;
-use App\Model\GroupUser;
+use App\Model\DepartmentUser;
 
 class UserController extends Controller
 {
@@ -47,8 +47,20 @@ class UserController extends Controller
     /**
      * Lấy danh sách người dùng
      */
-    public function getUserList() {
-        $users = User::orderby('id', 'desc')->paginate(4);
+    public function getUserList(Request $request) {
+        $keyword = $request->keyword;
+        $active = $request->active;
+
+        $db = User::select('*');
+        if (!empty($keyword)) {
+            $db->whereRaw('(username LIKE "%' . $keyword . '%" OR fullname LIKE "%' . $keyword . '%")');
+        }
+
+        if (in_array($active, [0,1])) {
+            $db->where('active', $active);
+        }
+
+        $users = $db->orderby('id', 'desc')->paginate(3);
         $data = UserResource::collection($users)->response()->getData();
         return $this->success('Danh sách người dùng', $data);
     }
@@ -210,13 +222,32 @@ class UserController extends Controller
             return $this->error('Người dùng đã thuộc một dự án nào đó. Không thể xóa');
         }
 
-        $count_group_user = GroupUser::where('user_id', $user->id)->count();
-        if ($count_group_user > 0) {
+        $count_department_user = DepartmentUser::where('user_id', $user->id)->count();
+        if ($count_department_user > 0) {
             return $this->error('Người dùng đã thuộc một nhóm nào đó. Không thể xóa');
         }
         // Storage::delete($user->avatar);
         $user->delete();
 
         return $this->success('Xóa người dùng thành công');
+    }
+
+    /**
+     * Tìm kiếm
+     */
+    public function search(Request $request) {
+        $list = User::query();
+        if ($request->has('active')) {
+            $list = User::where('active', $request->active);
+        }
+
+        if ($request->has('key_word')) {
+            $list = $list->where('fullname', 'LIKE', '%' . $request->key_word . '%')
+                ->orwhere('username', 'LIKE', '%' . $request->key_word . '%');
+        }
+        $users = $list->orderby('id', 'desc')->paginate(3)->withQueryString();
+        $users = UserResource::collection($users)->response()->getData();
+        return $this->success('Danh sách tìm kiếm', $users);
+
     }
 }

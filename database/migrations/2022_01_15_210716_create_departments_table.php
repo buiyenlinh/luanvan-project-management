@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGroupUserJobStatusTable extends Migration
+class CreateDepartmentsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,9 @@ class CreateGroupUserJobStatusTable extends Migration
      */
     public function up()
     {
-        Schema::create('yl_group_user_job_status', function (Blueprint $table) {
+        Schema::create('yl_departments', function (Blueprint $table) {
             $table->id();
-            $table->string('content');
-            $table->tinyInteger('status');
-            $table->foreignId('group_user_job_id')->constrained('yl_group_user_job')->unsigned();
+            $table->string('name')->unique();
             $table->timestamps();
         });
     }
@@ -29,6 +27,6 @@ class CreateGroupUserJobStatusTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('yl_group_user_job_status');
+        Schema::dropIfExists('yl_departments');
     }
 }
