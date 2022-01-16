@@ -31,7 +31,25 @@ const router = new VueRouter({
             auth: true,
             title: 'Người dùng'
           }
-        }
+        },
+        {
+          path: 'du-an',
+          name: 'project',
+          component: require('../views/Project.vue').default,
+          meta: {
+            auth: true,
+            title: 'Dự án'
+          },
+        },
+        {
+          path: 'ca-nhan',
+          name: 'profile',
+          component: require('../views/Profile.vue').default,
+          meta: {
+            auth: true,
+            title: 'Trang cá nhân'
+          }
+        },
       ]
     },
     {

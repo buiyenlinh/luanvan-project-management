@@ -830,3 +830,14 @@ body {
   }
 }
 
+/* Profile page*/
+
+.profile .avatar img {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border: 1px solid #ddd;
+}
+
