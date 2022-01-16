@@ -250,4 +250,67 @@ class UserController extends Controller
         return $this->success('Danh sách tìm kiếm', $users);
 
     }
+
+    /**
+     * Cập nhật profile
+     */
+    public function updateProfile(Request $request) {
+        if ($this->checkExist('username', $request->username, $this->auth->id)) {
+            return $this->error('Tên đăng nhập đã tồn tại');
+        }
+
+        if ($this->checkExist('email', $request->email, $this->auth->id)) {
+            return $this->error('Email đã tồn tại');
+        }
+
+        if ($this->checkExist('phone', $request->phone, $this->auth->id)) {
+            return $this->error('Số điện thoại đã tồn tại');
+        }
+
+        $password = $this->auth->password;
+        $birthday = $this->auth->birthday;
+        $avatar = $this->auth->avatar;
+
+        if ($request->has('password')) {
+            $password = bcrypt($request->password);
+        }
+        if ($request->has('birthday')) {
+            $birthday = strtotime($request->birthday);
+        }
+
+        if ($request->file('avatar')) {
+            if (!empty($avatar)) {
+                Storage::disk('public')->delete($avatar);
+            }
+
+            $file = $request->file('avatar');
+            $avatar = $file->store('public/images');
+            $avatar = str_replace('public/', '', $avatar);
+        }
+
+        $this->auth->update([
+            'fullname' => $request->fullname,
+            'username' => $request->username,
+            'password' => $password,
+            'gender' => $request->gender,
+            'birthday' => $birthday,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'avatar' => $avatar,
+        ]);
+
+        return $this->success('Cập nhật thông tin thành công', $this->_createAuth($this->auth));
+    }
+
+    /**
+     * Xóa ảnh đại diện
+     */
+    public function deleteAvatar() {
+        $avatar = $this->auth->avatar;
+        if (!empty($avatar)) {
+            Storage::disk('public')->delete($avatar);
+        }
+        $this->auth->update(['avatar' => '']);
+        return $this->success('Xóa ảnh đại diện thành công', $this->_createAuth($this->auth));
+    }
 }

@@ -13,6 +13,16 @@ export default {
           label: 'Người dùng',
           link: "user",
           icon: "fas fa-users",
+        },
+        {
+          label: 'Dự án',
+          link: "project",
+          icon: "fas fa-folder",
+        },
+        {
+          label: 'Cá nhân',
+          link: "profile",
+          icon: "fas fa-user-circle",
         }
       ],
       name_route: '',
@@ -60,8 +70,10 @@ export default {
     <div id="side-bar">
       <div class="top text-center mt-3 pb-3">
         <div class="avatar">
-          <img v-if="$root.auth.avatar" :src="$root.auth.avatar" alt="">
-          <img v-else :src="$root.avatar_default" alt="">
+          <router-link :to="{ name: 'profile' }">
+            <img v-if="$root.auth.avatar" :src="$root.auth.avatar" alt="">
+            <img v-else :src="$root.avatar_default" alt="">
+          </router-link>
         </div>
         <div class="role pt-1">
           <b>{{ $root.auth.fullname }}</b><br>
@@ -94,7 +106,7 @@ export default {
             </div>
             <div class="dropdown-menu">
               <a class="dropdown-item" @click="handleLogout">Đăng xuất</a>
-              <a class="dropdown-item" href="#">Trang cá nhân</a>
+              <router-link :to="{ name: 'profile' }"  class="dropdown-item">Trang cá nhân</router-link>
             </div>
           </div>
         </div>

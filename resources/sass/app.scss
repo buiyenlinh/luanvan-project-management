@@ -741,3 +741,15 @@ $side-bar-width-small: 65px;
         }
     }
 }
+
+
+/* Profile page*/
+.profile {
+    .avatar img {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: cover;
+        border: 1px solid #ddd; 
+    }
+}
