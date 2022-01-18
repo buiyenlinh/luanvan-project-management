@@ -36,9 +36,9 @@ class UserController extends Controller
     public function checkExist($name, $value, $id = 0) {
         $count = 0;
         if ($id == 0) { // Kiểm tra khi thêm
-            $count = count(User::where($name, $value)->get());
+            $count = User::where($name, $value)->count();
         } else { // Kiểm tra khi cập nhật
-            $count = count(User::where('id', '!=', $id)->where($name, $value)->get());
+            $count = User::where('id', '!=', $id)->where($name, $value)->count();
         }
         
         return $count > 0;
@@ -233,22 +233,19 @@ class UserController extends Controller
     }
 
     /**
-     * Tìm kiếm
+     * Tìm kiếm quản lý
      */
-    public function search(Request $request) {
-        $list = User::query();
-        if ($request->has('active')) {
-            $list = User::where('active', $request->active);
-        }
+    public function searchManager(Request $request) {
+        $role = Role::where('level', 3)->first();
+        $keyword = $request->keyword;
 
-        if ($request->has('key_word')) {
-            $list = $list->where('fullname', 'LIKE', '%' . $request->key_word . '%')
-                ->orwhere('username', 'LIKE', '%' . $request->key_word . '%');
+        $list = User::select('*');
+        if (!empty($keyword)) {
+            $list->whereRaw('(username LIKE "%' . $keyword . '%" OR fullname LIKE "%' . $keyword . '%")');
         }
-        $users = $list->orderby('id', 'desc')->paginate(3)->withQueryString();
-        $users = UserResource::collection($users)->response()->getData();
-        return $this->success('Danh sách tìm kiếm', $users);
+        $list->where('active', 1)->where('role_id', $role->id);
 
+        return $this->success('Danh sách tìm kiếm', $list->get());
     }
 
     /**

@@ -10,6 +10,7 @@ import router from './router/index';
 Vue.component('m-spinner', require('./components/Spinner.vue').default);
 Vue.component('m-loading', require('./components/Loading.vue').default);
 Vue.component('m-pagination', require('./components/Pagination.vue').default);
+Vue.component('m-select', require('./components/Select.vue').default);
 
 new Vue({
   router,
@@ -380,7 +381,11 @@ new Vue({
 		isSuperAdmin() {
 			if (!this.auth) return false;
 			return this.auth.role.level == 1;
-		}
+		},
+		isManager() {
+			if (!this.auth) return false;
+			return (this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3);
+		},
   },
   created() {
     this.page_title = document.title;

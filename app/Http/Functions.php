@@ -69,4 +69,26 @@ trait Functions {
   public function getRoleList() {
     return $this->success('Danh sách quyền', Role::all());
   }
+
+  /**
+   * Kiểm tra có phải Admin
+   */
+  public function isAdmin() {
+    return $this->auth->role->level == 1 || $this->auth->role->level == 2;
+  }
+
+  /**
+   * Kiểm tra có phải Manager
+   */
+  public function isManager() {
+    return $this->auth->role->level == 3;
+  }
+
+  /**
+   * Kiểm tra có phải nhân viên
+   */
+  public function isUser() {
+    return $this->auth->role->level == 4;
+  }
+  
 }
