@@ -5,18 +5,24 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/config', 'AppController@getConfig');
 
-Route::middleware(['is-token', 'check-role:1|2'])->group(function() {
-  Route::post('/login', 'AppController@login')->withoutMiddleware(['is-token', 'check-role']);
-  Route::get('/logout', 'AppController@logout')->withoutMiddleware('check-role:1|2');
+Route::middleware('is-token')->group(function() {
+  Route::post('/login', 'AppController@login')->withoutMiddleware('is-token');
+  Route::get('/logout', 'AppController@logout');
+  Route::post('/profile', 'UserController@updateProfile');
+  Route::delete('/profile/delete-avatar', 'UserController@deleteAvatar');
 
-  Route::post('/profile', 'UserController@updateProfile')->withoutMiddleware('check-role:1|2');
-  Route::delete('/profile/delete-avatar', 'UserController@deleteAvatar')->withoutMiddleware('check-role:1|2');
-  Route::prefix("/user")->group(function() {
+  Route::prefix("/user")->middleware('check-role:1|2')->group(function() {
     Route::get('list', 'UserController@getUserList')->withoutMiddleware('check-role:1|2');
     Route::post('add', 'UserController@addUser');
     Route::post('update', 'UserController@updateUser');
     Route::delete('delete/{id}', 'UserController@deleteUser');
-    Route::post('search', 'UserController@search');
+    Route::post('search-manager', 'UserController@searchManager');
+  });
+
+  Route::prefix('project')->middleware('check-role:1|2|3')->group(function() {
+    Route::get('list', 'ProjectController@listProject')->withoutMiddleware('check-role:1|2|3');
+    Route::post('add', 'ProjectController@addProject');
+    Route::post('update', 'ProjectController@updateProject');
   });
 
   Route::prefix('/role')->group(function() {

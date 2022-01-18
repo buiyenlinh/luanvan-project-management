@@ -366,7 +366,7 @@ export default {
                 </td>
                 <td>{{ item.created_at }}</td>
                 <td>
-                  <div v-if="$root.auth.role.level < item.role.level && $root.auth.role.level > 0" class="icon">
+                  <div v-if="$root.auth.role.level < item.role.level && $root.isAdmin()" class="icon">
                     <i class="fas fa-edit text-info"
                       title="Cập nhật"
                       @click="getInfoUpdate(item)"
@@ -393,12 +393,12 @@ export default {
     <div class="modal fade" id="user_modal">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-          <form @submit.prevent="onSubmit" v-if="$root.isAdmin()">
-            <div class="modal-header">
-              <h4 class="modal-title">Tài khoản</h4>
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
+          <div class="modal-header">
+            <h4 class="modal-title">Tài khoản</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="onSubmit" v-if="$root.isAdmin()">
               <div class="row">
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
@@ -506,14 +506,14 @@ export default {
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-info">
-                {{ user.id > 0 ? 'Cập nhật' : 'Thêm'}}
-              </button>
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-            </div>
-          </form>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-info btn-sm">
+                  {{ user.id > 0 ? 'Cập nhật' : 'Thêm'}}
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -530,8 +530,8 @@ export default {
             <div v-if="user.username"> Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?</div>
             </div>
             <div class="modal-footer">
-              <button type="submit" class="btn btn-danger">Xóa</button>
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+              <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
             </div>
           </form>
         </div>

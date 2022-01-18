@@ -117,5 +117,6 @@ export default {
         </div>
       </div>
     </div>
+    <m-loading v-if="loading_logout" title="Đang đăng xuất" :full="true" />
   </div>
 </template>

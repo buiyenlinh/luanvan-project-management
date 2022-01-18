@@ -88,7 +88,7 @@ export default {
 
         <div>
           <div class="text-right font-weight-bold mb-4">
-            <router-link :to="{ name: 'forget-password' }">Quên mật khẩu</router-link>
+            <router-link :to="{ name: 'forgetpass' }">Quên mật khẩu</router-link>
           </div>
           <button 
             type="submit"

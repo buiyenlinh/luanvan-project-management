@@ -63,7 +63,7 @@ const router = new VueRouter({
     },
     {
       path: '/quen-mat-khau',
-      name: 'lostpass',
+      name: 'forgetpass',
       component: require('../views/ForgetPassword.vue').default,
       meta: {
         guest: true,
