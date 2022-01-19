@@ -262,7 +262,7 @@ export default {
     this.getUserList();
     this.getRole();
     
-    $(document).on('hidden.bs.modal', '#user_modal', () => {
+    $(document).on('hidden.bs.modal', '#user_modal, #delete_user_modal', () => {
       this.handleCloseModal();
     });
   },
@@ -527,11 +527,16 @@ export default {
               <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body" v-if="$root.isAdmin()">
-            <div v-if="user.username"> Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?</div>
+              <div v-if="user.username" class="d-flex justify-content-start">
+                <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+                <span>
+                  Bạn có muốn xóa người dùng <b>{{ user.username }}</b> không?
+                </span>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
             </div>
           </form>
         </div>

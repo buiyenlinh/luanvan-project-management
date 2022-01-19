@@ -2134,8 +2134,8 @@ __webpack_require__.r(__webpack_exports__);
       "default": ''
     },
     variable: {
-      type: String,
-      "default": ''
+      type: Object,
+      "default": null
     },
     size: {
       type: String,
@@ -2175,7 +2175,7 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     setValue: function setValue(item) {
-      this.val = item[this.variable];
+      this.val = item[this.variable.fullname] || item[this.variable.username];
       this.$emit('changeValue', item);
       this.show = false;
     },
@@ -2537,9 +2537,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
-    return {
+    return _defineProperty({
       search: {
         keyword: ''
       },
@@ -2548,13 +2550,17 @@ __webpack_require__.r(__webpack_exports__);
       error: null,
       list: null,
       loading_add: false,
+      loading_delete: false,
       loading_list: false,
       current_page: 1,
       last_page: 1,
       text_select: '-- Tìm quản lý --'
-    };
+    }, "search", {
+      name: '',
+      manager: -1
+    });
   },
-  methods: {
+  methods: _defineProperty({
     onSubmit: function onSubmit() {
       var _this = this;
 
@@ -2679,7 +2685,7 @@ __webpack_require__.r(__webpack_exports__);
       this.project = _.clone(_project);
       this.project.manager = _project.manager.id;
       this.project.created_by = _project.created_by.id;
-      this.text_select = _project.manager.fullname;
+      this.text_select = _project.manager.fullname || _project.manager.username;
     },
     getList: function getList() {
       var _this3 = this;
@@ -2687,7 +2693,9 @@ __webpack_require__.r(__webpack_exports__);
       this.loading_list = true;
       this.$root.api.get('project/list', {
         params: {
-          page: this.current_page
+          page: this.current_page,
+          name: this.search.name,
+          manager: this.search.manager
         }
       }).then(function (res) {
         if (res.data.status == "OK") {
@@ -2718,9 +2726,34 @@ __webpack_require__.r(__webpack_exports__);
       this.getList();
     },
     onSubmitDelete: function onSubmitDelete() {
-      console.log("Delete");
+      var _this4 = this;
+
+      this.loading_delete = true;
+      this.$root.api["delete"]("project/delete/".concat(this.project.id)).then(function (res) {
+        if (res.data.status == "OK") {
+          _this4.$notify(res.data.message, 'success');
+
+          _this4.getList();
+
+          $('#project_modal_delete').modal('hide');
+        } else {
+          _this4.$root.showError(res.data.error);
+        }
+
+        _this4.loading_delete = false;
+      })["catch"](function (err) {
+        _this4.loading_delete = false;
+
+        _this4.$root.showError(err);
+      });
+    },
+    getUserSearch: function getUserSearch(_manager) {
+      this.search.manager = _manager.id;
     }
-  },
+  }, "handleSearch", function handleSearch() {
+    this.last_page = 1;
+    this.changePage(1);
+  }),
   created: function created() {
     this.handleCloseModal();
   },
@@ -2755,11 +2788,11 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   mounted: function mounted() {
-    var _this4 = this;
+    var _this5 = this;
 
     this.current_page = parseInt(this.$route.query.page || 1);
-    $(document).on('hidden.bs.modal', '#project_modal_add', function () {
-      _this4.handleCloseModal();
+    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete', function () {
+      _this5.handleCloseModal();
     });
     this.getList();
   }
@@ -3069,7 +3102,7 @@ __webpack_require__.r(__webpack_exports__);
     this.current_page = parseInt(this.$route.query.page || 1);
     this.getUserList();
     this.getRole();
-    $(document).on('hidden.bs.modal', '#user_modal', function () {
+    $(document).on('hidden.bs.modal', '#user_modal, #delete_user_modal', function () {
       _this6.handleCloseModal();
     });
   },
@@ -21807,7 +21840,14 @@ var render = function () {
                         },
                       },
                     },
-                    [_vm._v(_vm._s(item[_vm.variable]))]
+                    [
+                      _vm._v(
+                        _vm._s(
+                          item[_vm.variable.fullname] ||
+                            item[_vm.variable.username]
+                        )
+                      ),
+                    ]
                   ),
                 ])
               }),
@@ -22917,27 +22957,43 @@ var render = function () {
                   {
                     name: "model",
                     rawName: "v-model",
-                    value: _vm.search.keyword,
-                    expression: "search.keyword",
+                    value: _vm.search.name,
+                    expression: "search.name",
                   },
                 ],
                 staticClass: "form-control form-control-sm",
                 attrs: { type: "text", placeholder: "Tên dự án..." },
-                domProps: { value: _vm.search.keyword },
+                domProps: { value: _vm.search.name },
                 on: {
                   input: function ($event) {
                     if ($event.target.composing) {
                       return
                     }
-                    _vm.$set(_vm.search, "keyword", $event.target.value)
+                    _vm.$set(_vm.search, "name", $event.target.value)
                   },
                 },
               }),
             ]),
             _vm._v(" "),
-            _vm._m(0),
+            _c(
+              "div",
+              { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+              [
+                _c("m-select", {
+                  attrs: {
+                    size: "sm",
+                    text: "--Tìm theo quản lý--",
+                    url: "user/search-manager",
+                    statusReset: false,
+                    variable: { fullname: "fullname", username: "username" },
+                  },
+                  on: { changeValue: _vm.getUserSearch },
+                }),
+              ],
+              1
+            ),
             _vm._v(" "),
-            _vm._m(1),
+            _vm._m(0),
             _vm._v(" "),
             _vm.$root.isManager()
               ? _c(
@@ -23098,7 +23154,7 @@ var render = function () {
             { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
             [
               _c("div", { staticClass: "modal-content" }, [
-                _vm._m(2),
+                _vm._m(1),
                 _vm._v(" "),
                 _c("div", { staticClass: "modal-body" }, [
                   _c(
@@ -23118,7 +23174,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(3),
+                              _vm._m(2),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -23162,7 +23218,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(4),
+                              _vm._m(3),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -23206,7 +23262,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(5),
+                              _vm._m(4),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -23249,7 +23305,7 @@ var render = function () {
                           "div",
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _vm._m(6),
+                            _vm._m(5),
                             _vm._v(" "),
                             _c(
                               "div",
@@ -23283,7 +23339,7 @@ var render = function () {
                                   },
                                 }),
                                 _vm._v(" "),
-                                _vm._m(7),
+                                _vm._m(6),
                               ]
                             ),
                           ]
@@ -23297,7 +23353,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(8),
+                                _vm._m(7),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -23305,7 +23361,10 @@ var render = function () {
                                     text: _vm.text_select,
                                     url: "user/search-manager",
                                     statusReset: false,
-                                    variable: "fullname",
+                                    variable: {
+                                      fullname: "fullname",
+                                      username: "username",
+                                    },
                                   },
                                   on: { changeValue: _vm.getManager },
                                 }),
@@ -23329,7 +23388,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(9),
+                              _vm._m(8),
                               _c("br"),
                               _vm._v(" "),
                               _c("div", { staticClass: "form-check-inline" }, [
@@ -23424,7 +23483,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(10),
+                              _vm._m(9),
                               _c("br"),
                               _vm._v(" "),
                               _c("textarea", {
@@ -23508,21 +23567,38 @@ var render = function () {
                   },
                 },
                 [
-                  _vm._m(11),
+                  _vm._m(10),
                   _vm._v(" "),
                   _vm.$root.isAdmin()
                     ? _c("div", { staticClass: "modal-body" }, [
                         _vm.project.name
-                          ? _c("div", [
-                              _vm._v(" Bạn có muốn xóa dự án "),
-                              _c("b", [_vm._v(_vm._s(_vm.project.name))]),
-                              _vm._v(" không?"),
-                            ])
+                          ? _c(
+                              "div",
+                              { staticClass: "d-flex justify-content-start" },
+                              [
+                                _c("i", {
+                                  staticClass:
+                                    "fas fa-exclamation-triangle text-danger icon-warm-delete",
+                                }),
+                                _vm._v(" "),
+                                _c("span", [
+                                  _vm._v("\n                Xóa dự án "),
+                                  _c("b", [_vm._v(_vm._s(_vm.project.name))]),
+                                  _vm._v(
+                                    " thì tất cả các công việc liên quan sẽ bị xóa.\n                "
+                                  ),
+                                  _c("br"),
+                                  _vm._v(
+                                    "\n                Bạn có muốn xóa?\n              "
+                                  ),
+                                ]),
+                              ]
+                            )
                           : _vm._e(),
                       ])
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._m(12),
+                  _vm._m(11),
                 ]
               ),
             ]),
@@ -23546,22 +23622,6 @@ var render = function () {
   )
 }
 var staticRenderFns = [
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
-      _c("select", { staticClass: "form-control form-control-sm" }, [
-        _c("option", { attrs: { value: "-1" } }, [
-          _vm._v("  -- Trạng thái --"),
-        ]),
-        _vm._v(" "),
-        _c("option", { attrs: { value: "1" } }, [_vm._v("Kích hoạt")]),
-        _vm._v(" "),
-        _c("option", { attrs: { value: "0" } }, [_vm._v("Khóa")]),
-      ]),
-    ])
-  },
   function () {
     var _vm = this
     var _h = _vm.$createElement
@@ -23700,7 +23760,7 @@ var staticRenderFns = [
           staticClass: "btn btn-secondary btn-sm",
           attrs: { type: "button", "data-dismiss": "modal" },
         },
-        [_vm._v("Đóng")]
+        [_vm._v("Hủy")]
       ),
     ])
   },
@@ -24672,11 +24732,24 @@ var render = function () {
                   _vm.$root.isAdmin()
                     ? _c("div", { staticClass: "modal-body" }, [
                         _vm.user.username
-                          ? _c("div", [
-                              _vm._v(" Bạn có muốn xóa người dùng "),
-                              _c("b", [_vm._v(_vm._s(_vm.user.username))]),
-                              _vm._v(" không?"),
-                            ])
+                          ? _c(
+                              "div",
+                              { staticClass: "d-flex justify-content-start" },
+                              [
+                                _c("i", {
+                                  staticClass:
+                                    "fas fa-exclamation-triangle text-danger icon-warm-delete",
+                                }),
+                                _vm._v(" "),
+                                _c("span", [
+                                  _vm._v(
+                                    "\n                Bạn có muốn xóa người dùng "
+                                  ),
+                                  _c("b", [_vm._v(_vm._s(_vm.user.username))]),
+                                  _vm._v(" không?\n              "),
+                                ]),
+                              ]
+                            )
                           : _vm._e(),
                       ])
                     : _vm._e(),
@@ -24886,7 +24959,7 @@ var staticRenderFns = [
           staticClass: "btn btn-secondary btn-sm",
           attrs: { type: "button", "data-dismiss": "modal" },
         },
-        [_vm._v("Đóng")]
+        [_vm._v("Hủy")]
       ),
     ])
   },

@@ -23,6 +23,7 @@ Route::middleware('is-token')->group(function() {
     Route::get('list', 'ProjectController@listProject')->withoutMiddleware('check-role:1|2|3');
     Route::post('add', 'ProjectController@addProject');
     Route::post('update', 'ProjectController@updateProject');
+    Route::delete('delete/{id}', 'ProjectController@deleteProject');
   });
 
   Route::prefix('/role')->group(function() {

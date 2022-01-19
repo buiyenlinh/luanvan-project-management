@@ -10,10 +10,15 @@ export default {
       error: null,
       list: null,
       loading_add: false,
+      loading_delete: false,
       loading_list: false,
       current_page: 1,
 			last_page: 1,
-      text_select: '-- Tìm quản lý --'
+      text_select: '-- Tìm quản lý --',
+      search: {
+        name: '',
+        manager: -1
+      }
     }
   },
   methods: {
@@ -125,13 +130,15 @@ export default {
       this.project = _.clone(_project);
       this.project.manager = _project.manager.id;
       this.project.created_by = _project.created_by.id;
-      this.text_select = _project.manager.fullname;
+      this.text_select = _project.manager.fullname || _project.manager.username;
     },
     getList() {
       this.loading_list = true;
       this.$root.api.get('project/list',{
         params: {
-          page: this.current_page
+          page: this.current_page,
+          name: this.search.name,
+          manager: this.search.manager,
         }
       }).then(res => {
         if (res.data.status == "OK") {
@@ -158,7 +165,27 @@ export default {
 			this.getList();
 		},
     onSubmitDelete() {
-      console.log("Delete");
+      this.loading_delete = true;
+      this.$root.api.delete(`project/delete/${this.project.id}`).then(res => {
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          this.getList();
+          $('#project_modal_delete').modal('hide');
+        } else {
+          this.$root.showError(res.data.error);
+        }
+        this.loading_delete = false;
+      }).catch(err => {
+        this.loading_delete = false;
+        this.$root.showError(err);
+      })
+    },
+    getUserSearch(_manager) {
+      this.search.manager = _manager.id;
+    },
+    handleSearch() {
+      this.last_page = 1;
+      this.changePage(1);
     }
   },
   created() {
@@ -192,9 +219,10 @@ export default {
   },
   mounted() {
     this.current_page = parseInt(this.$route.query.page || 1);
-    $(document).on('hidden.bs.modal', '#project_modal_add', () => {
+    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete', () => {
       this.handleCloseModal();
     });
+
     this.getList();
   }
 }
@@ -205,14 +233,17 @@ export default {
     <form @submit.prevent="handleSearch">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
-          <input type="text" class="form-control form-control-sm" placeholder="Tên dự án..." v-model="search.keyword">
+          <input type="text" class="form-control form-control-sm" placeholder="Tên dự án..." v-model="search.name">
         </div>
         <div class="col-md-3 col-sm-5 col-12 mb-2">
-          <select class="form-control form-control-sm">
-            <option value="-1">  -- Trạng thái --</option>
-            <option value="1">Kích hoạt</option>
-            <option value="0">Khóa</option>
-          </select>
+          <m-select
+            :size="'sm'"
+            text="--Tìm theo quản lý--"
+            url="user/search-manager"
+            :statusReset="false"
+            @changeValue="getUserSearch"
+            :variable="{fullname: 'fullname', username: 'username'}"
+          />
         </div>
         <div class="col-md-2 col-sm-2 col-6 mb-2"> 
           <button type="submit" class="btn btn-info btn-sm">
@@ -298,7 +329,7 @@ export default {
                       url="user/search-manager"
                       :statusReset="false"
                       @changeValue="getManager"
-                      :variable="'fullname'"
+                      :variable="{fullname: 'fullname', username: 'username'}"
                     />
                     <div class="text-danger font-italic error">{{error.manager}}</div>
                   </div>
@@ -347,11 +378,18 @@ export default {
               <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body" v-if="$root.isAdmin()">
-              <div v-if="project.name"> Bạn có muốn xóa dự án <b>{{ project.name }}</b> không?</div>
+              <div v-if="project.name" class="d-flex justify-content-start">
+                <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+                <span>
+                  Xóa dự án <b>{{ project.name }}</b> thì tất cả các công việc liên quan sẽ bị xóa.
+                  <br>
+                  Bạn có muốn xóa?
+                </span>
+              </div>
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
             </div>
           </form>
         </div>
