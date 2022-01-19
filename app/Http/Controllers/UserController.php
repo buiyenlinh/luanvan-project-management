@@ -236,7 +236,7 @@ class UserController extends Controller
      * Tìm kiếm quản lý
      */
     public function searchManager(Request $request) {
-        $role = Role::where('level', 3)->first();
+        $role = Role::where('level', 3)->first();   
         $keyword = $request->keyword;
 
         $list = User::select('*');

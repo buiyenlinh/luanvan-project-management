@@ -3,6 +3,14 @@
 namespace App\Http\Controllers;
 use App\Http\Functions;
 use App\Model\Project;
+use App\Model\Task;
+use App\Model\Job;
+use App\Model\Department;
+use App\Model\DepartmentTask;
+use App\Model\DepartmentUser;
+use App\Model\DepartmentUserJob;
+use App\Model\DepartmentTaskStatus;
+use App\Model\DepartmentUserJobStatus;
 use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 
@@ -26,12 +34,22 @@ class ProjectController extends Controller
     /**
      * Danh sách dự án
      */
-    public function listProject() {
+    public function listProject(Request $request) {
+        $name = $request->name;
+        $manager_id = $request->manager;
         $db = Project::select('*');
         if ($this->isManager()) {
             $db->where('manager', $this->auth->id);
         } else if ($this->isUser()) {
             //Lấy những dự án mà nhân viên tham gia
+        }
+
+        if ($name) {
+            $db->whereRaw('name LIKE "%' . $name . '%"');
+        }
+
+        if($manager_id > 0) {
+            $db->where('manager', $manager_id);
         }
 
         $list = $db->orderBy('id','desc')->paginate(2);
@@ -51,6 +69,9 @@ class ProjectController extends Controller
         $manager = $request->manager;
         $describe = $request->describe;
         $created_by = $request->created_by;
+        if (!$describe) {
+            $describe = '';
+        }
 
         if (!$name) {
             return $this->error('Tên dự án là bắt buộc');
@@ -99,6 +120,10 @@ class ProjectController extends Controller
         $describe = $request->describe;
         $created_by = $request->created_by;
 
+        if (!$describe) {
+            $describe = '';
+        }
+
         if (!$name) {
             return $this->error('Tên dự án là bắt buộc');
         } else if (!$start_time) {
@@ -142,6 +167,39 @@ class ProjectController extends Controller
         if (!$id) {
             return $this->error('Vui lòng thử lại');
         }
-        
+        $tasks = Task::where('project_id', $id);
+        foreach($tasks->get() as $_task) {
+            $jobs = Job::where('task_id', $_task->id);
+            foreach($jobs->get() as $_job) {
+                $department_user_job = DepartmentUserJob::where('job_id', $_job->id);
+                foreach($department_user_job->get() as $_department_user_job) {
+                    DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->delete();
+                }
+                $department_user_job->delete();
+            }
+            $jobs->delete();
+
+            $department_task = DepartmentTask::where('task_id', $_task->id);
+            foreach($department_task->get() as $_department_task) {
+                DepartmentTaskStatus::where('department_task_id', $_department_task->id)->delete();
+                $department = Department::find($_department_task->department_id);
+                foreach($department->get() as $_department) {
+                    $department_user = DepartmentUser::where('department_id', $_department->id);
+                    foreach($department_user->get() as $_department_user) {
+                        $department_user_job = DepartmentUserJob::where('department_user_id', $_department_user->id);
+                        foreach($department_user_job->get() as $_department_user_job) {
+                            DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->delete();
+                        }
+                        $department_user_job->delete();
+                    }   
+                    $department_user->delete();
+                }
+            }
+            $department_task->delete();
+        }
+        $tasks->delete();
+        Project::find($id)->delete();
+
+        return $this->success('Xóa dự án thành công');
     }
 }

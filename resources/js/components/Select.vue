@@ -10,8 +10,8 @@ export default {
       default: ''
     },
     variable: {
-      type: String,
-      default: ''
+      type: Object,
+      default: null
     },
     size: {
       type: String,
@@ -47,7 +47,7 @@ export default {
       }
     },
     setValue(item) {
-      this.val = item[this.variable];
+      this.val = item[this.variable.fullname] || item[this.variable.username];
       this.$emit('changeValue', item);
       this.show = false;
     },
@@ -85,7 +85,7 @@ export default {
       <div v-if="loading" class="loading spinner-border spinner-border-sm"></div>
       <ul class="mt-2">
         <li v-for="(item, i) in list" :key="i">
-          <a @click="setValue(item)">{{ item[variable] }}</a>
+          <a @click="setValue(item)">{{ item[variable.fullname] || item[variable.username] }}</a>
         </li>
         <li class="li-no-data" v-if="list.length == 0">Không có dữ liệu</li>
       </ul>
