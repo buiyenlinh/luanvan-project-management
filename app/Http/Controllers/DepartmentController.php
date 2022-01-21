@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Functions;
 use App\Model\Department;
 use App\Model\DepartmentUser;
+use App\Model\DepartmentTask;
 use App\Http\Resources\DepartmentResource;
 
 class DepartmentController extends Controller
@@ -29,8 +30,25 @@ class DepartmentController extends Controller
     /**
      * Lấy danh sách
      */
-    public function getList() {
+    public function getList(Request $request) {
+        $leader_id = $request->leader;
+        $department = $request->department;
         $db = Department::select('*');
+        
+        if (!empty($department)) {
+            $db->whereRaw('name LIKE "%' . $department . '%"');
+        }
+
+        if ($leader_id > 0) {
+            $department_user = DepartmentUser::where('user_id', $leader_id)
+                ->where('leader', 1)->get();
+            $arr = [];
+            foreach($department_user as $_de_user) {
+                $arr[] = $_de_user['department_id'];
+            }
+            $db->whereIn('id', $arr);
+        }
+
         $list = $db->orderBy('id','desc')->paginate(2);
         $data = DepartmentResource::collection($list)->response()->getData();
         return $this->success('Danh sách phòng ban', $data);
@@ -133,8 +151,29 @@ class DepartmentController extends Controller
             }
         }
 
-
+        Department::find($id)->update(['name' => $name]);
 
         return $this->success('Cập nhật phòng ban thành công');
+    }
+
+
+    /**
+     * Xóa phòng ban
+     */
+    public function delete(Request $request) {
+        $department = Department::find($request->id);
+        if (!$department) {
+            return $this->error('Vui lòng thử lại');
+        }
+        $department_task = DepartmentTask::where('department_id', $request->id)->count();
+        if ($department_task > 0) {
+            return $this->error('Phòng ban đã có dữ liệu không được xóa');
+        }
+
+        // Xóa các thành viên trong phòng ban
+        $department_user = DepartmentUser::where('department_id', $department->id)->delete();
+        $department->delete();
+
+        return $this->success('Xóa phòng ban thành công');
     }
 }

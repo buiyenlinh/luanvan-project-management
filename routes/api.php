@@ -32,6 +32,7 @@ Route::middleware('is-token')->group(function() {
     Route::get('list', 'DepartmentController@getList')->withoutMiddleware('check-role:1|2');
     Route::post('add', 'DepartmentController@create');
     Route::post('update', 'DepartmentController@update');
+    Route::delete('delete/{id}', 'DepartmentController@delete');
   });
 
   Route::prefix('/role')->group(function() {

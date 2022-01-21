@@ -130,21 +130,13 @@ class UserController extends Controller
      * Cập nhật người dùng
      */
     public function updateUser(Request $request) {
-        if (!$this->checkUserLogin($request->role)) {
-            return $this->error('Tài khoản không có quyền');
-        }
+        if (!$this->checkUserLogin($request->role)) return $this->error('Tài khoản không có quyền');
         
-        if ($this->checkExist('username', $request->username, $request->id)) {
-            return $this->error('Tên đăng nhập đã tồn tại');
-        }
+        if ($this->checkExist('username', $request->username, $request->id)) return $this->error('Tên đăng nhập đã tồn tại');
 
-        if ($this->checkExist('email', $request->email, $request->id)) {
-            return $this->error('Email đã tồn tại');
-        }
+        if ($this->checkExist('email', $request->email, $request->id)) return $this->error('Email đã tồn tại');
 
-        if ($this->checkExist('phone', $request->phone, $request->id)) {
-            return $this->error('Số điện thoại đã tồn tại');
-        }
+        if ($this->checkExist('phone', $request->phone, $request->id)) return $this->error('Số điện thoại đã tồn tại');
 
         if (!$request->username) {
             return $this->error('Tên đăng nhập là bắt buộc');
@@ -157,21 +149,15 @@ class UserController extends Controller
         }
 
         $user = User::find($request->id);
-        if (!$user) {
-            return $this->error('Vui lòng thử lại');
-        }
+        if (!$user) return $this->error('Vui lòng thử lại');
 
         $password = $user->password;
         $avatar = $user->avatar;
         $birthday = $user->birthday;
         $fullname = $user->fullname;
-        if ($request->has('password')) {
-            $password = $request->password;
-        }
+        if ($request->has('password')) $password = $request->password;
 
-        if ($request->fullname) {
-            $fullname = $request->fullname;
-        }
+        if ($request->fullname) $fullname = $request->fullname;
 
         if ($request->file('avatar')) {
             if (!empty($avatar)) {
@@ -183,8 +169,20 @@ class UserController extends Controller
             $avatar = str_replace('public/', '', $avatar);
         }
 
-        if ($request->has('birthday')) {
-            $birthday = strtotime($request->birthday);
+        if ($request->has('birthday')) $birthday = strtotime($request->birthday);
+
+        if ($user->role_id != $request->role) {
+            $project_count = Project::where('created_by', $request->id)
+                ->orwhere('manager', $request->id)->count();
+            if ($project_count > 0) {
+                return $this->error('Tài khoản này hiện là quản trị hoặc là quản lý của một dự án nào đó. Không thể đổi quyền tài khoản');
+            }
+
+            $department_user = DepartmentUser::where('user_id', $request->id)
+                ->where('leader', 1)->count();
+            if ($department_user > 0) {
+                return $this->error('Tài khoản này hiện là trưởng phòng của phòng ban nào đó. Vui lòng đổi trưởng phòng ban trước khi thay đổi quyền của tài khoản này');
+            }
         }
 
         $user->update([
@@ -226,7 +224,7 @@ class UserController extends Controller
         if ($count_department_user > 0) {
             return $this->error('Người dùng đã thuộc một nhóm nào đó. Không thể xóa');
         }
-        // Storage::delete($user->avatar);
+        Storage::delete($user->avatar);
         $user->delete();
 
         return $this->success('Xóa người dùng thành công');

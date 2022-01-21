@@ -477,7 +477,7 @@ export default {
                     <div class="error text-danger font-italic">{{ error.active }}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="user.id == null || (user.role > 2 && user.id > 0)">
                   <div class="form-group">
                     <label><b>Phân quyền <span class="text-danger">*</span></b></label>
                     <select class="form-control" v-model="user.role">
@@ -485,7 +485,7 @@ export default {
                       <template v-for="(item, index) in role_list">
                       <option
                         :key="index"
-                        v-if="item.level > $root.auth.role.level && item.level != 1"
+                        v-if="item.level > $root.auth.role.level && item.level > 2"
                         :value="item.id">{{item.name}}</option>
                       </template>
                     </select>

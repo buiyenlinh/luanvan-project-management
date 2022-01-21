@@ -2276,6 +2276,7 @@ __webpack_require__.r(__webpack_exports__);
       members_show: [],
       text_select_leader: '-- Tìm họ tên hoặc tên đăng nhập --',
       loading_update_add: false,
+      loading_delete: false,
       _leader: null
     };
   },
@@ -2286,7 +2287,9 @@ __webpack_require__.r(__webpack_exports__);
       this.loading_list = true;
       this.$root.api.get('department/list', {
         params: {
-          page: this.current_page
+          page: this.current_page,
+          leader: this.search.leader,
+          department: this.search.name
         }
       }).then(function (res) {
         if (res.data.status == "OK") {
@@ -2305,7 +2308,7 @@ __webpack_require__.r(__webpack_exports__);
       this.current_page = page;
       this.getList();
     },
-    getUserSearch: function getUserSearch(_leader) {
+    getLeaderSearch: function getLeaderSearch(_leader) {
       this.search.leader = _leader.id;
     },
     handleSearch: function handleSearch() {
@@ -2451,6 +2454,28 @@ __webpack_require__.r(__webpack_exports__);
     removeMember: function removeMember(_index) {
       this.members_show.splice(_index, 1);
       this.getLeader(this._leader);
+    },
+    onSubmitDelete: function onSubmitDelete() {
+      var _this4 = this;
+
+      this.loading_delete = true;
+      this.$root.api["delete"]("department/delete/".concat(this.department.id)).then(function (res) {
+        if (res.data.status == "OK") {
+          _this4.$notify(res.data.message, 'success');
+
+          $('#department_modal_delete').modal('hide');
+
+          _this4.changePage(_this4.current_page);
+        } else {
+          _this4.$root.showError(res.data.error);
+        }
+
+        _this4.loading_delete = false;
+      })["catch"](function (err) {
+        _this4.$root.showError(err);
+
+        _this4.loading_delete = false;
+      });
     }
   },
   created: function created() {
@@ -2481,11 +2506,11 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   mounted: function mounted() {
-    var _this4 = this;
+    var _this5 = this;
 
     this.current_page = parseInt(this.$route.query.page || 1);
     $(document).on('hidden.bs.modal', '#department_modal_add, #department_modal_delete', function () {
-      _this4.handleCloseModal();
+      _this5.handleCloseModal();
     });
     this.getList();
   }
@@ -22278,12 +22303,12 @@ var render = function () {
                 _c("m-select", {
                   attrs: {
                     size: "sm",
-                    text: "--Tìm theo trưởng phòng--",
+                    text: "-- Tìm theo trưởng phòng --",
                     url: "user/search-user",
                     statusReset: false,
                     variable: { first: "fullname", second: "username" },
                   },
-                  on: { changeValue: _vm.getUserSearch },
+                  on: { changeValue: _vm.getLeaderSearch },
                 }),
               ],
               1
@@ -22651,6 +22676,60 @@ var render = function () {
         ]
       ),
       _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "department_modal_delete" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _c(
+                "form",
+                {
+                  on: {
+                    submit: function ($event) {
+                      $event.preventDefault()
+                      return _vm.onSubmitDelete.apply(null, arguments)
+                    },
+                  },
+                },
+                [
+                  _vm._m(5),
+                  _vm._v(" "),
+                  _vm.$root.isAdmin()
+                    ? _c("div", { staticClass: "modal-body" }, [
+                        _vm.department.name
+                          ? _c(
+                              "div",
+                              { staticClass: "d-flex justify-content-start" },
+                              [
+                                _c("i", {
+                                  staticClass:
+                                    "fas fa-exclamation-triangle text-danger icon-warm-delete",
+                                }),
+                                _vm._v(" "),
+                                _c("span", [
+                                  _vm._v(
+                                    "\n                Bạn có muốn xóa phòng ban "
+                                  ),
+                                  _c("b", [
+                                    _vm._v(_vm._s(_vm.department.name)),
+                                  ]),
+                                  _vm._v(" không?\n              "),
+                                ]),
+                              ]
+                            )
+                          : _vm._e(),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm._m(6),
+                ]
+              ),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
       _vm.loading_update_add
         ? _c("m-loading", {
             attrs: {
@@ -22660,6 +22739,12 @@ var render = function () {
                   : "Đang thêm phòng ban",
               full: true,
             },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_delete
+        ? _c("m-loading", {
+            attrs: { title: "Đang xóa phòng ban", full: true },
           })
         : _vm._e(),
     ],
@@ -22727,6 +22812,44 @@ var staticRenderFns = [
         _vm._v("Thành viên "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa phòng ban")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-danger btn-sm", attrs: { type: "submit" } },
+        [_vm._v("Xóa")]
+      ),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary btn-sm",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Hủy")]
+      ),
     ])
   },
 ]
@@ -25321,91 +25444,96 @@ var render = function () {
                             ]
                           ),
                           _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "col-md-6 col-sm-12 col-12" },
-                            [
-                              _c("div", { staticClass: "form-group" }, [
-                                _vm._m(11),
-                                _vm._v(" "),
-                                _c(
-                                  "select",
-                                  {
-                                    directives: [
-                                      {
-                                        name: "model",
-                                        rawName: "v-model",
-                                        value: _vm.user.role,
-                                        expression: "user.role",
-                                      },
-                                    ],
-                                    staticClass: "form-control",
-                                    on: {
-                                      change: function ($event) {
-                                        var $$selectedVal =
-                                          Array.prototype.filter
-                                            .call(
-                                              $event.target.options,
-                                              function (o) {
-                                                return o.selected
-                                              }
-                                            )
-                                            .map(function (o) {
-                                              var val =
-                                                "_value" in o
-                                                  ? o._value
-                                                  : o.value
-                                              return val
-                                            })
-                                        _vm.$set(
-                                          _vm.user,
-                                          "role",
-                                          $event.target.multiple
-                                            ? $$selectedVal
-                                            : $$selectedVal[0]
-                                        )
-                                      },
-                                    },
-                                  },
-                                  [
-                                    _c("option", { attrs: { value: "" } }, [
-                                      _vm._v("   -- Chọn quyền --"),
-                                    ]),
+                          _vm.user.id == null ||
+                          (_vm.user.role > 2 && _vm.user.id > 0)
+                            ? _c(
+                                "div",
+                                { staticClass: "col-md-6 col-sm-12 col-12" },
+                                [
+                                  _c("div", { staticClass: "form-group" }, [
+                                    _vm._m(11),
                                     _vm._v(" "),
-                                    _vm._l(
-                                      _vm.role_list,
-                                      function (item, index) {
-                                        return [
-                                          item.level >
-                                            _vm.$root.auth.role.level &&
-                                          item.level != 1
-                                            ? _c(
-                                                "option",
-                                                {
-                                                  key: index,
-                                                  domProps: { value: item.id },
-                                                },
-                                                [_vm._v(_vm._s(item.name))]
-                                              )
-                                            : _vm._e(),
-                                        ]
-                                      }
+                                    _c(
+                                      "select",
+                                      {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.user.role,
+                                            expression: "user.role",
+                                          },
+                                        ],
+                                        staticClass: "form-control",
+                                        on: {
+                                          change: function ($event) {
+                                            var $$selectedVal =
+                                              Array.prototype.filter
+                                                .call(
+                                                  $event.target.options,
+                                                  function (o) {
+                                                    return o.selected
+                                                  }
+                                                )
+                                                .map(function (o) {
+                                                  var val =
+                                                    "_value" in o
+                                                      ? o._value
+                                                      : o.value
+                                                  return val
+                                                })
+                                            _vm.$set(
+                                              _vm.user,
+                                              "role",
+                                              $event.target.multiple
+                                                ? $$selectedVal
+                                                : $$selectedVal[0]
+                                            )
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _c("option", { attrs: { value: "" } }, [
+                                          _vm._v("   -- Chọn quyền --"),
+                                        ]),
+                                        _vm._v(" "),
+                                        _vm._l(
+                                          _vm.role_list,
+                                          function (item, index) {
+                                            return [
+                                              item.level >
+                                                _vm.$root.auth.role.level &&
+                                              item.level > 2
+                                                ? _c(
+                                                    "option",
+                                                    {
+                                                      key: index,
+                                                      domProps: {
+                                                        value: item.id,
+                                                      },
+                                                    },
+                                                    [_vm._v(_vm._s(item.name))]
+                                                  )
+                                                : _vm._e(),
+                                            ]
+                                          }
+                                        ),
+                                      ],
+                                      2
                                     ),
-                                  ],
-                                  2
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  {
-                                    staticClass:
-                                      "error text-danger font-italic",
-                                  },
-                                  [_vm._v(_vm._s(_vm.error.role))]
-                                ),
-                              ]),
-                            ]
-                          ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "error text-danger font-italic",
+                                      },
+                                      [_vm._v(_vm._s(_vm.error.role))]
+                                    ),
+                                  ]),
+                                ]
+                              )
+                            : _vm._e(),
                           _vm._v(" "),
                           _c(
                             "div",
