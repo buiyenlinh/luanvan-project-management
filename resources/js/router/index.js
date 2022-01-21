@@ -42,6 +42,15 @@ const router = new VueRouter({
           },
         },
         {
+          path: 'phong-ban',
+          name: 'department',
+          component: require('../views/Department.vue').default,
+          meta: {
+            auth: true,
+            title: 'Phòng ban'
+          },
+        },
+        {
           path: 'ca-nhan',
           name: 'profile',
           component: require('../views/Profile.vue').default,

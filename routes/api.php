@@ -17,6 +17,8 @@ Route::middleware('is-token')->group(function() {
     Route::post('update', 'UserController@updateUser');
     Route::delete('delete/{id}', 'UserController@deleteUser');
     Route::post('search-manager', 'UserController@searchManager');
+    Route::post('search-user', 'UserController@searchUser');
+    Route::post('search-user-not-deparment', 'UserController@searchUserNotDepartment');
   });
 
   Route::prefix('project')->middleware('check-role:1|2|3')->group(function() {
@@ -24,6 +26,12 @@ Route::middleware('is-token')->group(function() {
     Route::post('add', 'ProjectController@addProject');
     Route::post('update', 'ProjectController@updateProject');
     Route::delete('delete/{id}', 'ProjectController@deleteProject');
+  });
+
+  Route::prefix('department')->middleware('check-role:1|2')->group(function() {
+    Route::get('list', 'DepartmentController@getList')->withoutMiddleware('check-role:1|2');
+    Route::post('add', 'DepartmentController@create');
+    Route::post('update', 'DepartmentController@update');
   });
 
   Route::prefix('/role')->group(function() {

@@ -245,7 +245,47 @@ class UserController extends Controller
         }
         $list->where('active', 1)->where('role_id', $role->id);
 
-        return $this->success('Danh sách tìm kiếm', $list->get());
+        return $this->success('Danh sách tìm kiếm quản lý dự án', $list->get());
+    }
+
+    /**
+     * Tìm kiếm user
+     */
+    public function searchUser(Request $request) {
+        $role = Role::where('level', 4)->first();   
+        $keyword = $request->keyword;
+
+        $list = User::select('*');
+        if (!empty($keyword)) {
+            $list->whereRaw('(username LIKE "%' . $keyword . '%" OR fullname LIKE "%' . $keyword . '%")');
+        }
+        $list->where('active', 1)->where('role_id', $role->id);
+
+        return $this->success('Danh sách tìm kiếm thành viên', $list->get());
+    }
+
+    /**
+     * Tìm kiếm user chưa có phòng ban
+     */
+    public function searchUserNotDepartment(Request $request) {
+        $role = Role::where('level', 4)->first();   
+        $keyword = $request->keyword;
+
+        $list = User::select('*');
+        if (!empty($keyword)) {
+            $list->whereRaw('(username LIKE "%' . $keyword . '%" OR fullname LIKE "%' . $keyword . '%")');
+        }
+        $list->where('active', 1)->where('role_id', $role->id);
+
+        $data = array();
+        foreach($list->get() as $_list) {
+            $department_user = DepartmentUser::where('user_id', $_list->id)->count();
+            if ($department_user == 0) {
+                $data[] = $_list;
+            }
+        }
+
+        return $this->success('Danh sách tìm kiếm thành viên', $data);
     }
 
     /**

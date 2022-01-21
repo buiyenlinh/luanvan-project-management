@@ -11,7 +11,10 @@ export default {
     },
     variable: {
       type: Object,
-      default: null
+      default: {
+        first: '',
+        second: ''
+      }
     },
     size: {
       type: String,
@@ -47,7 +50,7 @@ export default {
       }
     },
     setValue(item) {
-      this.val = item[this.variable.fullname] || item[this.variable.username];
+      this.val = item[this.variable.first] || item[this.variable.second];
       this.$emit('changeValue', item);
       this.show = false;
     },
@@ -85,7 +88,7 @@ export default {
       <div v-if="loading" class="loading spinner-border spinner-border-sm"></div>
       <ul class="mt-2">
         <li v-for="(item, i) in list" :key="i">
-          <a @click="setValue(item)">{{ item[variable.fullname] || item[variable.username] }}</a>
+          <a @click="setValue(item)">{{ item[variable.first] || item[variable.second] }}</a>
         </li>
         <li class="li-no-data" v-if="list.length == 0">Không có dữ liệu</li>
       </ul>
@@ -119,6 +122,7 @@ export default {
   left: 0px;
   z-index: 10;
   background: #fff;
+  box-shadow: 0px 2px 4px 1px #d8d8d8;
 
   .loading {
     position: absolute;

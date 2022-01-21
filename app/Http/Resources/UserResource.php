@@ -32,7 +32,7 @@ class UserResource extends JsonResource
             'birthday' => date("Y-m-d", $this->birthday),
             'avatar' => $avatar,
             'role' => new RoleResource($this->role()->first()), // role () là function được khai báo trong Model User
-            'created_at' => $this->created_at->format('h:i:s, d-m-Y'),
+            'created_at' => $this->created_at->format('H:i:s, d-m-Y'),
             'updated_at' => $this->updated_at->format('H:i:s, d-m-Y')
         ];
     }

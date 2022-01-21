@@ -120,6 +120,7 @@ export default {
             if (res.data.status == "OK") {
               this.$notify(res.data.message, 'success');
               $('#user_modal').modal('hide');
+              this.changePage(this.current_page);
             } else {
               this.$alert(res.data.error, '', 'error');
             }
@@ -543,7 +544,7 @@ export default {
       </div>
     </div>
 
-    <m-loading v-if="loading_add" :title="this.user.id != null ? 'Đang cập nhật tài khoản' : 'Đang thêm tài khoản'" :full="true" />
+    <m-loading v-if="loading_add" :title="user.id != null ? 'Đang cập nhật tài khoản' : 'Đang thêm tài khoản'" :full="true" />
     <m-loading v-if="loading_delete" title="Đang xóa tài khoản" :full="true" />
   </div>
 </template>

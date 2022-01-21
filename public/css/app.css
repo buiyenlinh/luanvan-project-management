@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 .m-notify-container {
   position: fixed;
   z-index: 10000;
@@ -867,5 +869,78 @@ body {
   background-color: #fff;
   padding: 0px 5px;
   border-radius: 0px 0px 0px 10px;
+}
+
+/* Phòng ban */
+
+#department .list ul {
+  padding: 0;
+  list-style: none;
+}
+
+#department .list ul li .info {
+  padding: 10px;
+  border: 1px solid #17a2b8;
+  cursor: pointer;
+}
+
+#department .list ul .avt-mem li {
+  margin-left: -15px;
+  list-style: none;
+}
+
+#department .list ul .avt-mem li img,
+#department .list ul .avt-mem li span {
+  border: 1px solid #17a2b8;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+#department .list ul .avt-mem li span {
+  background-color: #ddd;
+  background-color: #ddd;
+  display: inline-block;
+  text-align: center;
+  padding-top: 5px;
+  font-weight: bold;
+}
+
+#department .list ul .avt-mem li:nth-child(1) {
+  margin-left: 0;
+}
+
+#department #department_modal_add .members {
+  margin-top: 10px;
+}
+
+#department #department_modal_add .members ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+}
+
+#department #department_modal_add .members ul li {
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  padding: 6px 30px 6px 12px;
+  position: relative;
+  margin-right: 5px;
+}
+
+#department #department_modal_add .members ul li img {
+  width: 20px;
+  height: 20px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 50%;
+}
+
+#department #department_modal_add .members ul li .icon-remove {
+  position: absolute;
+  right: 10px;
+  top: 10px;
 }
 

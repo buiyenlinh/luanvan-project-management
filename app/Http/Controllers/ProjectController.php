@@ -38,10 +38,11 @@ class ProjectController extends Controller
         $name = $request->name;
         $manager_id = $request->manager;
         $db = Project::select('*');
+        
         if ($this->isManager()) {
             $db->where('manager', $this->auth->id);
         } else if ($this->isUser()) {
-            //Lấy những dự án mà nhân viên tham gia
+            // Trả về danh sách dự án mà user có tham gia
         }
 
         if ($name) {
@@ -157,7 +158,6 @@ class ProjectController extends Controller
         ]);
         return $this->success('Cập nhật dự án thành công');
     } 
-
 
     /**
      * Xóa dự án
