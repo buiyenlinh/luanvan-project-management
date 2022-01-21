@@ -3,28 +3,7 @@ export default {
   data() {
     return {
       change_bar: false,
-      menu: [
-        {
-          label: 'Thống kê',
-          link: "dashboard",
-          icon: "fas fa-tachometer-alt",
-        },
-        {
-          label: 'Người dùng',
-          link: "user",
-          icon: "fas fa-users",
-        },
-        {
-          label: 'Dự án',
-          link: "project",
-          icon: "fas fa-folder",
-        },
-        {
-          label: 'Cá nhân',
-          link: "profile",
-          icon: "fas fa-user-circle",
-        }
-      ],
+      menu: null,
       name_route: '',
       loading_logout: false
     }
@@ -51,6 +30,37 @@ export default {
         this.loading_logout = false;
         this.$root.showError(err);
       })
+    },
+    createMenu() {
+      this.menu = [
+        {
+          label: 'Thống kê',
+          link: "dashboard",
+          icon: "fas fa-tachometer-alt",
+        },
+        {
+          label: 'Dự án',
+          link: "project",
+          icon: "fas fa-folder",
+        },
+        {
+          label: 'Phòng ban',
+          link: "department",
+          icon: "fas fa-folder",
+        },
+      ]
+      if (this.$root.isAdmin()) {
+        this.menu.push({
+          label: 'Người dùng',
+          link: "user",
+          icon: "fas fa-users",
+        })
+      }
+      this.menu.push({
+        label: 'Cá nhân',
+        link: "profile",
+        icon: "fas fa-user-circle",
+      })
     }
   },
   watch: {
@@ -60,6 +70,9 @@ export default {
   },
   mounted() {
     this.name_route = this.$root.$route.name;
+  },
+  created() {
+    this.createMenu();
   }
 }
 </script>

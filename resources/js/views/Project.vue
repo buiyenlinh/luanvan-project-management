@@ -15,6 +15,7 @@ export default {
       current_page: 1,
 			last_page: 1,
       text_select: '-- Tìm quản lý --',
+      reset_select_comp: false,
       search: {
         name: '',
         manager: -1
@@ -91,6 +92,8 @@ export default {
         manager: '',
         created_by: ''
       }
+      this.text_select = '-- Tìm quản lý --';
+      this.reset_select_comp = !this.reset_select_comp;
       setTimeout(() => {
         this.validate_form = true;
       }, 300);
@@ -242,7 +245,7 @@ export default {
             url="user/search-manager"
             :statusReset="false"
             @changeValue="getUserSearch"
-            :variable="{fullname: 'fullname', username: 'username'}"
+            :variable="{first: 'fullname', second: 'username'}"
           />
         </div>
         <div class="col-md-2 col-sm-2 col-6 mb-2"> 
@@ -265,11 +268,28 @@ export default {
               <div :class="['info', !item.active ? 'block': 'bg-fff']">
                 <span v-if="!item.active" class="text-danger block-text">Khóa</span>
                 <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                <p style="font-size: 12px; margin-bottom: 0px"><b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
-                <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}}</p>
+                <p style="font-size: 12px; margin-bottom: 0px">
+                  <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
+                  <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}} <br>
+                  <b>Tạo lúc: </b>{{item.created_at}}
+                </p>
                 <div class="text-right" v-if="$root.isManager()">
-                  <span class="text-danger" @click="getProjectUpdate(item)" data-toggle="modal" data-target="#project_modal_delete"><b>Xóa</b></span>
-                  <span class="text-info" @click="getProjectUpdate(item)" data-toggle="modal" data-target="#project_modal_add"><b>Sửa</b></span>
+                  <span
+                    class="text-danger"
+                    @click="getProjectUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#project_modal_delete"
+                  >
+                    <b>Xóa</b>
+                  </span>
+                  <span
+                    class="text-info"
+                    @click="getProjectUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#project_modal_add"
+                  >
+                    <b>Sửa</b>
+                  </span>
                 </div>
               </div>
             </li>
@@ -327,9 +347,9 @@ export default {
                       :size="'sm'"
                       :text="text_select"
                       url="user/search-manager"
-                      :statusReset="false"
+                      :statusReset="reset_select_comp"
                       @changeValue="getManager"
-                      :variable="{fullname: 'fullname', username: 'username'}"
+                      :variable="{first: 'fullname', second: 'username'}"
                     />
                     <div class="text-danger font-italic error">{{error.manager}}</div>
                   </div>

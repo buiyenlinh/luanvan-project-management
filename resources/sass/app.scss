@@ -780,3 +780,67 @@ $side-bar-width-small: 65px;
         }
     }
 }
+
+/* Phòng ban */
+#department {
+    .list ul {
+        padding: 0;
+        list-style: none;
+        li .info {
+            padding: 10px;
+            border: 1px solid #17a2b8;
+            cursor: pointer;
+        }
+        .avt-mem li {
+            margin-left: -15px;
+            list-style: none;
+            img, span {
+                border: 1px solid #17a2b8;
+                border-radius: 50%;
+                width: 35px; 
+                height: 35px;
+                object-fit: cover;
+            }
+
+            span {
+                background-color: #ddd;
+                background-color: #ddd;
+                display: inline-block;
+                text-align: center;
+                padding-top: 5px;
+                font-weight: bold;
+            }
+        }
+        .avt-mem li:nth-child(1) {
+            margin-left: 0;
+        }
+    }
+
+    #department_modal_add .members {
+        margin-top: 10px;
+        ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+
+            li {
+                border: 1px solid #ddd;
+                border-radius: 30px;
+                padding: 6px 30px 6px 12px;
+                position: relative;
+                margin-right: 5px;
+                img {
+                    width: 20px;
+                    height: 20px;
+                    object-fit: cover;
+                    border-radius: 50%;
+                }
+                .icon-remove {
+                    position: absolute;
+                    right: 10px;
+                    top: 10px;
+                }
+            }
+        }
+    }
+}
