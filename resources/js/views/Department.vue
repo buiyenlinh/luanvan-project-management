@@ -17,6 +17,7 @@ export default {
       members_show: [],
       text_select_leader: '-- Tìm họ tên hoặc tên đăng nhập --',
       loading_update_add: false,
+      loading_delete: false,
       _leader: null
     }
   },
@@ -25,7 +26,9 @@ export default {
       this.loading_list = true;
       this.$root.api.get('department/list', {
         params: {
-          page: this.current_page
+          page: this.current_page,
+          leader: this.search.leader,
+          department: this.search.name
         }
       }).then(res => {
         if (res.data.status == "OK") {
@@ -43,7 +46,7 @@ export default {
 			this.current_page = page;
 			this.getList();
 		},
-    getUserSearch(_leader) {
+    getLeaderSearch(_leader) {
       this.search.leader = _leader.id;
     },
     handleSearch() {
@@ -175,6 +178,22 @@ export default {
     removeMember(_index) {
       this.members_show.splice(_index, 1);
       this.getLeader(this._leader);
+    },
+    onSubmitDelete() {
+      this.loading_delete = true;
+      this.$root.api.delete(`department/delete/${this.department.id}`).then(res => {
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#department_modal_delete').modal('hide');
+          this.changePage(this.current_page);
+        } else {
+          this.$root.showError(res.data.error);
+        }
+        this.loading_delete = false;
+      }).catch(err => {
+        this.$root.showError(err);
+        this.loading_delete = false;
+      })
     }
   },
   created() {
@@ -222,10 +241,10 @@ export default {
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <m-select
             :size="'sm'"
-            text="--Tìm theo trưởng phòng--"
+            text="-- Tìm theo trưởng phòng --"
             url="user/search-user"
             :statusReset="false"
-            @changeValue="getUserSearch"
+            @changeValue="getLeaderSearch"
             :variable="{first: 'fullname', second: 'username'}"
           />
         </div>
@@ -357,6 +376,33 @@ export default {
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="department_modal_delete">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <form @submit.prevent="onSubmitDelete">
+            <div class="modal-header">
+              <h4 class="modal-title">Xóa phòng ban</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" v-if="$root.isAdmin()">
+              <div v-if="department.name" class="d-flex justify-content-start">
+                <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+                <span>
+                  Bạn có muốn xóa phòng ban <b>{{ department.name }}</b> không?
+                </span>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_update_add" :title="department.id != null ? 'Đang cập nhật phòng ban' : 'Đang thêm phòng ban'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa phòng ban" :full="true" />
   </div>
 </template>
