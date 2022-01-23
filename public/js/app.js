@@ -2167,7 +2167,12 @@ __webpack_require__.r(__webpack_exports__);
         this.$root.api.post(this.url, {
           keyword: this.keyword
         }).then(function (response) {
-          _this.list = response.data.data;
+          if (response.data.status == "OK") {
+            _this.list = response.data.data;
+          } else {
+            _this.loading = false;
+            _this.list = [];
+          }
         })["catch"](function () {
           _this.loading = false;
         })["finally"](function () {
@@ -2606,6 +2611,9 @@ __webpack_require__.r(__webpack_exports__);
         link: "profile",
         icon: "fas fa-user-circle"
       });
+    },
+    closeSideBarTablet: function closeSideBarTablet() {
+      this.change_bar = false;
     }
   },
   watch: {
@@ -3459,7 +3467,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
+exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
 
 // exports
 
@@ -22260,84 +22268,88 @@ var render = function () {
     "div",
     { attrs: { id: "department" } },
     [
-      _c(
-        "form",
-        {
-          on: {
-            submit: function ($event) {
-              $event.preventDefault()
-              return _vm.handleSearch.apply(null, arguments)
-            },
-          },
-        },
-        [
-          _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
-              _c("input", {
-                directives: [
-                  {
-                    name: "model",
-                    rawName: "v-model",
-                    value: _vm.search.name,
-                    expression: "search.name",
-                  },
-                ],
-                staticClass: "form-control form-control-sm",
-                attrs: { type: "text", placeholder: "Tên phòng ban..." },
-                domProps: { value: _vm.search.name },
-                on: {
-                  input: function ($event) {
-                    if ($event.target.composing) {
-                      return
-                    }
-                    _vm.$set(_vm.search, "name", $event.target.value)
-                  },
+      _vm.$root.isAdmin()
+        ? _c(
+            "form",
+            {
+              on: {
+                submit: function ($event) {
+                  $event.preventDefault()
+                  return _vm.handleSearch.apply(null, arguments)
                 },
-              }),
-            ]),
-            _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
-              [
-                _c("m-select", {
-                  attrs: {
-                    size: "sm",
-                    text: "-- Tìm theo trưởng phòng --",
-                    url: "user/search-user",
-                    statusReset: false,
-                    variable: { first: "fullname", second: "username" },
-                  },
-                  on: { changeValue: _vm.getLeaderSearch },
-                }),
-              ],
-              1
-            ),
-            _vm._v(" "),
-            _vm._m(0),
-            _vm._v(" "),
-            _vm.$root.isAdmin()
-              ? _c(
-                  "div",
-                  { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
-                  [
-                    _c(
-                      "button",
+              },
+            },
+            [
+              _c("div", { staticClass: "row" }, [
+                _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
+                  _c("input", {
+                    directives: [
                       {
-                        staticClass: "btn btn-info btn-sm",
-                        attrs: {
-                          "data-toggle": "modal",
-                          "data-target": "#department_modal_add",
-                        },
+                        name: "model",
+                        rawName: "v-model",
+                        value: _vm.search.name,
+                        expression: "search.name",
                       },
-                      [_vm._v("Thêm")]
-                    ),
-                  ]
-                )
-              : _vm._e(),
-          ]),
-        ]
-      ),
+                    ],
+                    staticClass: "form-control form-control-sm",
+                    attrs: { type: "text", placeholder: "Tên phòng ban..." },
+                    domProps: { value: _vm.search.name },
+                    on: {
+                      input: function ($event) {
+                        if ($event.target.composing) {
+                          return
+                        }
+                        _vm.$set(_vm.search, "name", $event.target.value)
+                      },
+                    },
+                  }),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                  [
+                    _c("m-select", {
+                      attrs: {
+                        size: "sm",
+                        text: "-- Tìm theo trưởng phòng --",
+                        url: "user/search-user",
+                        statusReset: false,
+                        variable: { first: "fullname", second: "username" },
+                      },
+                      on: { changeValue: _vm.getLeaderSearch },
+                    }),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _vm._m(0),
+                _vm._v(" "),
+                _vm.$root.isAdmin()
+                  ? _c(
+                      "div",
+                      {
+                        staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2",
+                      },
+                      [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-info btn-sm",
+                            attrs: {
+                              "data-toggle": "modal",
+                              "data-target": "#department_modal_add",
+                            },
+                          },
+                          [_vm._v("Thêm")]
+                        ),
+                      ]
+                    )
+                  : _vm._e(),
+              ]),
+            ]
+          )
+        : _vm._e(),
       _vm._v(" "),
       _c("div", { staticClass: "list" }, [
         _vm.loading_list
@@ -22346,11 +22358,14 @@ var render = function () {
               "ul",
               { staticClass: "row" },
               [
-                _vm.list
+                _vm.list && _vm.list.data.length > 0
                   ? _vm._l(_vm.list.data, function (item, index) {
                       return _c(
                         "li",
-                        { key: index, staticClass: "col-md-3 col-sm-4 col-6" },
+                        {
+                          key: index,
+                          staticClass: "col-md-3 col-sm-4 col-12 mb-2",
+                        },
                         [
                           _c("div", { staticClass: "info bg-fff" }, [
                             _c("p", [
@@ -22415,7 +22430,9 @@ var render = function () {
                                     : _vm._e(),
                                   _vm._v(" "),
                                   _index == 7
-                                    ? _c("span", [_vm._v(_vm._s(_index))])
+                                    ? _c("span", [
+                                        _vm._v(_vm._s(item.members.length)),
+                                      ])
                                     : _vm._e(),
                                 ])
                               }),
@@ -22464,7 +22481,7 @@ var render = function () {
                         ]
                       )
                     })
-                  : _vm._e(),
+                  : _c("div", [_vm._v("Bạn chưa có phòng ban")]),
               ],
               2
             ),
@@ -23049,6 +23066,7 @@ var render = function () {
                   _vm.name_route == item.link ? "router-link-exact-active" : "",
                 ],
                 attrs: { title: item.label },
+                on: { click: _vm.closeSideBarTablet },
               },
               [
                 _c(
@@ -23416,7 +23434,7 @@ var render = function () {
           _c(
             "button",
             {
-              staticClass: "btn btn-info btn-sm",
+              staticClass: "btn btn-info btn-sm mb-1",
               attrs: { type: "button" },
               on: {
                 click: function ($event) {
@@ -23935,11 +23953,14 @@ var render = function () {
               "ul",
               { staticClass: "row" },
               [
-                _vm.list
+                _vm.list && _vm.list.data.length > 0
                   ? _vm._l(_vm.list.data, function (item, index) {
                       return _c(
                         "li",
-                        { key: index, staticClass: "col-md-3 col-sm-4 col-6" },
+                        {
+                          key: index,
+                          staticClass: "col-md-3 col-sm-4 col-12 mb-2",
+                        },
                         [
                           _c(
                             "div",
@@ -24041,7 +24062,9 @@ var render = function () {
                         ]
                       )
                     })
-                  : _vm._e(),
+                  : _c("li", { staticClass: "col-md-12" }, [
+                      _vm._v("Bạn chưa có dự án"),
+                    ]),
               ],
               2
             ),

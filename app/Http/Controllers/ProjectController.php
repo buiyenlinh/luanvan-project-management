@@ -38,11 +38,26 @@ class ProjectController extends Controller
         $name = $request->name;
         $manager_id = $request->manager;
         $db = Project::select('*');
-        
+
         if ($this->isManager()) {
             $db->where('manager', $this->auth->id);
         } else if ($this->isUser()) {
-            // Trả về danh sách dự án mà user có tham gia
+            $department_user = DepartmentUser::where('user_id', $this->auth->id);
+            $project_ids = array();
+            foreach($department_user as $_department_user) {
+                $department = Department::find($_department_user->department_id);
+                foreach ($department->get() as $_department) {
+                    $department_task = DepartmentTask::find($_department->task->id);
+                    foreach ($department_task->get() as $_department_task) {
+                        $project_ids[] = Task::find($_department_task->task_id)->project_id;
+                    }
+                }
+            }
+            if (count($project_ids) > 0) {
+                $db->whereIn('id', $project_ids);
+            } else {
+                $db->where('id', 0);
+            }
         }
 
         if ($name) {

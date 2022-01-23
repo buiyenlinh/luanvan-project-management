@@ -49,6 +49,15 @@ class DepartmentController extends Controller
             $db->whereIn('id', $arr);
         }
 
+        if ($this->isUser()) {
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+            if ($department_user) {
+                $db->where('id', $department_user->department_id);
+            } else {
+                $db->where('id', 0);
+            }
+        }
+
         $list = $db->orderBy('id','desc')->paginate(2);
         $data = DepartmentResource::collection($list)->response()->getData();
         return $this->success('Danh sách phòng ban', $data);

@@ -132,11 +132,11 @@ class UserController extends Controller
     public function updateUser(Request $request) {
         if (!$this->checkUserLogin($request->role)) return $this->error('Tài khoản không có quyền');
         
-        if ($this->checkExist('username', $request->username, $request->id)) return $this->error('Tên đăng nhập đã tồn tại');
+        if ($this->checkExist('username', $request->username, $request->id)) return $this->error('Tên đăng nhập này đã tồn tại');
 
-        if ($this->checkExist('email', $request->email, $request->id)) return $this->error('Email đã tồn tại');
+        if ($this->checkExist('email', $request->email, $request->id)) return $this->error('Email này đã tồn tại');
 
-        if ($this->checkExist('phone', $request->phone, $request->id)) return $this->error('Số điện thoại đã tồn tại');
+        if ($this->checkExist('phone', $request->phone, $request->id)) return $this->error('Số điện thoại này đã tồn tại');
 
         if (!$request->username) {
             return $this->error('Tên đăng nhập là bắt buộc');

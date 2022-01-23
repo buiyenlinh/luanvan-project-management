@@ -39,7 +39,12 @@ export default {
       if (this.keyword != '') {
         this.loading = true;
         this.$root.api.post(this.url, {keyword: this.keyword}).then(response => {
-          this.list = response.data.data;
+          if (response.data.status == "OK") {
+            this.list = response.data.data;
+          } else {
+            this.loading = false;
+            this.list = [];
+          }
         }).catch(() => {
           this.loading = false;
         }).finally(() => {
@@ -99,6 +104,11 @@ export default {
 <style lang="scss" scoped>
 .select-component {
   position: relative;
+  .form-control {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .select-icon-bottom {
     position: absolute;
     z-index: 10;
