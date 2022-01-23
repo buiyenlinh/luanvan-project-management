@@ -94,7 +94,7 @@ export default {
           <img v-else :src="$root.avatar_default" alt="">
           <div class="text-danger">{{error.avatar}}</div>
          </div>
-         <button type="button" class="btn btn-info btn-sm" @click="$refs.RefAvatar.click()">Đổi ảnh</button>
+         <button type="button" class="btn btn-info btn-sm mb-1" @click="$refs.RefAvatar.click()">Đổi ảnh</button>
           <input
             type="file"
             ref="RefAvatar"

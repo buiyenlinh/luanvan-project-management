@@ -263,8 +263,8 @@ export default {
           <m-spinner/>
         </div>
         <ul v-else class="row">
-          <template v-if="list">
-            <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-6">
+          <template v-if="list && list.data.length > 0">
+            <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
               <div :class="['info', !item.active ? 'block': 'bg-fff']">
                 <span v-if="!item.active" class="text-danger block-text">Khóa</span>
                 <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
@@ -294,6 +294,7 @@ export default {
               </div>
             </li>
           </template>
+          <li class="col-md-12" v-else>Bạn chưa có dự án</li>
         </ul>
     </div>
     <div class="text-center mt-3" v-if="last_page > 1">

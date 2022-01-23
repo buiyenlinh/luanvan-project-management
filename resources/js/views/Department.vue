@@ -233,7 +233,7 @@ export default {
 
 <template>
   <div id="department">
-    <form @submit.prevent="handleSearch">
+    <form @submit.prevent="handleSearch" v-if="$root.isAdmin()">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <input type="text" class="form-control form-control-sm" placeholder="Tên phòng ban..." v-model="search.name">
@@ -264,8 +264,8 @@ export default {
         <m-spinner/>
       </div>
       <ul v-else class="row">
-        <template v-if="list">
-          <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-6">
+        <template v-if="list && list.data.length > 0">
+          <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
             <div class="info bg-fff">
               <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
               <p style="font-size: 12px; margin-bottom: 0px">
@@ -277,7 +277,7 @@ export default {
               <ul class="avt-mem d-flex justify-content-start mt-1">
                 <li v-for="(mem, _index) in item.members" :key="_index">
                   <img :src="mem.avatar ? mem.avatar : $root.avatar_default" alt="" v-if="_index <= 6">
-                  <span v-if="_index == 7">{{_index}}</span>
+                  <span v-if="_index == 7">{{item.members.length}}</span>
                 </li>
               </ul>
               <div class="text-right" v-if="$root.isManager()">
@@ -301,6 +301,7 @@ export default {
             </div>
           </li>
         </template>
+        <div v-else>Bạn chưa có phòng ban</div>
       </ul>
     </div>
 
@@ -404,5 +405,6 @@ export default {
 
     <m-loading v-if="loading_update_add" :title="department.id != null ? 'Đang cập nhật phòng ban' : 'Đang thêm phòng ban'" :full="true" />
     <m-loading v-if="loading_delete" title="Đang xóa phòng ban" :full="true" />
+  
   </div>
 </template>

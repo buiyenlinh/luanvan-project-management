@@ -61,6 +61,9 @@ export default {
         link: "profile",
         icon: "fas fa-user-circle",
       })
+    },
+    closeSideBarTablet() {
+      this.change_bar = false;
     }
   },
   watch: {
@@ -99,6 +102,7 @@ export default {
           :key="index"
           :class="[ name_route == item.link ? 'router-link-exact-active' : '' ]"
           :title="item.label"
+          @click="closeSideBarTablet"
         >
           <router-link :to="{ name: item.link }" class="nav-link">
             <i :class="item.icon"></i>
