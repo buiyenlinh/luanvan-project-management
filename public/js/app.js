@@ -3099,6 +3099,120 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Task.vue?vue&type=script&lang=js&":
+/*!**********************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Task.vue?vue&type=script&lang=js& ***!
+  \**********************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      project_name: '',
+      search: {
+        name: ''
+      },
+      list: null,
+      loading_list: false,
+      task: null,
+      error: null,
+      validate_form: false,
+      select_department: {
+        text: '--- Tìm phòng ban ---',
+        status: false
+      },
+      select_label: {
+        text: '--- Tìm nhãn ---',
+        status: false
+      }
+    };
+  },
+  methods: {
+    getList: function getList() {
+      var _this = this;
+
+      this.loading_list = true;
+      this.$root.api.post('task/list', {
+        'project_name': this.project_name
+      }).then(function (res) {
+        if (res.data.status == "OK") {
+          _this.list = res.data.data;
+          _this.loading_list = false;
+        } else {
+          _this.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this.$root.showError(err);
+
+        _this.loading_list = false;
+      });
+    },
+    onSubmit: function onSubmit() {
+      console.log("onSubmit");
+    },
+    handleSearch: function handleSearch() {
+      console.log("handleSearch");
+    },
+    getDepartmentSearch: function getDepartmentSearch() {
+      console.log("getDepartmentSearch");
+    },
+    closeModal: function closeModal() {
+      var _this2 = this;
+
+      this.validate_form = false;
+      this.task = {
+        id: null,
+        name: '',
+        describe: '',
+        result: '',
+        start_time: '',
+        end_time: '',
+        delay_time: '',
+        label_id: '',
+        project_id: null,
+        pre_task_id: null
+      };
+      this.error = {
+        name: '',
+        describe: '',
+        result: '',
+        start_time: '',
+        end_time: '',
+        delay_time: '',
+        label_id: '',
+        project_id: '',
+        pre_task_id: ''
+      };
+      this.list = [];
+      this.select_department = {
+        text: '--- Tìm phòng ban ---',
+        status: false
+      };
+      setTimeout(function () {
+        _this2.validate_form = true;
+      }, 300);
+    },
+    getDepartment: function getDepartment() {
+      console.log("getDepartment");
+    },
+    getLabel: function getLabel() {
+      console.log("getLabel");
+    }
+  },
+  created: function created() {
+    this.closeModal();
+  },
+  mounted: function mounted() {
+    this.project_name = this.$route.params.project_name;
+    this.getList();
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/User.vue?vue&type=script&lang=js&":
 /*!**********************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/User.vue?vue&type=script&lang=js& ***!
@@ -23971,93 +24085,117 @@ var render = function () {
                               ],
                             },
                             [
-                              !item.active
-                                ? _c(
-                                    "span",
-                                    { staticClass: "text-danger block-text" },
-                                    [_vm._v("Khóa")]
-                                  )
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _c("p", [
-                                _c("i", { staticClass: "fas fa-folder" }),
-                                _vm._v("  "),
-                                _c("b", [_vm._v(_vm._s(item.name))]),
-                              ]),
-                              _vm._v(" "),
                               _c(
-                                "p",
+                                "router-link",
                                 {
-                                  staticStyle: {
-                                    "font-size": "12px",
-                                    "margin-bottom": "0px",
+                                  attrs: {
+                                    to: {
+                                      name: "task",
+                                      params: { project_name: item.alias },
+                                    },
                                   },
                                 },
                                 [
-                                  _c("b", [_vm._v("Người tạo: ")]),
-                                  _vm._v(
-                                    _vm._s(
-                                      item.created_by.fullname ||
-                                        item.created_by.username
-                                    ) + " "
-                                  ),
-                                  _c("br"),
+                                  !item.active
+                                    ? _c(
+                                        "span",
+                                        {
+                                          staticClass: "text-danger block-text",
+                                        },
+                                        [_vm._v("Khóa")]
+                                      )
+                                    : _vm._e(),
                                   _vm._v(" "),
-                                  _c("b", [_vm._v("Quản lý: ")]),
-                                  _vm._v(
-                                    _vm._s(
-                                      item.manager.fullname ||
-                                        item.manager.username
-                                    ) + " "
-                                  ),
-                                  _c("br"),
+                                  _c("p", [
+                                    _c("i", { staticClass: "fas fa-folder" }),
+                                    _vm._v("  "),
+                                    _c("b", [_vm._v(_vm._s(item.name))]),
+                                  ]),
                                   _vm._v(" "),
-                                  _c("b", [_vm._v("Tạo lúc: ")]),
-                                  _vm._v(
-                                    _vm._s(item.created_at) + "\n              "
+                                  _c(
+                                    "p",
+                                    {
+                                      staticStyle: {
+                                        "font-size": "12px",
+                                        "margin-bottom": "0px",
+                                      },
+                                    },
+                                    [
+                                      _c("b", [_vm._v("Người tạo: ")]),
+                                      _vm._v(
+                                        _vm._s(
+                                          item.created_by.fullname ||
+                                            item.created_by.username
+                                        ) + " "
+                                      ),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("b", [_vm._v("Quản lý: ")]),
+                                      _vm._v(
+                                        _vm._s(
+                                          item.manager.fullname ||
+                                            item.manager.username
+                                        ) + " "
+                                      ),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("b", [_vm._v("Tạo lúc: ")]),
+                                      _vm._v(
+                                        _vm._s(item.created_at) +
+                                          "\n                "
+                                      ),
+                                    ]
                                   ),
                                 ]
                               ),
                               _vm._v(" "),
                               _vm.$root.isManager()
-                                ? _c("div", { staticClass: "text-right" }, [
-                                    _c(
-                                      "span",
-                                      {
-                                        staticClass: "text-danger",
-                                        attrs: {
-                                          "data-toggle": "modal",
-                                          "data-target":
-                                            "#project_modal_delete",
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.getProjectUpdate(item)
+                                ? _c(
+                                    "div",
+                                    {
+                                      staticClass: "text-right",
+                                      staticStyle: { padding: "10px" },
+                                    },
+                                    [
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass: "text-danger",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target":
+                                              "#project_modal_delete",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getProjectUpdate(item)
+                                            },
                                           },
                                         },
-                                      },
-                                      [_c("b", [_vm._v("Xóa")])]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "span",
-                                      {
-                                        staticClass: "text-info",
-                                        attrs: {
-                                          "data-toggle": "modal",
-                                          "data-target": "#project_modal_add",
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.getProjectUpdate(item)
+                                        [_c("b", [_vm._v("Xóa")])]
+                                      ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "span",
+                                        {
+                                          staticClass: "text-info",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target": "#project_modal_add",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getProjectUpdate(item)
+                                            },
                                           },
                                         },
-                                      },
-                                      [_c("b", [_vm._v("Sửa")])]
-                                    ),
-                                  ])
+                                        [_c("b", [_vm._v("Sửa")])]
+                                      ),
+                                    ]
+                                  )
                                 : _vm._e(),
-                            ]
+                            ],
+                            1
                           ),
                         ]
                       )
@@ -24702,6 +24840,545 @@ var staticRenderFns = [
         [_vm._v("Hủy")]
       ),
     ])
+  },
+]
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8&":
+/*!**************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8& ***!
+  \**************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "task" } }, [
+    _c(
+      "form",
+      {
+        on: {
+          submit: function ($event) {
+            $event.preventDefault()
+            return _vm.handleSearch.apply(null, arguments)
+          },
+        },
+      },
+      [
+        _c("div", { staticClass: "row" }, [
+          _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.search.name,
+                  expression: "search.name",
+                },
+              ],
+              staticClass: "form-control form-control-sm",
+              attrs: { type: "text", placeholder: "Tên công việc..." },
+              domProps: { value: _vm.search.name },
+              on: {
+                input: function ($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.search, "name", $event.target.value)
+                },
+              },
+            }),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+            [
+              _c("m-select", {
+                attrs: {
+                  size: "sm",
+                  text: "--Tìm theo phòng ban--",
+                  url: "department/search",
+                  statusReset: false,
+                  variable: { first: "name" },
+                },
+                on: { changeValue: _vm.getDepartmentSearch },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _vm._m(0),
+          _vm._v(" "),
+          _vm.$root.isManager()
+            ? _c(
+                "div",
+                { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
+                [
+                  _c(
+                    "button",
+                    {
+                      staticClass: "btn btn-info btn-sm",
+                      attrs: {
+                        "data-toggle": "modal",
+                        "data-target": "#task_modal_add",
+                      },
+                    },
+                    [_vm._v("Thêm")]
+                  ),
+                ]
+              )
+            : _vm._e(),
+        ]),
+      ]
+    ),
+    _vm._v(" "),
+    _c("div", { staticClass: "list" }, [
+      _vm.loading_list
+        ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.list && _vm.list.length > 0
+        ? _c("div", [_c("h3", [_vm._v("Danh sách task")])])
+        : _c("div", [_vm._v("\n      Chưa có công việc nào\n    ")]),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "modal fade", attrs: { id: "task_modal_add" } }, [
+      _c(
+        "div",
+        { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
+        [
+          _c("div", { staticClass: "modal-content" }, [
+            _vm._m(1),
+            _vm._v(" "),
+            _c("div", { staticClass: "modal-body" }, [
+              _c(
+                "form",
+                {
+                  on: {
+                    submit: function ($event) {
+                      $event.preventDefault()
+                      return _vm.onSubmit.apply(null, arguments)
+                    },
+                  },
+                },
+                [
+                  _c("div", { staticClass: "row" }, [
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _vm._m(2),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.task.name,
+                              expression: "task.name",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: { type: "text" },
+                          domProps: { value: _vm.task.name },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(_vm.task, "name", $event.target.value)
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "text-danger font-italic error" },
+                          [_vm._v(_vm._s(_vm.error.name))]
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _vm._m(3),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.task.start_time,
+                              expression: "task.start_time",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: { type: "date" },
+                          domProps: { value: _vm.task.start_time },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(
+                                _vm.task,
+                                "start_time",
+                                $event.target.value
+                              )
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "text-danger font-italic error" },
+                          [_vm._v(_vm._s(_vm.error.start_time))]
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _vm._m(4),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.task.end_time,
+                              expression: "task.end_time",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: { type: "date" },
+                          domProps: { value: _vm.task.end_time },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(
+                                _vm.task,
+                                "end_time",
+                                $event.target.value
+                              )
+                            },
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "text-danger font-italic error" },
+                          [_vm._v(_vm._s(_vm.error.end_time))]
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _vm._m(5),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "input-group input-group-sm mb-3" },
+                        [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.task.delay_time,
+                                expression: "task.delay_time",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "number" },
+                            domProps: { value: _vm.task.delay_time },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  _vm.task,
+                                  "delay_time",
+                                  $event.target.value
+                                )
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _vm._m(6),
+                        ]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c(
+                        "div",
+                        { staticClass: "form-group" },
+                        [
+                          _vm._m(7),
+                          _vm._v(" "),
+                          _c("m-select", {
+                            attrs: {
+                              size: "sm",
+                              text: _vm.select_department.text,
+                              url: "user/search-manager",
+                              statusReset: _vm.select_department.status,
+                              variable: { first: "name" },
+                            },
+                            on: { changeValue: _vm.getDepartment },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [_vm._v(_vm._s(_vm.error.manager))]
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c(
+                        "div",
+                        { staticClass: "form-group" },
+                        [
+                          _vm._m(8),
+                          _vm._v(" "),
+                          _c("m-select", {
+                            attrs: {
+                              size: "sm",
+                              text: _vm.select_label.text,
+                              url: "user/search-manager",
+                              statusReset: _vm.select_label.status,
+                              variable: { first: "name" },
+                            },
+                            on: { changeValue: _vm.getLabel },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [_vm._v(_vm._s(_vm.error.manager))]
+                          ),
+                        ],
+                        1
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _vm._m(9),
+                        _vm._v(" "),
+                        _c("input", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.task.result,
+                              expression: "task.result",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: { type: "number" },
+                          domProps: { value: _vm.task.result },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(_vm.task, "result", $event.target.value)
+                            },
+                          },
+                        }),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "form-group" }, [
+                        _vm._m(10),
+                        _c("br"),
+                        _vm._v(" "),
+                        _c("textarea", {
+                          directives: [
+                            {
+                              name: "model",
+                              rawName: "v-model",
+                              value: _vm.task.describe,
+                              expression: "task.describe",
+                            },
+                          ],
+                          staticClass: "form-control form-control-sm",
+                          attrs: { type: "text", rows: "5" },
+                          domProps: { value: _vm.task.describe },
+                          on: {
+                            input: function ($event) {
+                              if ($event.target.composing) {
+                                return
+                              }
+                              _vm.$set(
+                                _vm.task,
+                                "describe",
+                                $event.target.value
+                              )
+                            },
+                          },
+                        }),
+                      ]),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "modal-footer" }, [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-info btn-sm",
+                        attrs: { type: "submit" },
+                      },
+                      [
+                        _vm._v(
+                          "\n                " +
+                            _vm._s(_vm.task.id ? "Cập nhật" : "Thêm") +
+                            "\n              "
+                        ),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-secondary btn-sm",
+                        attrs: { type: "button", "data-dismiss": "modal" },
+                      },
+                      [_vm._v("Close")]
+                    ),
+                  ]),
+                ]
+              ),
+            ]),
+          ]),
+        ]
+      ),
+    ]),
+  ])
+}
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "col-md-2 col-sm-2 col-6 mb-2" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
+        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n        ")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Công việc")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên công việc "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Thời gian bắt đầu "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Thời gian kết thức "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Thời gian trì hoãn")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "input-group-append" }, [
+      _c("span", { staticClass: "input-group-text" }, [_vm._v("( Ngày )")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Phân công cho phòng ban "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Chọn nhãn ")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Kết quả mong muốn")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Mô tả")])])
   },
 ]
 render._withStripped = true
@@ -42184,6 +42861,14 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
         title: 'Dự án'
       }
     }, {
+      path: 'du-an/:project_name',
+      name: 'task',
+      component: __webpack_require__(/*! ../views/Task.vue */ "./resources/js/views/Task.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Công việc'
+      }
+    }, {
       path: 'phong-ban',
       name: 'department',
       component: __webpack_require__(/*! ../views/Department.vue */ "./resources/js/views/Department.vue")["default"],
@@ -42795,6 +43480,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Project_vue_vue_type_template_id_39c6aa6c___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Project_vue_vue_type_template_id_39c6aa6c___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Task.vue":
+/*!*************************************!*\
+  !*** ./resources/js/views/Task.vue ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Task.vue?vue&type=template&id=5abc6ab8& */ "./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8&");
+/* harmony import */ var _Task_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Task.vue?vue&type=script&lang=js& */ "./resources/js/views/Task.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Task_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/Task.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/views/Task.vue?vue&type=script&lang=js&":
+/*!**************************************************************!*\
+  !*** ./resources/js/views/Task.vue?vue&type=script&lang=js& ***!
+  \**************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Task_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Task.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Task.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Task_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8&":
+/*!********************************************************************!*\
+  !*** ./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8& ***!
+  \********************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./Task.vue?vue&type=template&id=5abc6ab8& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Task.vue?vue&type=template&id=5abc6ab8&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Task_vue_vue_type_template_id_5abc6ab8___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 

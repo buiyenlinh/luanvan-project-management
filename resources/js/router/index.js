@@ -5,7 +5,7 @@ Vue.use(VueRouter);
 
 const router = new VueRouter({
   mode:'history',
-  routes: [
+  routes: [ 
     {
       path: '/',
       component: require('../views/Home.vue').default,
@@ -39,6 +39,15 @@ const router = new VueRouter({
           meta: {
             auth: true,
             title: 'Dự án'
+          },
+        },
+        {
+          path: 'du-an/:project_name',
+          name: 'task',
+          component: require('../views/Task.vue').default,
+          meta: {
+            auth: true,
+            title: 'Công việc'
           },
         },
         {

@@ -35,6 +35,10 @@ Route::middleware('is-token')->group(function() {
     Route::delete('delete/{id}', 'DepartmentController@delete');
   });
 
+  Route::prefix('task')->group(function() {
+    Route::post('list', 'TaskController@taskInProject');
+  });
+
   Route::prefix('/role')->group(function() {
     Route::get('list', 'UserController@getRoleList');
   });
