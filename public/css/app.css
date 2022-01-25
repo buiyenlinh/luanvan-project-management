@@ -597,6 +597,11 @@ body {
   border-bottom-width: 0px;
 }
 
+a,
+a:hover {
+  text-decoration: none;
+}
+
 .icon-warm-delete {
   font-size: 50px;
   margin-top: 8px;
@@ -852,9 +857,14 @@ body {
 }
 
 #project .list ul li .info {
-  padding: 10px;
   border: 1px solid #17a2b8;
   cursor: pointer;
+}
+
+#project .list ul li .info a {
+  display: block;
+  padding: 10px;
+  color: #333;
 }
 
 #project .list ul .block {

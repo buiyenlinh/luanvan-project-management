@@ -264,16 +264,20 @@ export default {
         </div>
         <ul v-else class="row">
           <template v-if="list && list.data.length > 0">
-            <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
+            <li
+              v-for="(item, index) in list.data"
+              :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
               <div :class="['info', !item.active ? 'block': 'bg-fff']">
-                <span v-if="!item.active" class="text-danger block-text">Khóa</span>
-                <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                <p style="font-size: 12px; margin-bottom: 0px">
-                  <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
-                  <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}} <br>
-                  <b>Tạo lúc: </b>{{item.created_at}}
-                </p>
-                <div class="text-right" v-if="$root.isManager()">
+                <router-link :to="{name: 'task', params: { 'project_name': item.alias }}">
+                  <span v-if="!item.active" class="text-danger block-text">Khóa</span>
+                  <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+                  <p style="font-size: 12px; margin-bottom: 0px">
+                    <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
+                    <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}} <br>
+                    <b>Tạo lúc: </b>{{item.created_at}}
+                  </p>
+                </router-link>
+                <div class="text-right" style="padding: 10px" v-if="$root.isManager()">
                   <span
                     class="text-danger"
                     @click="getProjectUpdate(item)"

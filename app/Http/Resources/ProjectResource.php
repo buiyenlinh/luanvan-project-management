@@ -36,6 +36,7 @@ class ProjectResource extends JsonResource
                 'fullname' => $created_by->fullname,
                 'username' => $created_by->username
             ],
+            'alias' => $this->alias,
             'created_at' => $this->created_at->format('H:i:s, d-m-Y'),
             'updated_at' => $this->updated_at->format('H:i:s, d-m-Y')
         ];
