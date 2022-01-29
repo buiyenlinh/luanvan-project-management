@@ -268,7 +268,7 @@ export default {
               v-for="(item, index) in list.data"
               :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
               <div :class="['info', !item.active ? 'block': 'bg-fff']">
-                <router-link :to="{name: 'task', params: { 'project_name': item.alias }}">
+                <router-link :to="{name: 'task', params: { 'id': item.id }}">
                   <span v-if="!item.active" class="text-danger block-text">Khóa</span>
                   <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
                   <p style="font-size: 12px; margin-bottom: 0px">

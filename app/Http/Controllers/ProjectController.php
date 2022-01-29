@@ -119,7 +119,6 @@ class ProjectController extends Controller
             'manager' => $manager,
             'created_by' => $created_by,
             'describe' => $describe,
-            'alias' => $this->to_slug($name)
         ]);
         return $this->success('Thêm dự án thành công');
     }
@@ -171,7 +170,6 @@ class ProjectController extends Controller
             'manager' => $manager,
             'created_by' => $created_by,
             'describe' => $describe,
-            'alias' => $this->to_slug($name)
         ]);
         return $this->success('Cập nhật dự án thành công');
     } 

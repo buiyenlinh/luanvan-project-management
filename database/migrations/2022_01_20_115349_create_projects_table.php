@@ -23,7 +23,6 @@ class CreateProjectsTable extends Migration
             $table->boolean('active')->default(1);
             $table->foreignId('manager')->constrained('yl_users')->unsigned();
             $table->foreignId('created_by')->constrained('yl_users')->unsigned(); // Người tạo dự án
-            $table->string('alias')->default('');
             $table->timestamps();
         });
     }

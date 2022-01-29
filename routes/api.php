@@ -33,10 +33,19 @@ Route::middleware('is-token')->group(function() {
     Route::post('add', 'DepartmentController@create');
     Route::post('update', 'DepartmentController@update');
     Route::delete('delete/{id}', 'DepartmentController@delete');
+    Route::post('search', 'DepartmentController@searchDepartment');
   });
 
-  Route::prefix('task')->group(function() {
-    Route::post('list', 'TaskController@taskInProject');
+  Route::prefix('project/{id}')->group(function(){
+    Route::prefix('task')->middleware('check-role:1|2')->group(function() {
+      Route::get('list', 'TaskController@taskInProject');
+      Route::post('search', 'TaskController@searchTaskName');
+      Route::post('add', 'TaskController@add');
+    });
+  });
+
+  Route::prefix('label')->middleware('check-role:1|2')->group(function() {
+    Route::post('search', 'LabelController@searchLabel');
   });
 
   Route::prefix('/role')->group(function() {
