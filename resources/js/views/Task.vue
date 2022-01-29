@@ -2,7 +2,7 @@
 export default {
   data() {
     return {
-      project_name: '',
+      project_id: '',
       search: {
         name: ''
       },
@@ -18,13 +18,18 @@ export default {
       select_label: {
         text: '--- Tìm nhãn ---',
         status: false
-      }
+      },
+      select_pre_task: {
+        text: '--- Tìm tên công việc ---',
+        status: false
+      },
+      file_show: ''
     }
   },
   methods: {
     getList() {
       this.loading_list = true;
-      this.$root.api.post('task/list', {'project_name' : this.project_name}).then(res => {
+      this.$root.api.get(`project/${this.project_id}/task/list`).then(res => {
         if (res.data.status == "OK") {
           this.list = res.data.data;
           this.loading_list = false;
@@ -37,13 +42,13 @@ export default {
       })
     },
     onSubmit() {
-      console.log("onSubmit");
+      this.checkName();
     },
     handleSearch() {
       console.log("handleSearch");
     },
-    getDepartmentSearch() {
-      console.log("getDepartmentSearch");
+    getDepartmentSearch(_department) {
+      this.task.department_id = _deparment.id;
     },
     closeModal() {
       this.validate_form = false;
@@ -57,7 +62,9 @@ export default {
         delay_time: '',
         label_id: '',
         project_id: null,
-        pre_task_id: null
+        pre_task_id: null,
+        department_id: null,
+        file: ''
       };
 
       this.error = {
@@ -72,30 +79,71 @@ export default {
         pre_task_id: ''
       }
 
+      this.file_show = '';
+
       this.list = [];
 
       this.select_department = {
         text: '--- Tìm phòng ban ---',
-        status: false
+        status: !this.select_department.status
+      }
+
+      this.select_label = {
+        text: '--- Tìm nhãn ---',
+        status: !this.select_label.status
+      }
+
+      this.select_pre_task = {
+        text: '--- Tìm tên công việc ---',
+        status: !this.select_pre_task.status
       }
 
       setTimeout(() => {
         this.validate_form = true;
       }, 300);
     },
-    getDepartment() {
-      console.log("getDepartment");
+    getDepartment(_deparment) {
+      this.task.department_id= _deparment.id;
+      this.select_department.text = _deparment.name;
     },
-    getLabel() {
-      console.log("getLabel");
+    getLabel(_label) {
+      this.task.label_id= _label.id;
+      this.select_label.text = _label.name;
+    },
+    handleGetFile(_file) {
+      this.task.file = _file.target.files[0];
+      this.file_show = _file.target.files[0].name;
+    },
+    getPreTask(_pre_task) {
+      this.task.pre_task_id= _pre_task.id;
+      this.select_pre_task.text = _pre_task.name;
+    },
+    checkName() {
+      if (this.task.name == '') {
+        this.error.name = 'Tên công việc là bắt buộc';
+      } else {
+        this.error.name = '';
+      }
     }
   },
   created() {
     this.closeModal();
   },
   mounted() {
-    this.project_name = this.$route.params.project_name;
+    this.project_id = this.$route.params.id;
     this.getList();
+
+    $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', () => {
+      this.closeModal();
+    });
+  },
+  watch: {
+    'task.name' () {
+      if (!this.validate_form) {
+        return;
+      }
+      this.checkName();
+    }
   }
 }
 </script>
@@ -122,7 +170,7 @@ export default {
           </button>
         </div>  
         <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isManager()">
-          <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add">Thêm</button>
+          <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add_update">Thêm</button>
         </div>
       </div>
     </form>
@@ -138,7 +186,7 @@ export default {
       </div>
     </div>
 
-    <div class="modal fade" id="task_modal_add">
+    <div class="modal fade" id="task_modal_add_update">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
@@ -158,6 +206,21 @@ export default {
 
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
+                    <label><b>Công việc tiên quyết <span class="text-danger">*</span></b></label>
+                    <m-select
+                      :size="'sm'"
+                      :text="select_pre_task.text"
+                      :url="`project/${this.project_id}/task/search`"
+                      :statusReset="select_pre_task.status"
+                      @changeValue="getPreTask"
+                      :variable="{first: 'name'}"
+                    />
+                    <div class="text-danger font-italic error">{{error.end_time}}</div>
+                  </div>
+                </div>
+
+                <div class="col-md-6 col-sm-12 col-12">
+                  <div class="form-group">
                     <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="task.start_time">
                     <div class="text-danger font-italic error">{{error.start_time}}</div>
@@ -166,7 +229,7 @@ export default {
 
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Thời gian kết thức <span class="text-danger">*</span></b></label>
+                    <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="task.end_time">
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
@@ -188,7 +251,7 @@ export default {
                     <m-select
                       :size="'sm'"
                       :text="select_department.text"
-                      url="user/search-manager"
+                      url="department/search"
                       :statusReset="select_department.status"
                       @changeValue="getDepartment"
                       :variable="{first: 'name'}"
@@ -203,7 +266,7 @@ export default {
                     <m-select
                       :size="'sm'"
                       :text="select_label.text"
-                      url="user/search-manager"
+                      url="label/search"
                       :statusReset="select_label.status"
                       @changeValue="getLabel"
                       :variable="{first: 'name'}"
@@ -211,20 +274,35 @@ export default {
                     <div class="text-danger font-italic error">{{error.manager}}</div>
                   </div>
                 </div>
-                
-                <div class="col-md-6 col-sm-12 col-12">
+
+                <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Kết quả mong muốn</b></label>
-                    <input type="number" class="form-control form-control-sm" v-model="task.result">
+                    <label><b>Mô tả</b></label><br>
+                    <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.describe"></textarea>
                   </div>
                 </div>
 
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Mô tả</b></label><br>
-                    <textarea type="text" class="form-control form-control-sm" rows="5" v-model="task.describe"></textarea>
+                    <label><b>Kết quả</b></label>
+                    <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.result"></textarea>
                   </div>
                 </div>
+
+                <div class="col-md-6 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Đính kèm</b></label>
+                    <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
+                    <input
+                      type="file"
+                      ref="ref_file"
+                      style="display: none"
+                      @change="handleGetFile"
+                    />
+                    <div v-if="file_show">File được chọn: {{ file_show }}</div>
+                  </div>
+                </div>
+
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-info btn-sm">

@@ -42,7 +42,7 @@ const router = new VueRouter({
           },
         },
         {
-          path: 'du-an/:project_name',
+          path: 'du-an/:id',
           name: 'task',
           component: require('../views/Task.vue').default,
           meta: {

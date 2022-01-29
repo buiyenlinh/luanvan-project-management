@@ -185,4 +185,18 @@ class DepartmentController extends Controller
 
         return $this->success('Xóa phòng ban thành công');
     }
+
+
+    /**
+     * Tìm kiếm phòng ban
+     */
+    public function searchDepartment(Request $request) {
+        $keyword = $request->keyword;
+        if (!$keyword) {
+            return $this->success('Danh sách tìm kiếm phòng ban', []);
+        }
+
+        $department = Department::where('name', 'LIKE', '%' . $keyword . '%')->get();
+        return $this->success('Danh sách tìm kiếm phòng ban', $department);
+    }
 }

@@ -17,6 +17,7 @@ class CreateTasksTable extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->text('describe')->default('');
+            $table->string('file')->default('');
             $table->text('result')->default('');
             $table->integer('start_time')->default(0);
             $table->integer('end_time')->default(0);
