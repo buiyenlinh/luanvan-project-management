@@ -5,6 +5,10 @@ export default {
       type: String,
       default: ''
     },
+    show_icon_x: {
+      type: Boolean,
+      default: true
+    },
     text: {
       type: String,
       default: ''
@@ -59,6 +63,11 @@ export default {
       this.$emit('changeValue', item);
       this.show = false;
     },
+    removeValue() {
+      this.cancel();
+      this.show = false;
+      this.$emit('remove');
+    },
     showDropdown() {
       this.show = !this.show;
     },
@@ -86,6 +95,7 @@ export default {
   <div class="select-component">
     <div :class="[size == 'sm' ? 'form-control-sm' : '', 'form-control']" @click="showDropdown">
       <span>{{ val }}</span>
+      <i class="fas fa-times icon-x" @click.stop="removeValue" v-if="show_icon_x"></i>
       <i :class="[this.show ? 'select-icon-transition' : '' , 'select-icon-bottom', 'fas fa-angle-down']"></i>
     </div>
     <div class="select-dropdown" v-if="show">
@@ -119,6 +129,14 @@ export default {
   .select-icon-transition {
     transform: rotate(180deg);
     transition: all ease-in-out 0.4s;
+  }
+
+  .icon-x {
+    position: absolute;
+    z-index: 10;
+    right: 25px;
+    top: 9px;
+    cursor: pointer;
   }
 }
 

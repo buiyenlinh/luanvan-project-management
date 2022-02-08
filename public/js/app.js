@@ -2129,6 +2129,10 @@ __webpack_require__.r(__webpack_exports__);
       type: String,
       "default": ''
     },
+    show_icon_x: {
+      type: Boolean,
+      "default": true
+    },
     text: {
       type: String,
       "default": ''
@@ -2186,6 +2190,11 @@ __webpack_require__.r(__webpack_exports__);
       this.val = item[this.variable.first] || item[this.variable.second];
       this.$emit('changeValue', item);
       this.show = false;
+    },
+    removeValue: function removeValue() {
+      this.cancel();
+      this.show = false;
+      this.$emit('remove');
     },
     showDropdown: function showDropdown() {
       this.show = !this.show;
@@ -2315,6 +2324,9 @@ __webpack_require__.r(__webpack_exports__);
     },
     getLeaderSearch: function getLeaderSearch(_leader) {
       this.search.leader = _leader.id;
+    },
+    removeLeaderSearch: function removeLeaderSearch() {
+      this.search.leader = null;
     },
     handleSearch: function handleSearch() {
       this.last_page = 1;
@@ -2455,6 +2467,10 @@ __webpack_require__.r(__webpack_exports__);
         this.department.leader = _leader.id;
         this.error.leader = '';
       }
+    },
+    removeLeader: function removeLeader() {
+      this.department.leader = null;
+      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
     },
     removeMember: function removeMember(_index) {
       this.members_show.splice(_index, 1);
@@ -2864,7 +2880,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.checkName();
       this.checkEndTime();
       this.checkStartTime();
-      this.checkManager();
+
+      if (this.$root.auth.role.level < 3) {
+        this.checkManager();
+      } else {
+        this.project.manager = this.$root.auth.id;
+      }
 
       if (this.project.start_time > this.project.end_time) {
         this.$root.showError('Ngày bắt đầu phải trước ngày kết thức');
@@ -3112,11 +3133,13 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       project_id: '',
+      project: null,
       search: {
         name: ''
       },
       list: null,
       loading_list: false,
+      loading_add: false,
       task: null,
       error: null,
       validate_form: false,
@@ -3125,7 +3148,7 @@ __webpack_require__.r(__webpack_exports__);
         status: false
       },
       select_label: {
-        text: '--- Tìm nhãn ---',
+        text: '--- Tìm tên nhãn ---',
         status: false
       },
       select_pre_task: {
@@ -3154,7 +3177,50 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     onSubmit: function onSubmit() {
+      var _this2 = this;
+
       this.checkName();
+      this.checkStartTime();
+      this.checkEndTime();
+      this.checkDepartment();
+      this.checkRelayTime();
+
+      if (this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.delay_time == '') {
+        var formData = new FormData();
+        formData.append('name', this.task.name);
+        formData.append('describe', this.task.describe);
+        formData.append('result', this.task.result);
+        formData.append('label_id', this.task.label_id);
+        formData.append('project_id', this.task.project_id);
+        formData.append('department_id', this.task.department_id);
+        formData.append('file', this.task.file);
+        formData.append('start_time', this.task.start_time);
+        formData.append('end_time', this.task.end_time);
+        formData.append('delay_time', this.task.delay_time);
+
+        if (this.task.id != null) {
+          console.log("Cập nhật");
+        } else {
+          this.loading_add = true;
+          this.$root.api.post("project/".concat(this.project_id, "/task/add"), formData).then(function (res) {
+            _this2.loading_add = false;
+
+            if (res.data.status == 'OK') {
+              _this2.$notify(res.data.message, 'success');
+
+              $('#task_modal_add_update').modal('hide');
+
+              _this2.getList();
+            } else {
+              _this2.$root.showError(res.data.error);
+            }
+          })["catch"](function (err) {
+            _this2.$root.showError(res.data.error);
+
+            _this2.loading_add = false;
+          });
+        }
+      }
     },
     handleSearch: function handleSearch() {
       console.log("handleSearch");
@@ -3162,8 +3228,11 @@ __webpack_require__.r(__webpack_exports__);
     getDepartmentSearch: function getDepartmentSearch(_department) {
       this.task.department_id = _deparment.id;
     },
+    removeDepartmentSearch: function removeDepartmentSearch() {
+      this.task.department_id = '';
+    },
     closeModal: function closeModal() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.validate_form = false;
       this.task = {
@@ -3175,7 +3244,6 @@ __webpack_require__.r(__webpack_exports__);
         end_time: '',
         delay_time: '',
         label_id: '',
-        project_id: null,
         pre_task_id: null,
         department_id: null,
         file: ''
@@ -3183,6 +3251,7 @@ __webpack_require__.r(__webpack_exports__);
       this.error = {
         name: '',
         describe: '',
+        department: '',
         result: '',
         start_time: '',
         end_time: '',
@@ -3198,7 +3267,7 @@ __webpack_require__.r(__webpack_exports__);
         status: !this.select_department.status
       };
       this.select_label = {
-        text: '--- Tìm nhãn ---',
+        text: '--- Tìm tên nhãn ---',
         status: !this.select_label.status
       };
       this.select_pre_task = {
@@ -3206,16 +3275,24 @@ __webpack_require__.r(__webpack_exports__);
         status: !this.select_pre_task.status
       };
       setTimeout(function () {
-        _this2.validate_form = true;
+        _this3.validate_form = true;
       }, 300);
     },
     getDepartment: function getDepartment(_deparment) {
       this.task.department_id = _deparment.id;
       this.select_department.text = _deparment.name;
     },
+    removeDepartment: function removeDepartment() {
+      this.task.department_id = null;
+      this.select_department.text = '--- Tìm phòng ban ---';
+    },
     getLabel: function getLabel(_label) {
       this.task.label_id = _label.id;
       this.select_label.text = _label.name;
+    },
+    removeLabel: function removeLabel() {
+      this.task.label_id = null;
+      this.select_label.text = '--- Tìm tên nhãn ---';
     },
     handleGetFile: function handleGetFile(_file) {
       this.task.file = _file.target.files[0];
@@ -3225,33 +3302,118 @@ __webpack_require__.r(__webpack_exports__);
       this.task.pre_task_id = _pre_task.id;
       this.select_pre_task.text = _pre_task.name;
     },
+    removePreTask: function removePreTask() {
+      this.task.pre_task_id = null;
+      this.select_pre_task.text = '--- Tìm tên công việc ---';
+    },
     checkName: function checkName() {
       if (this.task.name == '') {
         this.error.name = 'Tên công việc là bắt buộc';
       } else {
         this.error.name = '';
       }
+    },
+    checkStartTime: function checkStartTime() {
+      if (this.task.start_time == '') {
+        this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
+      } else if (this.task.start_time < this.project.start_time || this.task.start_time > this.project.end_time) {
+        this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với thời gian của dự án';
+      } else if (this.task.end_time != '' && this.task.start_time > this.task.end_time) {
+        this.error.start_time = 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc';
+      } else {
+        if (this.error.end_time == 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu') {
+          this.error.end_time = '';
+        }
+
+        this.error.start_time = '';
+      }
+    },
+    checkEndTime: function checkEndTime() {
+      var end_time_task = new Date(this.task.end_time).getTime();
+      var end_time_project = new Date(this.project.end_time).getTime();
+      var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
+
+      if (this.task.end_time == '') {
+        this.error.end_time = 'Thời gian kết thúc là bắt buộc';
+      } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project + delay_time_project) {
+        this.error.end_time = 'Thời gian kết thúc công việc không phù hợp với thời gian của dự án';
+      } else if (this.task.start_time != '' && this.task.start_time > this.task.end_time) {
+        this.error.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu';
+      } else {
+        if (this.error.start_time == 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc') {
+          this.error.start_time = '';
+        }
+
+        this.error.end_time = '';
+      }
+    },
+    checkRelayTime: function checkRelayTime() {
+      var end_time_task = new Date(this.task.end_time).getTime();
+      var end_time_project = new Date(this.project.end_time).getTime();
+      var delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
+      var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
+
+      if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
+        this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
+      } else {
+        this.error.delay_time = '';
+      }
+    },
+    checkDepartment: function checkDepartment() {
+      if (this.task.department_id == null || this.task.department_id < 0) {
+        this.error.department = 'Phân công cho phòng ban là bắt buộc';
+      } else {
+        this.error.department = '';
+      }
+    },
+    getProject: function getProject() {
+      var _this4 = this;
+
+      this.$root.api.get("project/info/".concat(this.project_id)).then(function (res) {
+        if (res.data.status == 'OK') {
+          _this4.project = res.data.data;
+        } else {
+          _this4.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this4.$root.showError(err);
+      });
     }
   },
   created: function created() {
     this.closeModal();
   },
   mounted: function mounted() {
-    var _this3 = this;
+    var _this5 = this;
 
     this.project_id = this.$route.params.id;
     this.getList();
+    this.getProject();
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', function () {
-      _this3.closeModal();
+      _this5.closeModal();
     });
   },
   watch: {
     'task.name': function taskName() {
-      if (!this.validate_form) {
-        return;
-      }
-
+      if (!this.validate_form) return;
       this.checkName();
+    },
+    'task.start_time': function taskStart_time() {
+      if (!this.validate_form) return;
+      this.checkStartTime();
+    },
+    'task.end_time': function taskEnd_time() {
+      if (!this.validate_form) return;
+      this.checkEndTime();
+      this.checkRelayTime();
+    },
+    'task.delay_time': function taskDelay_time() {
+      if (!this.validate_form) return;
+      this.checkRelayTime();
+    },
+    'task.department_id': function taskDepartment_id() {
+      if (!this.validate_form) return;
+      this.checkDepartment();
     }
   }
 });
@@ -3626,7 +3788,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
+exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-component .icon-x[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 25px;\n  top: 9px;\n  cursor: pointer;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
 
 // exports
 
@@ -22240,6 +22402,18 @@ var render = function () {
       [
         _c("span", [_vm._v(_vm._s(_vm.val))]),
         _vm._v(" "),
+        _vm.show_icon_x
+          ? _c("i", {
+              staticClass: "fas fa-times icon-x",
+              on: {
+                click: function ($event) {
+                  $event.stopPropagation()
+                  return _vm.removeValue.apply(null, arguments)
+                },
+              },
+            })
+          : _vm._e(),
+        _vm._v(" "),
         _c("i", {
           class: [
             this.show ? "select-icon-transition" : "",
@@ -22476,7 +22650,10 @@ var render = function () {
                         statusReset: false,
                         variable: { first: "fullname", second: "username" },
                       },
-                      on: { changeValue: _vm.getLeaderSearch },
+                      on: {
+                        changeValue: _vm.getLeaderSearch,
+                        remove: _vm.removeLeaderSearch,
+                      },
                     }),
                   ],
                   1
@@ -22737,7 +22914,10 @@ var render = function () {
                                   second: "username",
                                 },
                               },
-                              on: { changeValue: _vm.getLeader },
+                              on: {
+                                changeValue: _vm.getLeader,
+                                remove: _vm.removeLeader,
+                              },
                             }),
                             _vm._v(" "),
                             _c(
@@ -22761,6 +22941,7 @@ var render = function () {
                               attrs: {
                                 size: "sm",
                                 text: "-- Tìm họ tên hoặc tên đăng nhập --",
+                                show_icon_x: false,
                                 url: "user/search-user-not-deparment",
                                 statusReset: _vm.reset_select_comp,
                                 variable: {
@@ -22841,7 +23022,7 @@ var render = function () {
                           staticClass: "btn btn-secondary btn-sm",
                           attrs: { type: "button", "data-dismiss": "modal" },
                         },
-                        [_vm._v("Close")]
+                        [_vm._v("Đóng")]
                       ),
                     ]),
                   ]
@@ -24062,30 +24243,37 @@ var render = function () {
               }),
             ]),
             _vm._v(" "),
-            _c(
-              "div",
-              { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
-              [
-                _c("m-select", {
-                  attrs: {
-                    size: "sm",
-                    text: "--Tìm theo quản lý--",
-                    url: "user/search-manager",
-                    statusReset: false,
-                    variable: { first: "fullname", second: "username" },
-                  },
-                  on: { changeValue: _vm.getUserSearch },
-                }),
-              ],
-              1
-            ),
+            _vm.$root.isAdmin()
+              ? _c(
+                  "div",
+                  { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                  [
+                    _c("m-select", {
+                      attrs: {
+                        size: "sm",
+                        text: "--Tìm theo quản lý--",
+                        url: "user/search-manager",
+                        statusReset: false,
+                        variable: { first: "fullname", second: "username" },
+                      },
+                      on: { changeValue: _vm.getUserSearch },
+                    }),
+                  ],
+                  1
+                )
+              : _vm._e(),
             _vm._v(" "),
             _vm._m(0),
             _vm._v(" "),
             _vm.$root.isManager()
               ? _c(
                   "div",
-                  { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
+                  {
+                    class: [
+                      _vm.$root.auth.role.level == 3 ? "col-md-7" : "col-md-4",
+                      "col-sm-12 col-6 text-right mb-2",
+                    ],
+                  },
                   [
                     _c(
                       "button",
@@ -24467,43 +24655,45 @@ var render = function () {
                           ]
                         ),
                         _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c(
+                        _vm.$root.isAdmin()
+                          ? _c(
                               "div",
-                              { staticClass: "form-group" },
+                              { staticClass: "col-md-6 col-sm-12 col-12" },
                               [
-                                _vm._m(7),
-                                _vm._v(" "),
-                                _c("m-select", {
-                                  attrs: {
-                                    size: "sm",
-                                    text: _vm.text_select,
-                                    url: "user/search-manager",
-                                    statusReset: _vm.reset_select_comp,
-                                    variable: {
-                                      first: "fullname",
-                                      second: "username",
-                                    },
-                                  },
-                                  on: { changeValue: _vm.getManager },
-                                }),
-                                _vm._v(" "),
                                 _c(
                                   "div",
-                                  {
-                                    staticClass:
-                                      "text-danger font-italic error",
-                                  },
-                                  [_vm._v(_vm._s(_vm.error.manager))]
+                                  { staticClass: "form-group" },
+                                  [
+                                    _vm._m(7),
+                                    _vm._v(" "),
+                                    _c("m-select", {
+                                      attrs: {
+                                        size: "sm",
+                                        text: _vm.text_select,
+                                        url: "user/search-manager",
+                                        statusReset: _vm.reset_select_comp,
+                                        variable: {
+                                          first: "fullname",
+                                          second: "username",
+                                        },
+                                      },
+                                      on: { changeValue: _vm.getManager },
+                                    }),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-danger font-italic error",
+                                      },
+                                      [_vm._v(_vm._s(_vm.error.manager))]
+                                    ),
+                                  ],
+                                  1
                                 ),
-                              ],
-                              1
-                            ),
-                          ]
-                        ),
+                              ]
+                            )
+                          : _vm._e(),
                         _vm._v(" "),
                         _c(
                           "div",
@@ -24660,7 +24850,7 @@ var render = function () {
                             staticClass: "btn btn-secondary btn-sm",
                             attrs: { type: "button", "data-dismiss": "modal" },
                           },
-                          [_vm._v("Close")]
+                          [_vm._v("Đóng")]
                         ),
                       ]),
                     ]
@@ -24691,7 +24881,7 @@ var render = function () {
                 [
                   _vm._m(10),
                   _vm._v(" "),
-                  _vm.$root.isAdmin()
+                  _vm.$root.isManager()
                     ? _c("div", { staticClass: "modal-body" }, [
                         _vm.project.name
                           ? _c(
@@ -24908,488 +25098,582 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "task" } }, [
-    _c(
-      "form",
-      {
-        on: {
-          submit: function ($event) {
-            $event.preventDefault()
-            return _vm.handleSearch.apply(null, arguments)
+  return _c(
+    "div",
+    { attrs: { id: "task" } },
+    [
+      _vm.project
+        ? _c("h3", { staticClass: "mb-2" }, [
+            _vm._v("Dự án: " + _vm._s(_vm.project.name)),
+          ])
+        : _c("m-spinner", { staticClass: "mb-2" }),
+      _vm._v(" "),
+      _c(
+        "form",
+        {
+          on: {
+            submit: function ($event) {
+              $event.preventDefault()
+              return _vm.handleSearch.apply(null, arguments)
+            },
           },
         },
-      },
-      [
-        _c("div", { staticClass: "row" }, [
-          _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
-            _c("input", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: _vm.search.name,
-                  expression: "search.name",
+        [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-md-3 col-sm-5 col-12 mb-2" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.search.name,
+                    expression: "search.name",
+                  },
+                ],
+                staticClass: "form-control form-control-sm",
+                attrs: { type: "text", placeholder: "Tên công việc..." },
+                domProps: { value: _vm.search.name },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.$set(_vm.search, "name", $event.target.value)
+                  },
                 },
+              }),
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+              [
+                _c("m-select", {
+                  attrs: {
+                    size: "sm",
+                    text: "--Tìm theo phòng ban--",
+                    url: "department/search",
+                    statusReset: false,
+                    variable: { first: "name" },
+                  },
+                  on: {
+                    changeValue: _vm.getDepartmentSearch,
+                    remove: _vm.removeDepartmentSearch,
+                  },
+                }),
               ],
-              staticClass: "form-control form-control-sm",
-              attrs: { type: "text", placeholder: "Tên công việc..." },
-              domProps: { value: _vm.search.name },
-              on: {
-                input: function ($event) {
-                  if ($event.target.composing) {
-                    return
-                  }
-                  _vm.$set(_vm.search, "name", $event.target.value)
-                },
-              },
-            }),
+              1
+            ),
+            _vm._v(" "),
+            _vm._m(0),
+            _vm._v(" "),
+            _vm.$root.isManager()
+              ? _c(
+                  "div",
+                  { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
+                  [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-info btn-sm",
+                        attrs: {
+                          "data-toggle": "modal",
+                          "data-target": "#task_modal_add_update",
+                        },
+                      },
+                      [_vm._v("Thêm")]
+                    ),
+                  ]
+                )
+              : _vm._e(),
           ]),
-          _vm._v(" "),
+        ]
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "list" }, [
+        _vm.loading_list
+          ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
+          : _vm.list && _vm.list.length > 0
+          ? _c("div", [_c("b", [_vm._v("Danh sách công việc")])])
+          : _c("div", [_vm._v("\n      Chưa có công việc nào\n    ")]),
+      ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "task_modal_add_update" } },
+        [
           _c(
             "div",
-            { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+            { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
             [
-              _c("m-select", {
-                attrs: {
-                  size: "sm",
-                  text: "--Tìm theo phòng ban--",
-                  url: "department/search",
-                  statusReset: false,
-                  variable: { first: "name" },
-                },
-                on: { changeValue: _vm.getDepartmentSearch },
-              }),
-            ],
-            1
-          ),
-          _vm._v(" "),
-          _vm._m(0),
-          _vm._v(" "),
-          _vm.$root.isManager()
-            ? _c(
-                "div",
-                { staticClass: "col-md-4 col-sm-12 col-6 text-right mb-2" },
-                [
+              _c("div", { staticClass: "modal-content" }, [
+                _vm._m(1),
+                _vm._v(" "),
+                _c("div", { staticClass: "modal-body" }, [
                   _c(
-                    "button",
+                    "form",
                     {
-                      staticClass: "btn btn-info btn-sm",
-                      attrs: {
-                        "data-toggle": "modal",
-                        "data-target": "#task_modal_add_update",
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.onSubmit.apply(null, arguments)
+                        },
                       },
                     },
-                    [_vm._v("Thêm")]
-                  ),
-                ]
-              )
-            : _vm._e(),
-        ]),
-      ]
-    ),
-    _vm._v(" "),
-    _c("div", { staticClass: "list" }, [
-      _vm.loading_list
-        ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
-        : _vm._e(),
-      _vm._v(" "),
-      _vm.list && _vm.list.length > 0
-        ? _c("div", [_c("h3", [_vm._v("Danh sách task")])])
-        : _c("div", [_vm._v("\n      Chưa có công việc nào\n    ")]),
-    ]),
-    _vm._v(" "),
-    _c(
-      "div",
-      { staticClass: "modal fade", attrs: { id: "task_modal_add_update" } },
-      [
-        _c(
-          "div",
-          { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
-          [
-            _c("div", { staticClass: "modal-content" }, [
-              _vm._m(1),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-body" }, [
-                _c(
-                  "form",
-                  {
-                    on: {
-                      submit: function ($event) {
-                        $event.preventDefault()
-                        return _vm.onSubmit.apply(null, arguments)
-                      },
-                    },
-                  },
-                  [
-                    _c("div", { staticClass: "row" }, [
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(2),
-                          _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.task.name,
-                                expression: "task.name",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "text" },
-                            domProps: { value: _vm.task.name },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(_vm.task, "name", $event.target.value)
-                              },
-                            },
-                          }),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "text-danger font-italic error" },
-                            [_vm._v(_vm._s(_vm.error.name))]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                    [
+                      _c("div", { staticClass: "row" }, [
                         _c(
                           "div",
-                          { staticClass: "form-group" },
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _vm._m(3),
-                            _vm._v(" "),
-                            _c("m-select", {
-                              attrs: {
-                                size: "sm",
-                                text: _vm.select_pre_task.text,
-                                url:
-                                  "project/" + this.project_id + "/task/search",
-                                statusReset: _vm.select_pre_task.status,
-                                variable: { first: "name" },
-                              },
-                              on: { changeValue: _vm.getPreTask },
-                            }),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "text-danger font-italic error" },
-                              [_vm._v(_vm._s(_vm.error.end_time))]
-                            ),
-                          ],
-                          1
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(2),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.task.name,
+                                    expression: "task.name",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text" },
+                                domProps: { value: _vm.task.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.task,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "text-danger font-italic error",
+                                },
+                                [_vm._v(_vm._s(_vm.error.name))]
+                              ),
+                            ]),
+                          ]
                         ),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(4),
-                          _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.task.start_time,
-                                expression: "task.start_time",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "date" },
-                            domProps: { value: _vm.task.start_time },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.task,
-                                  "start_time",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "text-danger font-italic error" },
-                            [_vm._v(_vm._s(_vm.error.start_time))]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(5),
-                          _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.task.end_time,
-                                expression: "task.end_time",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "date" },
-                            domProps: { value: _vm.task.end_time },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.task,
-                                  "end_time",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "text-danger font-italic error" },
-                            [_vm._v(_vm._s(_vm.error.end_time))]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _vm._m(6),
                         _vm._v(" "),
                         _c(
                           "div",
-                          { staticClass: "input-group input-group-sm mb-3" },
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _c("input", {
-                              directives: [
-                                {
-                                  name: "model",
-                                  rawName: "v-model",
-                                  value: _vm.task.delay_time,
-                                  expression: "task.delay_time",
-                                },
+                            _c(
+                              "div",
+                              { staticClass: "form-group" },
+                              [
+                                _vm._m(3),
+                                _vm._v(" "),
+                                _c("m-select", {
+                                  attrs: {
+                                    size: "sm",
+                                    text: _vm.select_pre_task.text,
+                                    url:
+                                      "project/" +
+                                      this.project_id +
+                                      "/task/search",
+                                    statusReset: _vm.select_pre_task.status,
+                                    variable: { first: "name" },
+                                  },
+                                  on: {
+                                    changeValue: _vm.getPreTask,
+                                    remove: _vm.removePreTask,
+                                  },
+                                }),
                               ],
-                              staticClass: "form-control form-control-sm",
-                              attrs: { type: "number" },
-                              domProps: { value: _vm.task.delay_time },
-                              on: {
-                                input: function ($event) {
-                                  if ($event.target.composing) {
-                                    return
-                                  }
-                                  _vm.$set(
-                                    _vm.task,
-                                    "delay_time",
-                                    $event.target.value
-                                  )
+                              1
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(4),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.task.start_time,
+                                    expression: "task.start_time",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "date" },
+                                domProps: { value: _vm.task.start_time },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.task,
+                                      "start_time",
+                                      $event.target.value
+                                    )
+                                  },
                                 },
-                              },
-                            }),
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "text-danger font-italic error",
+                                },
+                                [_vm._v(_vm._s(_vm.error.start_time))]
+                              ),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(5),
+                              _vm._v(" "),
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.task.end_time,
+                                    expression: "task.end_time",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "date" },
+                                domProps: { value: _vm.task.end_time },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.task,
+                                      "end_time",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "text-danger font-italic error",
+                                },
+                                [_vm._v(_vm._s(_vm.error.end_time))]
+                              ),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _vm._m(6),
                             _vm._v(" "),
-                            _vm._m(7),
+                            _c(
+                              "div",
+                              { staticClass: "input-group input-group-sm" },
+                              [
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.task.delay_time,
+                                      expression: "task.delay_time",
+                                    },
+                                  ],
+                                  staticClass: "form-control form-control-sm",
+                                  attrs: { type: "number" },
+                                  domProps: { value: _vm.task.delay_time },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.task,
+                                        "delay_time",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _vm._m(7),
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "text-danger font-italic error mb-3",
+                              },
+                              [_vm._v(_vm._s(_vm.error.delay_time))]
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "form-group" },
+                              [
+                                _vm._m(8),
+                                _vm._v(" "),
+                                _c("m-select", {
+                                  attrs: {
+                                    size: "sm",
+                                    text: _vm.select_department.text,
+                                    url: "department/search",
+                                    statusReset: _vm.select_department.status,
+                                    variable: { first: "name" },
+                                  },
+                                  on: {
+                                    changeValue: _vm.getDepartment,
+                                    remove: _vm.removeDepartment,
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "text-danger font-italic error",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.department))]
+                                ),
+                              ],
+                              1
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "form-group" },
+                              [
+                                _vm._m(9),
+                                _vm._v(" "),
+                                _c("m-select", {
+                                  attrs: {
+                                    size: "sm",
+                                    text: _vm.select_label.text,
+                                    url: "label/search",
+                                    statusReset: _vm.select_label.status,
+                                    variable: { first: "name" },
+                                  },
+                                  on: {
+                                    changeValue: _vm.getLabel,
+                                    remove: _vm.removeLabel,
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "text-danger font-italic error",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.manager))]
+                                ),
+                              ],
+                              1
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(10),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("textarea", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.task.describe,
+                                    expression: "task.describe",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text", rows: "4" },
+                                domProps: { value: _vm.task.describe },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.task,
+                                      "describe",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(11),
+                              _vm._v(" "),
+                              _c("textarea", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.task.result,
+                                    expression: "task.result",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text", rows: "4" },
+                                domProps: { value: _vm.task.result },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.task,
+                                      "result",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(12),
+                              _vm._v(" "),
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-info btn-sm",
+                                  attrs: { type: "button" },
+                                  on: {
+                                    click: function ($event) {
+                                      return _vm.$refs.ref_file.click()
+                                    },
+                                  },
+                                },
+                                [_vm._v("Chọn tập tin")]
+                              ),
+                              _vm._v(" "),
+                              _c("input", {
+                                ref: "ref_file",
+                                staticStyle: { display: "none" },
+                                attrs: { type: "file" },
+                                on: { change: _vm.handleGetFile },
+                              }),
+                              _vm._v(" "),
+                              _vm.file_show
+                                ? _c("div", [
+                                    _vm._v(
+                                      "File được chọn: " + _vm._s(_vm.file_show)
+                                    ),
+                                  ])
+                                : _vm._e(),
+                            ]),
                           ]
                         ),
                       ]),
                       _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                      _c("div", { staticClass: "modal-footer" }, [
                         _c(
-                          "div",
-                          { staticClass: "form-group" },
+                          "button",
+                          {
+                            staticClass: "btn btn-info btn-sm",
+                            attrs: { type: "submit" },
+                          },
                           [
-                            _vm._m(8),
-                            _vm._v(" "),
-                            _c("m-select", {
-                              attrs: {
-                                size: "sm",
-                                text: _vm.select_department.text,
-                                url: "department/search",
-                                statusReset: _vm.select_department.status,
-                                variable: { first: "name" },
-                              },
-                              on: { changeValue: _vm.getDepartment },
-                            }),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "text-danger font-italic error" },
-                              [_vm._v(_vm._s(_vm.error.manager))]
+                            _vm._v(
+                              "\n                " +
+                                _vm._s(_vm.task.id ? "Cập nhật" : "Thêm") +
+                                "\n              "
                             ),
-                          ],
-                          1
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-secondary btn-sm",
+                            attrs: { type: "button", "data-dismiss": "modal" },
+                          },
+                          [_vm._v("Close")]
                         ),
                       ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c(
-                          "div",
-                          { staticClass: "form-group" },
-                          [
-                            _vm._m(9),
-                            _vm._v(" "),
-                            _c("m-select", {
-                              attrs: {
-                                size: "sm",
-                                text: _vm.select_label.text,
-                                url: "label/search",
-                                statusReset: _vm.select_label.status,
-                                variable: { first: "name" },
-                              },
-                              on: { changeValue: _vm.getLabel },
-                            }),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "text-danger font-italic error" },
-                              [_vm._v(_vm._s(_vm.error.manager))]
-                            ),
-                          ],
-                          1
-                        ),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(10),
-                          _c("br"),
-                          _vm._v(" "),
-                          _c("textarea", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.task.describe,
-                                expression: "task.describe",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "text", rows: "4" },
-                            domProps: { value: _vm.task.describe },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.task,
-                                  "describe",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(11),
-                          _vm._v(" "),
-                          _c("textarea", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.task.result,
-                                expression: "task.result",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "text", rows: "4" },
-                            domProps: { value: _vm.task.result },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.task,
-                                  "result",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(12),
-                          _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-info btn-sm",
-                              attrs: { type: "button" },
-                              on: {
-                                click: function ($event) {
-                                  return _vm.$refs.ref_file.click()
-                                },
-                              },
-                            },
-                            [_vm._v("Chọn tập tin")]
-                          ),
-                          _vm._v(" "),
-                          _c("input", {
-                            ref: "ref_file",
-                            staticStyle: { display: "none" },
-                            attrs: { type: "file" },
-                            on: { change: _vm.handleGetFile },
-                          }),
-                          _vm._v(" "),
-                          _vm.file_show
-                            ? _c("div", [
-                                _vm._v(
-                                  "File được chọn: " + _vm._s(_vm.file_show)
-                                ),
-                              ])
-                            : _vm._e(),
-                        ]),
-                      ]),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "modal-footer" }, [
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-info btn-sm",
-                          attrs: { type: "submit" },
-                        },
-                        [
-                          _vm._v(
-                            "\n                " +
-                              _vm._s(_vm.task.id ? "Cập nhật" : "Thêm") +
-                              "\n              "
-                          ),
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-secondary btn-sm",
-                          attrs: { type: "button", "data-dismiss": "modal" },
-                        },
-                        [_vm._v("Close")]
-                      ),
-                    ]),
-                  ]
-                ),
+                    ]
+                  ),
+                ]),
               ]),
-            ]),
-          ]
-        ),
-      ]
-    ),
-  ])
+            ]
+          ),
+        ]
+      ),
+      _vm._v(" "),
+      _vm.loading_add
+        ? _c("m-loading", {
+            attrs: {
+              title:
+                this.task.id != null
+                  ? "Đang cập nhật công việc"
+                  : "Đang thêm công việc",
+              full: true,
+            },
+          })
+        : _vm._e(),
+    ],
+    1
+  )
 }
 var staticRenderFns = [
   function () {
@@ -25436,12 +25720,7 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [
-      _c("b", [
-        _vm._v("Công việc tiên quyết "),
-        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
-      ]),
-    ])
+    return _c("label", [_c("b", [_vm._v("Công việc tiên quyết")])])
   },
   function () {
     var _vm = this
@@ -25494,7 +25773,7 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [_c("b", [_vm._v("Chọn nhãn ")])])
+    return _c("label", [_c("b", [_vm._v("Nhãn ")])])
   },
   function () {
     var _vm = this
@@ -25686,6 +25965,8 @@ var render = function () {
                           _c("td", [_vm._v(_vm._s(item.fullname))]),
                           _vm._v(" "),
                           _c("td", [_vm._v(_vm._s(item.email))]),
+                          _vm._v(" "),
+                          _c("td", [_vm._v(_vm._s(item.role.name))]),
                           _vm._v(" "),
                           _c("td", [
                             _c(
@@ -26564,6 +26845,8 @@ var staticRenderFns = [
         _c("td", [_c("b", [_vm._v("Tên tài khoản")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Email")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Nhóm")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Trạng thái")])]),
         _vm._v(" "),

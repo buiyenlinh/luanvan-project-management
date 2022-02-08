@@ -49,7 +49,7 @@ class DepartmentController extends Controller
             $db->whereIn('id', $arr);
         }
 
-        if ($this->isUser()) {
+        if ($this->isUser() || $this->isManager()) {
             $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
             if ($department_user) {
                 $db->where('id', $department_user->department_id);
