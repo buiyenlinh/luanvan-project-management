@@ -23,6 +23,7 @@ Route::middleware('is-token')->group(function() {
 
   Route::prefix('project')->middleware('check-role:1|2|3')->group(function() {
     Route::get('list', 'ProjectController@listProject')->withoutMiddleware('check-role:1|2|3');
+    Route::get('info/{id}', 'ProjectController@getProjectById')->withoutMiddleware('check-role:1|2|3');
     Route::post('add', 'ProjectController@addProject');
     Route::post('update', 'ProjectController@updateProject');
     Route::delete('delete/{id}', 'ProjectController@deleteProject');
@@ -37,8 +38,8 @@ Route::middleware('is-token')->group(function() {
   });
 
   Route::prefix('project/{id}')->group(function(){
-    Route::prefix('task')->middleware('check-role:1|2')->group(function() {
-      Route::get('list', 'TaskController@taskInProject');
+    Route::prefix('task')->middleware('check-role:1|2|3')->group(function() {
+      Route::get('list', 'TaskController@taskInProject')->withoutMiddleware('check-role:1|2|3');
       Route::post('search', 'TaskController@searchTaskName');
       Route::post('add', 'TaskController@add');
     });

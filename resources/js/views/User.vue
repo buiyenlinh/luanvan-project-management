@@ -342,6 +342,7 @@ export default {
               <td><b>Tên đăng nhập</b></td>
               <td><b>Tên tài khoản</b></td>
               <td><b>Email</b></td>
+              <td><b>Nhóm</b></td>
               <td><b>Trạng thái</b></td>
               <td><b>Ngày tạo</b></td>
               <td></td>
@@ -359,6 +360,7 @@ export default {
                 <td>{{ item.username }}</td>
                 <td>{{ item.fullname }}</td>
                 <td>{{ item.email }}</td>
+                <td>{{ item.role.name }}</td>
                 <td>
                   <span class="badge" :class="{
                     'badge-secondary': !item.active,

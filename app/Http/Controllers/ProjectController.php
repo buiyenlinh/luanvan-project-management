@@ -42,17 +42,17 @@ class ProjectController extends Controller
         if ($this->isManager()) {
             $db->where('manager', $this->auth->id);
         } else if ($this->isUser()) {
-            $department_user = DepartmentUser::where('user_id', $this->auth->id);
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
             $project_ids = array();
-            foreach($department_user as $_department_user) {
-                $department = Department::find($_department_user->department_id);
-                foreach ($department->get() as $_department) {
-                    $department_task = DepartmentTask::find($_department->task->id);
-                    foreach ($department_task->get() as $_department_task) {
-                        $project_ids[] = Task::find($_department_task->task_id)->project_id;
-                    }
+
+            $department_task = DepartmentTask::where('department_id', $department_user->department_id);
+            foreach ($department_task->get() as $_department_task) {
+                $task = Task::find($_department_task->task_id);
+                if ($task) {
+                    $project_ids[] = $task->project_id;
                 }
             }
+            
             if (count($project_ids) > 0) {
                 $db->whereIn('id', $project_ids);
             } else {
@@ -216,5 +216,18 @@ class ProjectController extends Controller
         Project::find($id)->delete();
 
         return $this->success('Xóa dự án thành công');
+    }
+
+    /**
+     * Lấy thông tin dự án bằng id
+     */
+    public function getProjectById(Request $request) {
+        $project_id = $request->id;
+        if (!$project_id) {
+            return $this->success('Thông tin dự án', []);
+        }
+
+        $project = new ProjectResource(Project::find($project_id));
+        return $this->success('Thông tin dự án', $project);
     }
 }

@@ -49,6 +49,9 @@ export default {
     getLeaderSearch(_leader) {
       this.search.leader = _leader.id;
     },
+    removeLeaderSearch() {
+      this.search.leader = null;
+    },
     handleSearch() {
       this.last_page = 1;
       this.changePage(1);
@@ -175,6 +178,10 @@ export default {
         this.error.leader = '';
       }
     },
+    removeLeader() {
+      this.department.leader = null;
+      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
+    },
     removeMember(_index) {
       this.members_show.splice(_index, 1);
       this.getLeader(this._leader);
@@ -245,6 +252,7 @@ export default {
             url="user/search-user"
             :statusReset="false"
             @changeValue="getLeaderSearch"
+            @remove="removeLeaderSearch"
             :variable="{first: 'fullname', second: 'username'}"
           />
         </div>
@@ -336,6 +344,7 @@ export default {
                       url="user/search-user-not-deparment" 
                       :statusReset="reset_select_comp"
                       @changeValue="getLeader"
+                      @remove="removeLeader"
                       :variable="{first: 'fullname', second: 'username'}"
                     />
                     <div class="text-danger font-italic error">{{error.leader}}</div>
@@ -348,6 +357,7 @@ export default {
                     <m-select
                       :size="'sm'"
                       text="-- Tìm họ tên hoặc tên đăng nhập --"
+                      :show_icon_x="false"
                       url="user/search-user-not-deparment" 
                       :statusReset="reset_select_comp"
                       @changeValue="getMember"
@@ -370,7 +380,7 @@ export default {
                 <button type="submit" class="btn btn-info btn-sm">
                   {{ department.id ? 'Cập nhật' : 'Thêm'}}
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
               </div>
             </form>
           </div>

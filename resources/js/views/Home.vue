@@ -54,7 +54,7 @@ export default {
           label: 'Người dùng',
           link: "user",
           icon: "fas fa-users",
-        })
+        });
       }
       this.menu.push({
         label: 'Cá nhân',

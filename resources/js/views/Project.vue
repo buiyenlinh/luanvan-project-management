@@ -27,7 +27,11 @@ export default {
       this.checkName();
       this.checkEndTime();
       this.checkStartTime();
-      this.checkManager();
+      if (this.$root.auth.role.level < 3) {
+        this.checkManager();
+      } else {
+        this.project.manager = this.$root.auth.id;
+      }
       if (this.project.start_time > this.project.end_time) {
         this.$root.showError('Ngày bắt đầu phải trước ngày kết thức');
         this.loading_add = false;
@@ -238,7 +242,7 @@ export default {
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <input type="text" class="form-control form-control-sm" placeholder="Tên dự án..." v-model="search.name">
         </div>
-        <div class="col-md-3 col-sm-5 col-12 mb-2">
+        <div class="col-md-3 col-sm-5 col-12 mb-2" v-if="$root.isAdmin()">
           <m-select
             :size="'sm'"
             text="--Tìm theo quản lý--"
@@ -253,7 +257,7 @@ export default {
             <i class="fas fa-search"></i> Tìm
           </button>
         </div>  
-        <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isManager()">
+        <div :class="[$root.auth.role.level == 3 ? 'col-md-7' : 'col-md-4' ,'col-sm-12 col-6 text-right mb-2']" v-if="$root.isManager()">
           <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#project_modal_add">Thêm</button>
         </div>
       </div>
@@ -345,7 +349,7 @@ export default {
                     </div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="$root.isAdmin()">
                   <div class="form-group">
                     <label><b>Quản lý <span class="text-danger">*</span></b></label>
                     <m-select
@@ -386,7 +390,7 @@ export default {
                 <button type="submit" class="btn btn-info btn-sm">
                   {{ project.id ? 'Cập nhật' : 'Thêm'}}
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
               </div>
             </form>
           </div>
@@ -402,7 +406,7 @@ export default {
               <h4 class="modal-title">Xóa dự án</h4>
               <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
-            <div class="modal-body" v-if="$root.isAdmin()">
+            <div class="modal-body" v-if="$root.isManager()">
               <div v-if="project.name" class="d-flex justify-content-start">
                 <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
                 <span>
