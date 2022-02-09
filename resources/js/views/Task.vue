@@ -25,7 +25,8 @@ export default {
         text: '--- Tìm tên công việc ---',
         status: false
       },
-      file_show: ''
+      file_show: '',
+      file_updated: ''
     }
   },
   methods: {
@@ -33,7 +34,7 @@ export default {
       this.loading_list = true;
       this.$root.api.get(`project/${this.project_id}/task/list`).then(res => {
         if (res.data.status == "OK") {
-          this.list = res.data.data;
+          this.list = res.data.data.data;
           this.loading_list = false;
         } else {
           this.$root.showError(res.data.error);
@@ -62,9 +63,24 @@ export default {
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
         formData.append('delay_time', this.task.delay_time);
+        formData.append('pre_task_id', this.task.pre_task_id);
 
         if (this.task.id != null) {
-          console.log("Cập nhật")
+          formData.append('id', this.task.id);
+          this.loading_add = true;
+          this.$root.api.post(`project/${this.project_id}/task/update`, formData).then(res => {
+            this.loading_add = false;
+            if (res.data.status == 'OK') {
+              this.$notify(res.data.message, 'success');
+              $('#task_modal_add_update').modal('hide');
+              this.getList();
+            } else {
+              this.$root.showError(res.data.error);
+            }
+          }).catch (err => {
+            this.$root.showError(err);
+            this.loading_add = false;
+          })
         } else {
           this.loading_add = true;
           this.$root.api.post(`project/${this.project_id}/task/add`, formData).then(res => {
@@ -77,7 +93,7 @@ export default {
               this.$root.showError(res.data.error);
             }
           }).catch (err => {
-            this.$root.showError(res.data.error);
+            this.$root.showError(err);
             this.loading_add = false;
           })
         }
@@ -102,8 +118,8 @@ export default {
         start_time: '',
         end_time: '',
         delay_time: '',
-        label_id: '',
-        pre_task_id: null,
+        label_id: 0,
+        pre_task_id: 0,
         department_id: null,
         file: ''
       };
@@ -122,8 +138,7 @@ export default {
       }
 
       this.file_show = '';
-
-      this.list = [];
+      this.file_updated = '';
 
       this.select_department = {
         text: '--- Tìm phòng ban ---',
@@ -157,7 +172,7 @@ export default {
       this.select_label.text = _label.name;
     },
     removeLabel() {
-      this.task.label_id= null;
+      this.task.label_id= 0;
       this.select_label.text = '--- Tìm tên nhãn ---';
     },
     handleGetFile(_file) {
@@ -169,7 +184,7 @@ export default {
       this.select_pre_task.text = _pre_task.name;
     },
     removePreTask() {
-      this.task.pre_task_id = null;
+      this.task.pre_task_id = 0;
       this.select_pre_task.text = '--- Tìm tên công việc ---';
     },
     checkName() {
@@ -240,6 +255,17 @@ export default {
       }).catch(err => {
         this.$root.showError(err);
       })
+    },
+    getTaskUpdate(_task) {
+      this.task = _.clone(_task);
+      this.select_department.text = _task.department.name;
+      this.task.department_id = _task.department.id;
+      this.select_label.text = _task.label.name;
+      this.task.label_id = _task.label.id;
+      this.file_updated = _task.file;
+      if (_task.pre_task_id) {
+        this.select_pre_task.text = _task.pre_task.name;
+      }
     }
   },
   created() {
@@ -314,8 +340,45 @@ export default {
         <m-spinner/>
       </div>
       <div v-else-if="list && list.length > 0">
-        <b>Danh sách công việc</b>
-        
+        <div class="mb-3"><b>Danh sách công việc</b></div>
+        <ul class="row">
+          <li class="col-md-3 col-sm-4 col-12 mb-3"
+            v-for="(item, index) in list"
+            :key="index"
+          >
+            <div class="bg-fff info">
+              <router-link :to="{name: 'task', params: { 'id': item.id }}">
+                <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+                <p style="font-size: 12px; margin-bottom: 0px">
+                  <b>Phân cho: </b>{{item.department.name}} <br>
+                  <b>Tạo lúc: </b>{{item.created_at}} <br>
+                  <b>Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
+                </p>
+              </router-link>
+
+              <div class="text-right" style="padding: 0px 10px 10px 0px" v-if="$root.isManager()">
+                <span
+                  class="text-danger"
+                  @click="getTaskUpdate(item)"
+                  data-toggle="modal"
+                  data-target="#task_modal_delete"
+                  style="cursor: pointer"
+                >
+                  <b>Xóa</b>
+                </span>
+                <span
+                  class="text-info"
+                  @click="getTaskUpdate(item)"
+                  data-toggle="modal"
+                  data-target="#task_modal_add_update"
+                  style="cursor: pointer"
+                >
+                  <b>Sửa</b>
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
       <div v-else>
         Chưa có công việc nào
@@ -439,6 +502,7 @@ export default {
                       @change="handleGetFile"
                     />
                     <div v-if="file_show">File được chọn: {{ file_show }}</div>
+                    <div v-if="file_updated"><a target="_blank" :href="file_updated">Xem tệp đã chọn</a></div>
                   </div>
                 </div>
 
@@ -455,6 +519,6 @@ export default {
       </div>
     </div>
 
-    <m-loading v-if="loading_add" :title="this.task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
+    <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
   </div>
 </template>

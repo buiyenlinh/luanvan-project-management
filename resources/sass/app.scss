@@ -850,3 +850,20 @@ $side-bar-width-small: 65px;
         }
     }
 }
+
+/* Công việc */
+#task {
+    ul {
+        padding: 0px;
+        list-style: none;
+
+        li .info {
+            border: 1px solid #17a2b8;
+            a {
+                color: #333;
+                padding: 10px;
+                display: inline-block;
+            }
+        }
+    }
+}

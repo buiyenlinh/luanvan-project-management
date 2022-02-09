@@ -3155,7 +3155,8 @@ __webpack_require__.r(__webpack_exports__);
         text: '--- Tìm tên công việc ---',
         status: false
       },
-      file_show: ''
+      file_show: '',
+      file_updated: ''
     };
   },
   methods: {
@@ -3165,7 +3166,7 @@ __webpack_require__.r(__webpack_exports__);
       this.loading_list = true;
       this.$root.api.get("project/".concat(this.project_id, "/task/list")).then(function (res) {
         if (res.data.status == "OK") {
-          _this.list = res.data.data;
+          _this.list = res.data.data.data;
           _this.loading_list = false;
         } else {
           _this.$root.showError(res.data.error);
@@ -3197,9 +3198,28 @@ __webpack_require__.r(__webpack_exports__);
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
         formData.append('delay_time', this.task.delay_time);
+        formData.append('pre_task_id', this.task.pre_task_id);
 
         if (this.task.id != null) {
-          console.log("Cập nhật");
+          formData.append('id', this.task.id);
+          this.loading_add = true;
+          this.$root.api.post("project/".concat(this.project_id, "/task/update"), formData).then(function (res) {
+            _this2.loading_add = false;
+
+            if (res.data.status == 'OK') {
+              _this2.$notify(res.data.message, 'success');
+
+              $('#task_modal_add_update').modal('hide');
+
+              _this2.getList();
+            } else {
+              _this2.$root.showError(res.data.error);
+            }
+          })["catch"](function (err) {
+            _this2.$root.showError(err);
+
+            _this2.loading_add = false;
+          });
         } else {
           this.loading_add = true;
           this.$root.api.post("project/".concat(this.project_id, "/task/add"), formData).then(function (res) {
@@ -3215,7 +3235,7 @@ __webpack_require__.r(__webpack_exports__);
               _this2.$root.showError(res.data.error);
             }
           })["catch"](function (err) {
-            _this2.$root.showError(res.data.error);
+            _this2.$root.showError(err);
 
             _this2.loading_add = false;
           });
@@ -3243,8 +3263,8 @@ __webpack_require__.r(__webpack_exports__);
         start_time: '',
         end_time: '',
         delay_time: '',
-        label_id: '',
-        pre_task_id: null,
+        label_id: 0,
+        pre_task_id: 0,
         department_id: null,
         file: ''
       };
@@ -3261,7 +3281,7 @@ __webpack_require__.r(__webpack_exports__);
         pre_task_id: ''
       };
       this.file_show = '';
-      this.list = [];
+      this.file_updated = '';
       this.select_department = {
         text: '--- Tìm phòng ban ---',
         status: !this.select_department.status
@@ -3291,7 +3311,7 @@ __webpack_require__.r(__webpack_exports__);
       this.select_label.text = _label.name;
     },
     removeLabel: function removeLabel() {
-      this.task.label_id = null;
+      this.task.label_id = 0;
       this.select_label.text = '--- Tìm tên nhãn ---';
     },
     handleGetFile: function handleGetFile(_file) {
@@ -3303,7 +3323,7 @@ __webpack_require__.r(__webpack_exports__);
       this.select_pre_task.text = _pre_task.name;
     },
     removePreTask: function removePreTask() {
-      this.task.pre_task_id = null;
+      this.task.pre_task_id = 0;
       this.select_pre_task.text = '--- Tìm tên công việc ---';
     },
     checkName: function checkName() {
@@ -3378,6 +3398,18 @@ __webpack_require__.r(__webpack_exports__);
       })["catch"](function (err) {
         _this4.$root.showError(err);
       });
+    },
+    getTaskUpdate: function getTaskUpdate(_task) {
+      this.task = _.clone(_task);
+      this.select_department.text = _task.department.name;
+      this.task.department_id = _task.department.id;
+      this.select_label.text = _task.label.name;
+      this.task.label_id = _task.label.id;
+      this.file_updated = _task.file;
+
+      if (_task.pre_task_id) {
+        this.select_pre_task.text = _task.pre_task.name;
+      }
     }
   },
   created: function created() {
@@ -25194,7 +25226,125 @@ var render = function () {
         _vm.loading_list
           ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
           : _vm.list && _vm.list.length > 0
-          ? _c("div", [_c("b", [_vm._v("Danh sách công việc")])])
+          ? _c("div", [
+              _vm._m(1),
+              _vm._v(" "),
+              _c(
+                "ul",
+                { staticClass: "row" },
+                _vm._l(_vm.list, function (item, index) {
+                  return _c(
+                    "li",
+                    {
+                      key: index,
+                      staticClass: "col-md-3 col-sm-4 col-12 mb-3",
+                    },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "bg-fff info" },
+                        [
+                          _c(
+                            "router-link",
+                            {
+                              attrs: {
+                                to: { name: "task", params: { id: item.id } },
+                              },
+                            },
+                            [
+                              _c("p", [
+                                _c("i", { staticClass: "fas fa-folder" }),
+                                _vm._v("  "),
+                                _c("b", [_vm._v(_vm._s(item.name))]),
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "p",
+                                {
+                                  staticStyle: {
+                                    "font-size": "12px",
+                                    "margin-bottom": "0px",
+                                  },
+                                },
+                                [
+                                  _c("b", [_vm._v("Phân cho: ")]),
+                                  _vm._v(_vm._s(item.department.name) + " "),
+                                  _c("br"),
+                                  _vm._v(" "),
+                                  _c("b", [_vm._v("Tạo lúc: ")]),
+                                  _vm._v(_vm._s(item.created_at) + " "),
+                                  _c("br"),
+                                  _vm._v(" "),
+                                  _c("b", [_vm._v("Trạng thái: ")]),
+                                  _vm._v(
+                                    " " +
+                                      _vm._s(
+                                        _vm.$root.getStatusTaskName(
+                                          item.status.status
+                                        )
+                                      ) +
+                                      "\n              "
+                                  ),
+                                ]
+                              ),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _vm.$root.isManager()
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass: "text-right",
+                                  staticStyle: { padding: "0px 10px 10px 0px" },
+                                },
+                                [
+                                  _c(
+                                    "span",
+                                    {
+                                      staticClass: "text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      attrs: {
+                                        "data-toggle": "modal",
+                                        "data-target": "#task_modal_delete",
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.getTaskUpdate(item)
+                                        },
+                                      },
+                                    },
+                                    [_c("b", [_vm._v("Xóa")])]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "span",
+                                    {
+                                      staticClass: "text-info",
+                                      staticStyle: { cursor: "pointer" },
+                                      attrs: {
+                                        "data-toggle": "modal",
+                                        "data-target": "#task_modal_add_update",
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.getTaskUpdate(item)
+                                        },
+                                      },
+                                    },
+                                    [_c("b", [_vm._v("Sửa")])]
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
+                        ],
+                        1
+                      ),
+                    ]
+                  )
+                }),
+                0
+              ),
+            ])
           : _c("div", [_vm._v("\n      Chưa có công việc nào\n    ")]),
       ]),
       _vm._v(" "),
@@ -25207,7 +25357,7 @@ var render = function () {
             { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
             [
               _c("div", { staticClass: "modal-content" }, [
-                _vm._m(1),
+                _vm._m(2),
                 _vm._v(" "),
                 _c("div", { staticClass: "modal-body" }, [
                   _c(
@@ -25227,7 +25377,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(2),
+                              _vm._m(3),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -25274,7 +25424,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(3),
+                                _vm._m(4),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25303,7 +25453,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(4),
+                              _vm._m(5),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -25347,7 +25497,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(5),
+                              _vm._m(6),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -25390,7 +25540,7 @@ var render = function () {
                           "div",
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _vm._m(6),
+                            _vm._m(7),
                             _vm._v(" "),
                             _c(
                               "div",
@@ -25422,7 +25572,7 @@ var render = function () {
                                   },
                                 }),
                                 _vm._v(" "),
-                                _vm._m(7),
+                                _vm._m(8),
                               ]
                             ),
                             _vm._v(" "),
@@ -25445,7 +25595,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(8),
+                                _vm._m(9),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25483,7 +25633,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(9),
+                                _vm._m(10),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25518,7 +25668,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(10),
+                              _vm._m(11),
                               _c("br"),
                               _vm._v(" "),
                               _c("textarea", {
@@ -25555,7 +25705,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(11),
+                              _vm._m(12),
                               _vm._v(" "),
                               _c("textarea", {
                                 directives: [
@@ -25591,7 +25741,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(12),
+                              _vm._m(13),
                               _vm._v(" "),
                               _c(
                                 "button",
@@ -25618,6 +25768,21 @@ var render = function () {
                                 ? _c("div", [
                                     _vm._v(
                                       "File được chọn: " + _vm._s(_vm.file_show)
+                                    ),
+                                  ])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm.file_updated
+                                ? _c("div", [
+                                    _c(
+                                      "a",
+                                      {
+                                        attrs: {
+                                          target: "_blank",
+                                          href: _vm.file_updated,
+                                        },
+                                      },
+                                      [_vm._v("Xem tệp đã chọn")]
                                     ),
                                   ])
                                 : _vm._e(),
@@ -25664,7 +25829,7 @@ var render = function () {
         ? _c("m-loading", {
             attrs: {
               title:
-                this.task.id != null
+                _vm.task.id != null
                   ? "Đang cập nhật công việc"
                   : "Đang thêm công việc",
               full: true,
@@ -25686,6 +25851,14 @@ var staticRenderFns = [
         { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
         [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n        ")]
       ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "mb-3" }, [
+      _c("b", [_vm._v("Danh sách công việc")]),
     ])
   },
   function () {
@@ -42878,6 +43051,16 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
     isManager: function isManager() {
       if (!this.auth) return false;
       return this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3;
+    },
+    getStatusTaskName: function getStatusTaskName($num_status) {
+      if ($num_status == 0) return 'Đã giao';
+      if ($num_status == 1) return 'Tiếp nhận';
+      if ($num_status == 2) return 'Đang thực hiện';
+      if ($num_status == 3) return 'Hoàn thành';
+      if ($num_status == 4) return 'Chờ duyệt';
+      if ($num_status == 5) return 'Đã duyệt';
+      if ($num_status == 6) return 'Không được duyệt';
+      if ($num_status == 7) return 'Từ chối nhận';
     }
   },
   created: function created() {
