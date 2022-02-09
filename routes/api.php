@@ -42,6 +42,7 @@ Route::middleware('is-token')->group(function() {
       Route::get('list', 'TaskController@taskInProject')->withoutMiddleware('check-role:1|2|3');
       Route::post('search', 'TaskController@searchTaskName');
       Route::post('add', 'TaskController@add');
+      Route::post('update', 'TaskController@update');
     });
   });
 

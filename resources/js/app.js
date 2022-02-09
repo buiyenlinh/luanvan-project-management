@@ -386,6 +386,16 @@ new Vue({
 			if (!this.auth) return false;
 			return (this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3);
 		},
+		getStatusTaskName($num_status) {
+			if ($num_status == 0) return 'Đã giao';
+			if ($num_status == 1) return 'Tiếp nhận';
+			if ($num_status == 2) return 'Đang thực hiện';
+			if ($num_status == 3) return 'Hoàn thành';
+			if ($num_status == 4) return 'Chờ duyệt';
+			if ($num_status == 5) return 'Đã duyệt';
+			if ($num_status == 6) return 'Không được duyệt';
+			if ($num_status == 7) return 'Từ chối nhận';
+		}
   },
   created() {
     this.page_title = document.title;

@@ -22,9 +22,9 @@ class CreateTasksTable extends Migration
             $table->integer('start_time')->default(0);
             $table->integer('end_time')->default(0);
             $table->smallinteger('delay_time')->default(0); // Đơn vị: Ngày
-            $table->foreignId('label_id')->constrained('yl_labels')->unsigned();
+            $table->integer('label_id')->default(0);
             $table->foreignId('project_id')->constrained('yl_projects')->unsigned();
-            $table->integer('pre_task_id');
+            $table->integer('pre_task_id')->default(0);
             $table->timestamps();
         });
     }

@@ -955,3 +955,20 @@ a:hover {
   top: 10px;
 }
 
+/* Công việc */
+
+#task ul {
+  padding: 0px;
+  list-style: none;
+}
+
+#task ul li .info {
+  border: 1px solid #17a2b8;
+}
+
+#task ul li .info a {
+  color: #333;
+  padding: 10px;
+  display: inline-block;
+}
+
