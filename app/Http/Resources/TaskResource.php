@@ -8,6 +8,7 @@ use App\Model\DepartmentTaskStatus;
 use App\Model\Department;
 use App\Model\Label;
 use App\Model\Task;
+use App\Model\PreTask;
 use App\Http\Resources\DepartmentTaskStatusResource;
 use App\Http\Resources\DepartmentResource;
 
@@ -38,7 +39,11 @@ class TaskResource extends JsonResource
 
         $label = Label::find($this->label_id);
 
-        $pre_task = Task::find($this->pre_task_id);
+        $pre_tasks = array();
+        $pre_task = PreTask::where('task_id', $this->id)->get();
+        foreach ($pre_task as $_pre_task) {
+            $pre_tasks[] = Task::find($_pre_task->pre_task_id);
+        }
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -49,8 +54,7 @@ class TaskResource extends JsonResource
             'delay_time' => $this->delay_time,
             'label_id' => $this->label_id,
             'project_id' => $this->project_id,
-            'pre_task_id' => $this->pre_task_id,
-            'pre_task' => $this->pre_task,
+            'pre_task_ids' => $pre_tasks,
             'file' => $file,
             'status' => $status,
             'department_id' => $this->department_id,

@@ -866,4 +866,17 @@ $side-bar-width-small: 65px;
             }
         }
     }
+
+    .pre-tasks {
+        ul li {
+            border: 1px solid #ddd;
+            display: inline-block;
+            padding: 3px 8px 5px 8px;
+            border-radius: 30px;
+            font-size: 13px;
+            i {
+                margin-left: 5px;
+            }
+        }
+    }
 }
