@@ -118,6 +118,7 @@ export default {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: 35px;
   }
   .select-icon-bottom {
     position: absolute;

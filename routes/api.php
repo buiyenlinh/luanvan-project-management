@@ -43,6 +43,7 @@ Route::middleware('is-token')->group(function() {
       Route::post('search', 'TaskController@searchTaskName');
       Route::post('add', 'TaskController@add');
       Route::post('update', 'TaskController@update');
+      Route::delete('delete/{id_task}', 'TaskController@delete');
     });
   });
 

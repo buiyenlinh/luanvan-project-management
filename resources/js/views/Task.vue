@@ -5,11 +5,13 @@ export default {
       project_id: '',
       project: null,
       search: {
-        name: ''
+        name: '',
+        department_id: ''
       },
       list: null,
       loading_list: false,
       loading_add: false,
+      loading_delete: false,
       task: null,
       error: null,
       validate_form: false,
@@ -26,13 +28,17 @@ export default {
         status: false
       },
       file_show: '',
-      file_updated: ''
+      file_updated: '',
+      pre_task_ids_show: [],
+      pre_task_id_check: []
     }
   },
   methods: {
     getList() {
       this.loading_list = true;
-      this.$root.api.get(`project/${this.project_id}/task/list`).then(res => {
+      this.$root.api.get(`project/${this.project_id}/task/list`, {
+        params: this.search
+      }).then(res => {
         if (res.data.status == "OK") {
           this.list = res.data.data.data;
           this.loading_list = false;
@@ -63,7 +69,13 @@ export default {
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
         formData.append('delay_time', this.task.delay_time);
-        formData.append('pre_task_id', this.task.pre_task_id);
+
+        if (this.pre_task_ids_show.length > 0) {
+          for (let i in this.pre_task_ids_show) {
+            formData.append('pre_task_ids[]', this.pre_task_ids_show[i].id);
+          }
+        }
+        
 
         if (this.task.id != null) {
           formData.append('id', this.task.id);
@@ -99,14 +111,28 @@ export default {
         }
       }
     },
-    handleSearch() {
-      console.log("handleSearch");
+    onSubmitDelete() {
+      this.loading_delete = true;
+      this.$root.api.delete(`project/${this.project_id}/task/delete/${this.task.id}`).then(res => {
+        this.loading_delete = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#task_modal_delete').modal('hide');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_delete = false;
+      })
     },
     getDepartmentSearch(_department) {
-      this.task.department_id = _deparment.id;
+      console.log(_department);
+      this.search.department_id = _department.id;
     },
     removeDepartmentSearch() {
-      this.task.department_id = '';
+      this.search.department_id = '';
     },
     closeModal() {
       this.validate_form = false;
@@ -119,7 +145,7 @@ export default {
         end_time: '',
         delay_time: '',
         label_id: 0,
-        pre_task_id: 0,
+        pre_task_ids: [],
         department_id: null,
         file: ''
       };
@@ -134,11 +160,13 @@ export default {
         delay_time: '',
         label_id: '',
         project_id: '',
-        pre_task_id: ''
+        pre_task_ids: ''
       }
 
       this.file_show = '';
       this.file_updated = '';
+      this.pre_task_ids_show = [];
+      this.pre_task_id_check = [];
 
       this.select_department = {
         text: '--- Tìm phòng ban ---',
@@ -159,9 +187,9 @@ export default {
         this.validate_form = true;
       }, 300);
     },
-    getDepartment(_deparment) {
-      this.task.department_id= _deparment.id;
-      this.select_department.text = _deparment.name;
+    getDepartment(_department) {
+      this.task.department_id= _department.id;
+      this.select_department.text = _department.name;
     },
     removeDepartment() {
       this.task.department_id= null;
@@ -180,12 +208,18 @@ export default {
       this.file_show = _file.target.files[0].name;
     },
     getPreTask(_pre_task) {
-      this.task.pre_task_id= _pre_task.id;
-      this.select_pre_task.text = _pre_task.name;
+      if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
+        this.pre_task_id_check.push(_pre_task.id);
+        this.pre_task_ids_show.push(_pre_task);
+      } else {
+        this.select_pre_task.text = '--- Tìm tên công việc --- ';
+      }
     },
     removePreTask() {
-      this.task.pre_task_id = 0;
       this.select_pre_task.text = '--- Tìm tên công việc ---';
+    },
+    removePreTaskId(_index) {
+      this.pre_task_ids_show.splice(_index, 1);
     },
     checkName() {
       if (this.task.name == '') {
@@ -227,16 +261,21 @@ export default {
       }
     },
     checkRelayTime() {
-      let end_time_task = new Date(this.task.end_time).getTime();
-      let end_time_project = new Date(this.project.end_time).getTime();
-      let delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
-      let delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
-
-      if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
-        this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
+      if (this.task.delay_time < 0) {
+        this.error.delay_time = 'Thời gian trì hoãn phải lớn hơn hoặc bằng 0';
       } else {
-        this.error.delay_time = '';
+        let end_time_task = new Date(this.task.end_time).getTime();
+        let end_time_project = new Date(this.project.end_time).getTime();
+        let delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
+        let delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
+
+        if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
+          this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
+        } else {
+          this.error.delay_time = '';
+        }
       }
+      
     },
     checkDepartment() {
       if (this.task.department_id == null || this.task.department_id < 0) {
@@ -260,11 +299,17 @@ export default {
       this.task = _.clone(_task);
       this.select_department.text = _task.department.name;
       this.task.department_id = _task.department.id;
-      this.select_label.text = _task.label.name;
-      this.task.label_id = _task.label.id;
+      if (_task.label) {
+        this.select_label.text = _task.label.name;
+        this.task.label_id = _task.label.id;
+      }
+      
       this.file_updated = _task.file;
-      if (_task.pre_task_id) {
-        this.select_pre_task.text = _task.pre_task.name;
+      if (_task.pre_task_ids) {
+        for (let i in _task.pre_task_ids) {
+          this.pre_task_id_check.push(_task.pre_task_ids[i].id);
+        }
+        this.pre_task_ids_show = _task.pre_task_ids;
       }
     }
   },
@@ -309,7 +354,7 @@ export default {
   <div id="task">
     <h3 v-if="project" class="mb-2">Dự án: {{ project.name }}</h3>
     <m-spinner v-else class="mb-2" />
-    <form @submit.prevent="handleSearch">
+    <form @submit.prevent="getList">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <input type="text" class="form-control form-control-sm" placeholder="Tên công việc..." v-model="search.name">
@@ -352,7 +397,7 @@ export default {
                 <p style="font-size: 12px; margin-bottom: 0px">
                   <b>Phân cho: </b>{{item.department.name}} <br>
                   <b>Tạo lúc: </b>{{item.created_at}} <br>
-                  <b>Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
+                  <b v-if="item.status != null" >Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
                 </p>
               </router-link>
 
@@ -381,7 +426,7 @@ export default {
         </ul>
       </div>
       <div v-else>
-        Chưa có công việc nào
+        Không có công việc nào
       </div>
     </div>
 
@@ -400,21 +445,6 @@ export default {
                     <label><b>Tên công việc <span class="text-danger">*</span></b></label>
                     <input type="text" class="form-control form-control-sm" v-model="task.name">
                     <div class="text-danger font-italic error">{{error.name}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Công việc tiên quyết</b></label>
-                    <m-select
-                      :size="'sm'"
-                      :text="select_pre_task.text"
-                      :url="`project/${this.project_id}/task/search`"
-                      :statusReset="select_pre_task.status"
-                      @changeValue="getPreTask"
-                      @remove="removePreTask"
-                      :variable="{first: 'name'}"
-                    />
                   </div>
                 </div>
 
@@ -477,6 +507,29 @@ export default {
                   </div>
                 </div>
 
+                <div class="col-md-6 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Công việc tiên quyết</b></label>
+                    <m-select
+                      :size="'sm'"
+                      :text="select_pre_task.text"
+                      :url="`project/${this.project_id}/task/search`"
+                      :statusReset="select_pre_task.status"
+                      @changeValue="getPreTask"
+                      @remove="removePreTask"
+                      :variable="{first: 'name'}"
+                    />
+                  </div>
+                  <div class="pre-tasks">
+                    <ul>
+                      <li v-for="(item, index) in pre_task_ids_show" :key="index">
+                        {{item.name }}
+                        <i class="fas fa-times icon-remove" @click="removePreTaskId(index)"></i>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Mô tả</b></label><br>
@@ -511,7 +564,7 @@ export default {
                 <button type="submit" class="btn btn-info btn-sm">
                   {{ task.id ? 'Cập nhật' : 'Thêm'}}
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
               </div>
             </form>
           </div>
@@ -519,6 +572,30 @@ export default {
       </div>
     </div>
 
+    <div class="modal fade" id="task_modal_delete">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Xóa Công việc</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="task.name" class="d-flex justify-content-start">
+              <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+              <span>
+                Bạn có muốn xóa công việc <b>{{ task.name }}</b>
+              </span>
+            </div>
+          </div>
+          <div class="modal-footer">
+              <button type="submit" class="btn btn-danger btn-sm" @click="onSubmitDelete">Xóa</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
   </div>
 </template>

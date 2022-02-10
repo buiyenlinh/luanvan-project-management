@@ -972,3 +972,15 @@ a:hover {
   display: inline-block;
 }
 
+#task .pre-tasks ul li {
+  border: 1px solid #ddd;
+  display: inline-block;
+  padding: 3px 8px 5px 8px;
+  border-radius: 30px;
+  font-size: 13px;
+}
+
+#task .pre-tasks ul li i {
+  margin-left: 5px;
+}
+

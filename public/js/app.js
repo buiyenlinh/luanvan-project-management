@@ -3135,11 +3135,13 @@ __webpack_require__.r(__webpack_exports__);
       project_id: '',
       project: null,
       search: {
-        name: ''
+        name: '',
+        department_id: ''
       },
       list: null,
       loading_list: false,
       loading_add: false,
+      loading_delete: false,
       task: null,
       error: null,
       validate_form: false,
@@ -3156,7 +3158,9 @@ __webpack_require__.r(__webpack_exports__);
         status: false
       },
       file_show: '',
-      file_updated: ''
+      file_updated: '',
+      pre_task_ids_show: [],
+      pre_task_id_check: []
     };
   },
   methods: {
@@ -3164,7 +3168,9 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       this.loading_list = true;
-      this.$root.api.get("project/".concat(this.project_id, "/task/list")).then(function (res) {
+      this.$root.api.get("project/".concat(this.project_id, "/task/list"), {
+        params: this.search
+      }).then(function (res) {
         if (res.data.status == "OK") {
           _this.list = res.data.data.data;
           _this.loading_list = false;
@@ -3198,7 +3204,12 @@ __webpack_require__.r(__webpack_exports__);
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
         formData.append('delay_time', this.task.delay_time);
-        formData.append('pre_task_id', this.task.pre_task_id);
+
+        if (this.pre_task_ids_show.length > 0) {
+          for (var i in this.pre_task_ids_show) {
+            formData.append('pre_task_ids[]', this.pre_task_ids_show[i].id);
+          }
+        }
 
         if (this.task.id != null) {
           formData.append('id', this.task.id);
@@ -3242,17 +3253,37 @@ __webpack_require__.r(__webpack_exports__);
         }
       }
     },
-    handleSearch: function handleSearch() {
-      console.log("handleSearch");
+    onSubmitDelete: function onSubmitDelete() {
+      var _this3 = this;
+
+      this.loading_delete = true;
+      this.$root.api["delete"]("project/".concat(this.project_id, "/task/delete/").concat(this.task.id)).then(function (res) {
+        _this3.loading_delete = false;
+
+        if (res.data.status == "OK") {
+          _this3.$notify(res.data.message, 'success');
+
+          $('#task_modal_delete').modal('hide');
+
+          _this3.getList();
+        } else {
+          _this3.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this3.$root.showError(err);
+
+        _this3.loading_delete = false;
+      });
     },
     getDepartmentSearch: function getDepartmentSearch(_department) {
-      this.task.department_id = _deparment.id;
+      console.log(_department);
+      this.search.department_id = _department.id;
     },
     removeDepartmentSearch: function removeDepartmentSearch() {
-      this.task.department_id = '';
+      this.search.department_id = '';
     },
     closeModal: function closeModal() {
-      var _this3 = this;
+      var _this4 = this;
 
       this.validate_form = false;
       this.task = {
@@ -3264,7 +3295,7 @@ __webpack_require__.r(__webpack_exports__);
         end_time: '',
         delay_time: '',
         label_id: 0,
-        pre_task_id: 0,
+        pre_task_ids: [],
         department_id: null,
         file: ''
       };
@@ -3278,10 +3309,12 @@ __webpack_require__.r(__webpack_exports__);
         delay_time: '',
         label_id: '',
         project_id: '',
-        pre_task_id: ''
+        pre_task_ids: ''
       };
       this.file_show = '';
       this.file_updated = '';
+      this.pre_task_ids_show = [];
+      this.pre_task_id_check = [];
       this.select_department = {
         text: '--- Tìm phòng ban ---',
         status: !this.select_department.status
@@ -3295,12 +3328,12 @@ __webpack_require__.r(__webpack_exports__);
         status: !this.select_pre_task.status
       };
       setTimeout(function () {
-        _this3.validate_form = true;
+        _this4.validate_form = true;
       }, 300);
     },
-    getDepartment: function getDepartment(_deparment) {
-      this.task.department_id = _deparment.id;
-      this.select_department.text = _deparment.name;
+    getDepartment: function getDepartment(_department) {
+      this.task.department_id = _department.id;
+      this.select_department.text = _department.name;
     },
     removeDepartment: function removeDepartment() {
       this.task.department_id = null;
@@ -3319,12 +3352,18 @@ __webpack_require__.r(__webpack_exports__);
       this.file_show = _file.target.files[0].name;
     },
     getPreTask: function getPreTask(_pre_task) {
-      this.task.pre_task_id = _pre_task.id;
-      this.select_pre_task.text = _pre_task.name;
+      if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
+        this.pre_task_id_check.push(_pre_task.id);
+        this.pre_task_ids_show.push(_pre_task);
+      } else {
+        this.select_pre_task.text = '--- Tìm tên công việc --- ';
+      }
     },
     removePreTask: function removePreTask() {
-      this.task.pre_task_id = 0;
       this.select_pre_task.text = '--- Tìm tên công việc ---';
+    },
+    removePreTaskId: function removePreTaskId(_index) {
+      this.pre_task_ids_show.splice(_index, 1);
     },
     checkName: function checkName() {
       if (this.task.name == '') {
@@ -3368,15 +3407,19 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     checkRelayTime: function checkRelayTime() {
-      var end_time_task = new Date(this.task.end_time).getTime();
-      var end_time_project = new Date(this.project.end_time).getTime();
-      var delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
-      var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
-
-      if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
-        this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
+      if (this.task.delay_time < 0) {
+        this.error.delay_time = 'Thời gian trì hoãn phải lớn hơn hoặc bằng 0';
       } else {
-        this.error.delay_time = '';
+        var end_time_task = new Date(this.task.end_time).getTime();
+        var end_time_project = new Date(this.project.end_time).getTime();
+        var delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
+        var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
+
+        if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
+          this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
+        } else {
+          this.error.delay_time = '';
+        }
       }
     },
     checkDepartment: function checkDepartment() {
@@ -3387,28 +3430,36 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     getProject: function getProject() {
-      var _this4 = this;
+      var _this5 = this;
 
       this.$root.api.get("project/info/".concat(this.project_id)).then(function (res) {
         if (res.data.status == 'OK') {
-          _this4.project = res.data.data;
+          _this5.project = res.data.data;
         } else {
-          _this4.$root.showError(res.data.error);
+          _this5.$root.showError(res.data.error);
         }
       })["catch"](function (err) {
-        _this4.$root.showError(err);
+        _this5.$root.showError(err);
       });
     },
     getTaskUpdate: function getTaskUpdate(_task) {
       this.task = _.clone(_task);
       this.select_department.text = _task.department.name;
       this.task.department_id = _task.department.id;
-      this.select_label.text = _task.label.name;
-      this.task.label_id = _task.label.id;
+
+      if (_task.label) {
+        this.select_label.text = _task.label.name;
+        this.task.label_id = _task.label.id;
+      }
+
       this.file_updated = _task.file;
 
-      if (_task.pre_task_id) {
-        this.select_pre_task.text = _task.pre_task.name;
+      if (_task.pre_task_ids) {
+        for (var i in _task.pre_task_ids) {
+          this.pre_task_id_check.push(_task.pre_task_ids[i].id);
+        }
+
+        this.pre_task_ids_show = _task.pre_task_ids;
       }
     }
   },
@@ -3416,13 +3467,13 @@ __webpack_require__.r(__webpack_exports__);
     this.closeModal();
   },
   mounted: function mounted() {
-    var _this5 = this;
+    var _this6 = this;
 
     this.project_id = this.$route.params.id;
     this.getList();
     this.getProject();
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', function () {
-      _this5.closeModal();
+      _this6.closeModal();
     });
   },
   watch: {
@@ -3820,7 +3871,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-component .icon-x[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 25px;\n  top: 9px;\n  cursor: pointer;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
+exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  padding-right: 35px;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-component .icon-x[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 25px;\n  top: 9px;\n  cursor: pointer;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
 
 // exports
 
@@ -25146,7 +25197,7 @@ var render = function () {
           on: {
             submit: function ($event) {
               $event.preventDefault()
-              return _vm.handleSearch.apply(null, arguments)
+              return _vm.getList.apply(null, arguments)
             },
           },
         },
@@ -25275,7 +25326,9 @@ var render = function () {
                                   _vm._v(_vm._s(item.created_at) + " "),
                                   _c("br"),
                                   _vm._v(" "),
-                                  _c("b", [_vm._v("Trạng thái: ")]),
+                                  item.status != null
+                                    ? _c("b", [_vm._v("Trạng thái: ")])
+                                    : _vm._e(),
                                   _vm._v(
                                     " " +
                                       _vm._s(
@@ -25345,7 +25398,7 @@ var render = function () {
                 0
               ),
             ])
-          : _c("div", [_vm._v("\n      Chưa có công việc nào\n    ")]),
+          : _c("div", [_vm._v("\n      Không có công việc nào\n    ")]),
       ]),
       _vm._v(" "),
       _c(
@@ -25420,40 +25473,8 @@ var render = function () {
                           "div",
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _c(
-                              "div",
-                              { staticClass: "form-group" },
-                              [
-                                _vm._m(4),
-                                _vm._v(" "),
-                                _c("m-select", {
-                                  attrs: {
-                                    size: "sm",
-                                    text: _vm.select_pre_task.text,
-                                    url:
-                                      "project/" +
-                                      this.project_id +
-                                      "/task/search",
-                                    statusReset: _vm.select_pre_task.status,
-                                    variable: { first: "name" },
-                                  },
-                                  on: {
-                                    changeValue: _vm.getPreTask,
-                                    remove: _vm.removePreTask,
-                                  },
-                                }),
-                              ],
-                              1
-                            ),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(5),
+                              _vm._m(4),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -25497,7 +25518,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(6),
+                              _vm._m(5),
                               _vm._v(" "),
                               _c("input", {
                                 directives: [
@@ -25540,7 +25561,7 @@ var render = function () {
                           "div",
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _vm._m(7),
+                            _vm._m(6),
                             _vm._v(" "),
                             _c(
                               "div",
@@ -25572,7 +25593,7 @@ var render = function () {
                                   },
                                 }),
                                 _vm._v(" "),
-                                _vm._m(8),
+                                _vm._m(7),
                               ]
                             ),
                             _vm._v(" "),
@@ -25595,7 +25616,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(9),
+                                _vm._m(8),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25633,7 +25654,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(10),
+                                _vm._m(9),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25660,6 +25681,65 @@ var render = function () {
                               ],
                               1
                             ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "form-group" },
+                              [
+                                _vm._m(10),
+                                _vm._v(" "),
+                                _c("m-select", {
+                                  attrs: {
+                                    size: "sm",
+                                    text: _vm.select_pre_task.text,
+                                    url:
+                                      "project/" +
+                                      this.project_id +
+                                      "/task/search",
+                                    statusReset: _vm.select_pre_task.status,
+                                    variable: { first: "name" },
+                                  },
+                                  on: {
+                                    changeValue: _vm.getPreTask,
+                                    remove: _vm.removePreTask,
+                                  },
+                                }),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "pre-tasks" }, [
+                              _c(
+                                "ul",
+                                _vm._l(
+                                  _vm.pre_task_ids_show,
+                                  function (item, index) {
+                                    return _c("li", { key: index }, [
+                                      _vm._v(
+                                        "\n                      " +
+                                          _vm._s(item.name) +
+                                          "\n                      "
+                                      ),
+                                      _c("i", {
+                                        staticClass: "fas fa-times icon-remove",
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.removePreTaskId(index)
+                                          },
+                                        },
+                                      }),
+                                    ])
+                                  }
+                                ),
+                                0
+                              ),
+                            ]),
                           ]
                         ),
                         _vm._v(" "),
@@ -25813,7 +25893,7 @@ var render = function () {
                             staticClass: "btn btn-secondary btn-sm",
                             attrs: { type: "button", "data-dismiss": "modal" },
                           },
-                          [_vm._v("Close")]
+                          [_vm._v("Đóng")]
                         ),
                       ]),
                     ]
@@ -25822,6 +25902,55 @@ var render = function () {
               ]),
             ]
           ),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "task_modal_delete" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(14),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _vm.task.name
+                  ? _c("div", { staticClass: "d-flex justify-content-start" }, [
+                      _c("i", {
+                        staticClass:
+                          "fas fa-exclamation-triangle text-danger icon-warm-delete",
+                      }),
+                      _vm._v(" "),
+                      _c("span", [
+                        _vm._v("\n              Bạn có muốn xóa công việc "),
+                        _c("b", [_vm._v(_vm._s(_vm.task.name))]),
+                      ]),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-danger btn-sm",
+                    attrs: { type: "submit" },
+                    on: { click: _vm.onSubmitDelete },
+                  },
+                  [_vm._v("Xóa")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-secondary btn-sm",
+                    attrs: { type: "button", "data-dismiss": "modal" },
+                  },
+                  [_vm._v("Đóng")]
+                ),
+              ]),
+            ]),
+          ]),
         ]
       ),
       _vm._v(" "),
@@ -25834,6 +25963,12 @@ var render = function () {
                   : "Đang thêm công việc",
               full: true,
             },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_delete
+        ? _c("m-loading", {
+            attrs: { title: "Đang xóa công việc", full: true },
           })
         : _vm._e(),
     ],
@@ -25893,12 +26028,6 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [_c("b", [_vm._v("Công việc tiên quyết")])])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
     return _c("label", [
       _c("b", [
         _vm._v("Thời gian bắt đầu "),
@@ -25952,6 +26081,12 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Công việc tiên quyết")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
     return _c("label", [_c("b", [_vm._v("Mô tả")])])
   },
   function () {
@@ -25965,6 +26100,23 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", [_c("b", [_vm._v("Đính kèm")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa Công việc")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
   },
 ]
 render._withStripped = true
