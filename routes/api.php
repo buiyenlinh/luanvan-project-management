@@ -27,6 +27,7 @@ Route::middleware('is-token')->group(function() {
     Route::post('add', 'ProjectController@addProject');
     Route::post('update', 'ProjectController@updateProject');
     Route::delete('delete/{id}', 'ProjectController@deleteProject');
+    Route::delete('delete-file/{id}', 'ProjectController@deleteFile');
   });
 
   Route::prefix('department')->middleware('check-role:1|2')->group(function() {
@@ -44,6 +45,7 @@ Route::middleware('is-token')->group(function() {
       Route::post('add', 'TaskController@add');
       Route::post('update', 'TaskController@update');
       Route::delete('delete/{id_task}', 'TaskController@delete');
+      Route::delete('delete-file/{id_task}', 'TaskController@deleteFile');
     });
   });
 

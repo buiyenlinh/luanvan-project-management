@@ -30,7 +30,8 @@ export default {
       file_show: '',
       file_updated: '',
       pre_task_ids_show: [],
-      pre_task_id_check: []
+      pre_task_id_check: [],
+      loading_delete_file: false
     }
   },
   methods: {
@@ -55,9 +56,16 @@ export default {
       this.checkStartTime();
       this.checkEndTime();
       this.checkDepartment();
-      this.checkRelayTime();
-      if (this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.delay_time == '') {
+      let check = false;
+      if (this.pre_task_ids_show.length > 0) {
+        for (let i in this.pre_task_ids_show) {
+          if (!this.checkTimePreTask(this.pre_task_ids_show[i], this.task)) {
+            check = true;
+          }
+        }
+      }
 
+      if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.pre_task_ids == '') {
         let formData = new FormData();
         formData.append('name', this.task.name);
         formData.append('describe', this.task.describe);
@@ -68,7 +76,6 @@ export default {
         formData.append('file', this.task.file);
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
-        formData.append('delay_time', this.task.delay_time);
 
         if (this.pre_task_ids_show.length > 0) {
           for (let i in this.pre_task_ids_show) {
@@ -76,7 +83,6 @@ export default {
           }
         }
         
-
         if (this.task.id != null) {
           formData.append('id', this.task.id);
           this.loading_add = true;
@@ -143,7 +149,6 @@ export default {
         result: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         label_id: 0,
         pre_task_ids: [],
         department_id: null,
@@ -157,7 +162,6 @@ export default {
         result: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         label_id: '',
         project_id: '',
         pre_task_ids: ''
@@ -207,13 +211,47 @@ export default {
       this.task.file = _file.target.files[0];
       this.file_show = _file.target.files[0].name;
     },
-    getPreTask(_pre_task) {
-      if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
-        this.pre_task_id_check.push(_pre_task.id);
-        this.pre_task_ids_show.push(_pre_task);
-      } else {
+    deleteFile() {
+      this.loading_delete_file = true;
+      this.$root.api.delete(`project/${this.project_id}/task/delete-file/${this.task.id}`).then(res => {
+        this.loading_delete_file = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          this.task.file = '';
+          this.file_updated = '';
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_delete_file = false;
+      })
+    },
+    removeFile() {
+      this.file_show = '';
+      this.task.file = '';
+    },
+    checkTimePreTask(_pre_task, _task) {
+      let start_time_task = new Date(_task.start_time).getTime(); // đơn vị mili giây
+      if (start_time_task <= _pre_task.end_time * 1000) { // Dvi giây nên * 1000
+        this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với công việc tiên quyết "' + _pre_task.name + '"';
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
+        return false;
       }
+      return true;
+    },
+    getPreTask(_pre_task) {
+      if (this.checkTimePreTask(_pre_task, this.task)) {
+        if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
+          this.pre_task_id_check.push(_pre_task.id);
+          this.pre_task_ids_show.push(_pre_task);
+        } else {
+          this.select_pre_task.text = '';
+          this.select_pre_task.text = '--- Tìm tên công việc --- ';
+        }
+      }
+      
     },
     removePreTask() {
       this.select_pre_task.text = '--- Tìm tên công việc ---';
@@ -245,11 +283,10 @@ export default {
     checkEndTime() {
       let end_time_task = new Date(this.task.end_time).getTime();
       let end_time_project = new Date(this.project.end_time).getTime();
-      let delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
 
       if (this.task.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
-      } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project + delay_time_project) {
+      } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project) {
         this.error.end_time = 'Thời gian kết thúc công việc không phù hợp với thời gian của dự án'
       } else if (this.task.start_time != '' && this.task.start_time > this.task.end_time) {
         this.error.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu'
@@ -259,23 +296,6 @@ export default {
         }
         this.error.end_time = '';
       }
-    },
-    checkRelayTime() {
-      if (this.task.delay_time < 0) {
-        this.error.delay_time = 'Thời gian trì hoãn phải lớn hơn hoặc bằng 0';
-      } else {
-        let end_time_task = new Date(this.task.end_time).getTime();
-        let end_time_project = new Date(this.project.end_time).getTime();
-        let delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
-        let delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
-
-        if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
-          this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
-        } else {
-          this.error.delay_time = '';
-        }
-      }
-      
     },
     checkDepartment() {
       if (this.task.department_id == null || this.task.department_id < 0) {
@@ -337,11 +357,6 @@ export default {
     'task.end_time' () {
       if (!this.validate_form) return;
       this.checkEndTime();
-      this.checkRelayTime();
-    },
-    'task.delay_time' () {
-      if (!this.validate_form) return;
-      this.checkRelayTime();
     },
     'task.department_id' () {
       if (!this.validate_form) return;
@@ -465,17 +480,6 @@ export default {
                 </div>
 
                 <div class="col-md-6 col-sm-12 col-12">
-                  <label><b>Thời gian trì hoãn</b></label>
-                  <div class="input-group input-group-sm">
-                    <input type="number" class="form-control form-control-sm" v-model="task.delay_time">
-                    <div class="input-group-append">
-                      <span class="input-group-text">( Ngày )</span>
-                    </div>
-                  </div>
-                  <div class="text-danger font-italic error mb-3">{{error.delay_time}}</div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Phân công cho phòng ban <span class="text-danger">*</span></b></label>
                     <m-select
@@ -554,8 +558,14 @@ export default {
                       style="display: none"
                       @change="handleGetFile"
                     />
-                    <div v-if="file_show">File được chọn: {{ file_show }}</div>
-                    <div v-if="file_updated"><a target="_blank" :href="file_updated">Xem tệp đã chọn</a></div>
+                    <div v-if="file_show">
+                      <span>File được chọn: {{ file_show }}</span>
+                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="removeFile"></i>
+                    </div>
+                    <div v-if="file_updated">
+                      <a target="_blank" :href="file_updated">Xem tệp đã chọn</a>
+                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="deleteFile"></i>
+                    </div>
                   </div>
                 </div>
 
@@ -597,5 +607,6 @@ export default {
 
     <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
     <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
+    <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm" :full="true" />
   </div>
 </template>

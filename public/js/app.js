@@ -2849,11 +2849,15 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+var _methods;
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
-    return _defineProperty({
+    var _ref;
+
+    return _ref = {
       search: {
         keyword: ''
       },
@@ -2868,12 +2872,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       last_page: 1,
       text_select: '-- Tìm quản lý --',
       reset_select_comp: false
-    }, "search", {
+    }, _defineProperty(_ref, "search", {
       name: '',
       manager: -1
-    });
+    }), _defineProperty(_ref, "file_show", ''), _defineProperty(_ref, "file_updated", ''), _defineProperty(_ref, "loading_delete_file", false), _ref;
   },
-  methods: _defineProperty({
+  methods: (_methods = {
     onSubmit: function onSubmit() {
       var _this = this;
 
@@ -2895,10 +2899,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       if (this.project.name && this.project.start_time && this.project.end_time && this.project.manager && this.project.active == 1 | this.project.active == 0) {
         this.loading_add = true;
+        var formData = new FormData();
+        formData.append('name', this.project.name);
+        formData.append('start_time', this.project.start_time);
+        formData.append('end_time', this.project.end_time);
+        formData.append('active', this.project.active);
+        formData.append('manager', this.project.manager);
+        formData.append('file', this.project.file);
 
         if (this.project.id > 0) {
           // Cập nhật
-          this.$root.api.post('project/update', this.project).then(function (res) {
+          formData.append('id', this.project.id);
+          this.$root.api.post('project/update', formData).then(function (res) {
             if (res.data.status == 'OK') {
               _this.$notify(res.data.message, 'success');
 
@@ -2917,8 +2929,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           });
         } else {
           // Thêm mới
-          this.project.created_by = this.$root.auth.id;
-          this.$root.api.post('project/add', this.project).then(function (res) {
+          formData.append('created_by', this.$root.auth.id);
+          this.$root.api.post('project/add', formData).then(function (res) {
             _this.loading_add = false;
 
             if (res.data.status == "OK") {
@@ -2951,8 +2963,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         describe: '',
         start_time: '',
         end_time: '',
-        delay_time: 0,
         active: 1,
+        file: '',
         manager: null,
         created_by: null
       };
@@ -2960,10 +2972,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         name: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         manager: '',
         created_by: ''
       };
+      this.file_show = '';
+      this.file_updated = '';
       this.text_select = '-- Tìm quản lý --';
       this.reset_select_comp = !this.reset_select_comp;
       setTimeout(function () {
@@ -3006,6 +3019,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.project.manager = _project.manager.id;
       this.project.created_by = _project.created_by.id;
       this.text_select = _project.manager.fullname || _project.manager.username;
+      this.file_updated = _project.file;
     },
     getList: function getList() {
       var _this3 = this;
@@ -3045,6 +3059,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       this.current_page = page;
       this.getList();
     },
+    handleGetFile: function handleGetFile(_file) {
+      this.project.file = _file.target.files[0];
+      this.file_show = _file.target.files[0].name;
+    },
     onSubmitDelete: function onSubmitDelete() {
       var _this4 = this;
 
@@ -3070,10 +3088,35 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     getUserSearch: function getUserSearch(_manager) {
       this.search.manager = _manager.id;
     }
-  }, "handleSearch", function handleSearch() {
+  }, _defineProperty(_methods, "handleSearch", function handleSearch() {
     this.last_page = 1;
     this.changePage(1);
-  }),
+  }), _defineProperty(_methods, "deleteFile", function deleteFile() {
+    var _this5 = this;
+
+    this.loading_delete_file = true;
+    this.$root.api["delete"]("project/delete-file/".concat(this.project.id)).then(function (res) {
+      _this5.loading_delete_file = false;
+
+      if (res.data.status == 'OK') {
+        _this5.$notify(res.data.message, 'success');
+
+        _this5.getList();
+
+        _this5.project.file = '';
+        _this5.file_updated = '';
+      } else {
+        _this5.$root.showError(res.data.error);
+      }
+    })["catch"](function (err) {
+      _this5.loading_delete_file = false;
+
+      _this5.$root.showError(err);
+    });
+  }), _defineProperty(_methods, "removeFile", function removeFile() {
+    this.file_show = '';
+    this.project.file = '';
+  }), _methods),
   created: function created() {
     this.handleCloseModal();
   },
@@ -3108,11 +3151,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   },
   mounted: function mounted() {
-    var _this5 = this;
+    var _this6 = this;
 
     this.current_page = parseInt(this.$route.query.page || 1);
     $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete', function () {
-      _this5.handleCloseModal();
+      _this6.handleCloseModal();
     });
     this.getList();
   }
@@ -3160,7 +3203,8 @@ __webpack_require__.r(__webpack_exports__);
       file_show: '',
       file_updated: '',
       pre_task_ids_show: [],
-      pre_task_id_check: []
+      pre_task_id_check: [],
+      loading_delete_file: false
     };
   },
   methods: {
@@ -3190,9 +3234,17 @@ __webpack_require__.r(__webpack_exports__);
       this.checkStartTime();
       this.checkEndTime();
       this.checkDepartment();
-      this.checkRelayTime();
+      var check = false;
 
-      if (this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.delay_time == '') {
+      if (this.pre_task_ids_show.length > 0) {
+        for (var i in this.pre_task_ids_show) {
+          if (!this.checkTimePreTask(this.pre_task_ids_show[i], this.task)) {
+            check = true;
+          }
+        }
+      }
+
+      if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.pre_task_ids == '') {
         var formData = new FormData();
         formData.append('name', this.task.name);
         formData.append('describe', this.task.describe);
@@ -3203,11 +3255,10 @@ __webpack_require__.r(__webpack_exports__);
         formData.append('file', this.task.file);
         formData.append('start_time', this.task.start_time);
         formData.append('end_time', this.task.end_time);
-        formData.append('delay_time', this.task.delay_time);
 
         if (this.pre_task_ids_show.length > 0) {
-          for (var i in this.pre_task_ids_show) {
-            formData.append('pre_task_ids[]', this.pre_task_ids_show[i].id);
+          for (var _i in this.pre_task_ids_show) {
+            formData.append('pre_task_ids[]', this.pre_task_ids_show[_i].id);
           }
         }
 
@@ -3293,7 +3344,6 @@ __webpack_require__.r(__webpack_exports__);
         result: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         label_id: 0,
         pre_task_ids: [],
         department_id: null,
@@ -3306,7 +3356,6 @@ __webpack_require__.r(__webpack_exports__);
         result: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         label_id: '',
         project_id: '',
         pre_task_ids: ''
@@ -3351,12 +3400,54 @@ __webpack_require__.r(__webpack_exports__);
       this.task.file = _file.target.files[0];
       this.file_show = _file.target.files[0].name;
     },
-    getPreTask: function getPreTask(_pre_task) {
-      if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
-        this.pre_task_id_check.push(_pre_task.id);
-        this.pre_task_ids_show.push(_pre_task);
-      } else {
+    deleteFile: function deleteFile() {
+      var _this5 = this;
+
+      this.loading_delete_file = true;
+      this.$root.api["delete"]("project/".concat(this.project_id, "/task/delete-file/").concat(this.task.id)).then(function (res) {
+        _this5.loading_delete_file = false;
+
+        if (res.data.status == "OK") {
+          _this5.$notify(res.data.message, 'success');
+
+          _this5.task.file = '';
+          _this5.file_updated = '';
+
+          _this5.getList();
+        } else {
+          _this5.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this5.$root.showError(err);
+
+        _this5.loading_delete_file = false;
+      });
+    },
+    removeFile: function removeFile() {
+      this.file_show = '';
+      this.task.file = '';
+    },
+    checkTimePreTask: function checkTimePreTask(_pre_task, _task) {
+      var start_time_task = new Date(_task.start_time).getTime(); // đơn vị mili giây
+
+      if (start_time_task <= _pre_task.end_time * 1000) {
+        // Dvi giây nên * 1000
+        this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với công việc tiên quyết "' + _pre_task.name + '"';
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
+        return false;
+      }
+
+      return true;
+    },
+    getPreTask: function getPreTask(_pre_task) {
+      if (this.checkTimePreTask(_pre_task, this.task)) {
+        if (!this.pre_task_id_check.includes(_pre_task.id) && _pre_task.id != this.task.id) {
+          this.pre_task_id_check.push(_pre_task.id);
+          this.pre_task_ids_show.push(_pre_task);
+        } else {
+          this.select_pre_task.text = '';
+          this.select_pre_task.text = '--- Tìm tên công việc --- ';
+        }
       }
     },
     removePreTask: function removePreTask() {
@@ -3390,11 +3481,10 @@ __webpack_require__.r(__webpack_exports__);
     checkEndTime: function checkEndTime() {
       var end_time_task = new Date(this.task.end_time).getTime();
       var end_time_project = new Date(this.project.end_time).getTime();
-      var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
 
       if (this.task.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
-      } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project + delay_time_project) {
+      } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project) {
         this.error.end_time = 'Thời gian kết thúc công việc không phù hợp với thời gian của dự án';
       } else if (this.task.start_time != '' && this.task.start_time > this.task.end_time) {
         this.error.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu';
@@ -3406,22 +3496,6 @@ __webpack_require__.r(__webpack_exports__);
         this.error.end_time = '';
       }
     },
-    checkRelayTime: function checkRelayTime() {
-      if (this.task.delay_time < 0) {
-        this.error.delay_time = 'Thời gian trì hoãn phải lớn hơn hoặc bằng 0';
-      } else {
-        var end_time_task = new Date(this.task.end_time).getTime();
-        var end_time_project = new Date(this.project.end_time).getTime();
-        var delay_time_task = Number(this.task.delay_time) * 24 * 60 * 60 * 1000;
-        var delay_time_project = Number(this.project.delay_time) * 24 * 60 * 60 * 1000;
-
-        if (Number(end_time_task) + delay_time_task > Number(end_time_project) + delay_time_project) {
-          this.error.delay_time = 'Thời gian trì hoãn quá hạn thời gian dự án';
-        } else {
-          this.error.delay_time = '';
-        }
-      }
-    },
     checkDepartment: function checkDepartment() {
       if (this.task.department_id == null || this.task.department_id < 0) {
         this.error.department = 'Phân công cho phòng ban là bắt buộc';
@@ -3430,16 +3504,16 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     getProject: function getProject() {
-      var _this5 = this;
+      var _this6 = this;
 
       this.$root.api.get("project/info/".concat(this.project_id)).then(function (res) {
         if (res.data.status == 'OK') {
-          _this5.project = res.data.data;
+          _this6.project = res.data.data;
         } else {
-          _this5.$root.showError(res.data.error);
+          _this6.$root.showError(res.data.error);
         }
       })["catch"](function (err) {
-        _this5.$root.showError(err);
+        _this6.$root.showError(err);
       });
     },
     getTaskUpdate: function getTaskUpdate(_task) {
@@ -3467,13 +3541,13 @@ __webpack_require__.r(__webpack_exports__);
     this.closeModal();
   },
   mounted: function mounted() {
-    var _this6 = this;
+    var _this7 = this;
 
     this.project_id = this.$route.params.id;
     this.getList();
     this.getProject();
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', function () {
-      _this6.closeModal();
+      _this7.closeModal();
     });
   },
   watch: {
@@ -3488,11 +3562,6 @@ __webpack_require__.r(__webpack_exports__);
     'task.end_time': function taskEnd_time() {
       if (!this.validate_form) return;
       this.checkEndTime();
-      this.checkRelayTime();
-    },
-    'task.delay_time': function taskDelay_time() {
-      if (!this.validate_form) return;
-      this.checkRelayTime();
     },
     'task.department_id': function taskDepartment_id() {
       if (!this.validate_form) return;
@@ -24694,50 +24763,6 @@ var render = function () {
                           ]
                         ),
                         _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _vm._m(5),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              {
-                                staticClass: "input-group input-group-sm mb-3",
-                              },
-                              [
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.project.delay_time,
-                                      expression: "project.delay_time",
-                                    },
-                                  ],
-                                  staticClass: "form-control form-control-sm",
-                                  attrs: { type: "number" },
-                                  domProps: { value: _vm.project.delay_time },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.project,
-                                        "delay_time",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _vm._m(6),
-                              ]
-                            ),
-                          ]
-                        ),
-                        _vm._v(" "),
                         _vm.$root.isAdmin()
                           ? _c(
                               "div",
@@ -24747,7 +24772,7 @@ var render = function () {
                                   "div",
                                   { staticClass: "form-group" },
                                   [
-                                    _vm._m(7),
+                                    _vm._m(5),
                                     _vm._v(" "),
                                     _c("m-select", {
                                       attrs: {
@@ -24783,7 +24808,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(8),
+                              _vm._m(6),
                               _c("br"),
                               _vm._v(" "),
                               _c("div", { staticClass: "form-check-inline" }, [
@@ -24878,7 +24903,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(9),
+                              _vm._m(7),
                               _c("br"),
                               _vm._v(" "),
                               _c("textarea", {
@@ -24906,6 +24931,75 @@ var render = function () {
                                   },
                                 },
                               }),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(8),
+                              _vm._v(" "),
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-info btn-sm",
+                                  attrs: { type: "button" },
+                                  on: {
+                                    click: function ($event) {
+                                      return _vm.$refs.ref_file.click()
+                                    },
+                                  },
+                                },
+                                [_vm._v("Chọn tập tin")]
+                              ),
+                              _vm._v(" "),
+                              _c("input", {
+                                ref: "ref_file",
+                                staticStyle: { display: "none" },
+                                attrs: { type: "file" },
+                                on: { change: _vm.handleGetFile },
+                              }),
+                              _vm._v(" "),
+                              _vm.file_show
+                                ? _c("div", [
+                                    _c("span", [
+                                      _vm._v(
+                                        "File được chọn: " +
+                                          _vm._s(_vm.file_show)
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.removeFile },
+                                    }),
+                                  ])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm.file_updated
+                                ? _c("div", [
+                                    _c(
+                                      "a",
+                                      {
+                                        attrs: {
+                                          target: "_blank",
+                                          href: _vm.file_updated,
+                                        },
+                                      },
+                                      [_vm._v("Xem tệp đã chọn")]
+                                    ),
+                                    _vm._v("  \n                    "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.deleteFile },
+                                    }),
+                                  ])
+                                : _vm._e(),
                             ]),
                           ]
                         ),
@@ -24962,7 +25056,7 @@ var render = function () {
                   },
                 },
                 [
-                  _vm._m(10),
+                  _vm._m(9),
                   _vm._v(" "),
                   _vm.$root.isManager()
                     ? _c("div", { staticClass: "modal-body" }, [
@@ -24993,7 +25087,7 @@ var render = function () {
                       ])
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._m(11),
+                  _vm._m(10),
                 ]
               ),
             ]),
@@ -25010,6 +25104,12 @@ var render = function () {
                   : "Đang thêm dự án",
               full: true,
             },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_delete_file
+        ? _c("m-loading", {
+            attrs: { title: "Đang xóa tệp đính kèm của dự án", full: true },
           })
         : _vm._e(),
     ],
@@ -25083,20 +25183,6 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [_c("b", [_vm._v("Thời gian trì hoãn")])])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "input-group-append" }, [
-      _c("span", { staticClass: "input-group-text" }, [_vm._v("( Ngày )")]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
     return _c("label", [
       _c("b", [
         _vm._v("Quản lý "),
@@ -25120,6 +25206,12 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", [_c("b", [_vm._v("Mô tả")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Đính kèm")])])
   },
   function () {
     var _vm = this
@@ -25561,62 +25653,11 @@ var render = function () {
                           "div",
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
-                            _vm._m(6),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              { staticClass: "input-group input-group-sm" },
-                              [
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.task.delay_time,
-                                      expression: "task.delay_time",
-                                    },
-                                  ],
-                                  staticClass: "form-control form-control-sm",
-                                  attrs: { type: "number" },
-                                  domProps: { value: _vm.task.delay_time },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.task,
-                                        "delay_time",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _vm._m(7),
-                              ]
-                            ),
-                            _vm._v(" "),
-                            _c(
-                              "div",
-                              {
-                                staticClass:
-                                  "text-danger font-italic error mb-3",
-                              },
-                              [_vm._v(_vm._s(_vm.error.delay_time))]
-                            ),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
                             _c(
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(8),
+                                _vm._m(6),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25654,7 +25695,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(9),
+                                _vm._m(7),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25692,7 +25733,7 @@ var render = function () {
                               "div",
                               { staticClass: "form-group" },
                               [
-                                _vm._m(10),
+                                _vm._m(8),
                                 _vm._v(" "),
                                 _c("m-select", {
                                   attrs: {
@@ -25748,7 +25789,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(11),
+                              _vm._m(9),
                               _c("br"),
                               _vm._v(" "),
                               _c("textarea", {
@@ -25785,7 +25826,7 @@ var render = function () {
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(12),
+                              _vm._m(10),
                               _vm._v(" "),
                               _c("textarea", {
                                 directives: [
@@ -25821,7 +25862,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(13),
+                              _vm._m(11),
                               _vm._v(" "),
                               _c(
                                 "button",
@@ -25846,9 +25887,18 @@ var render = function () {
                               _vm._v(" "),
                               _vm.file_show
                                 ? _c("div", [
-                                    _vm._v(
-                                      "File được chọn: " + _vm._s(_vm.file_show)
-                                    ),
+                                    _c("span", [
+                                      _vm._v(
+                                        "File được chọn: " +
+                                          _vm._s(_vm.file_show)
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.removeFile },
+                                    }),
                                   ])
                                 : _vm._e(),
                               _vm._v(" "),
@@ -25864,6 +25914,12 @@ var render = function () {
                                       },
                                       [_vm._v("Xem tệp đã chọn")]
                                     ),
+                                    _vm._v(" "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.deleteFile },
+                                    }),
                                   ])
                                 : _vm._e(),
                             ]),
@@ -25911,7 +25967,7 @@ var render = function () {
         [
           _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
             _c("div", { staticClass: "modal-content" }, [
-              _vm._m(14),
+              _vm._m(12),
               _vm._v(" "),
               _c("div", { staticClass: "modal-body" }, [
                 _vm.task.name
@@ -25969,6 +26025,12 @@ var render = function () {
       _vm.loading_delete
         ? _c("m-loading", {
             attrs: { title: "Đang xóa công việc", full: true },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_delete_file
+        ? _c("m-loading", {
+            attrs: { title: "Đang xóa tệp đính kèm", full: true },
           })
         : _vm._e(),
     ],
@@ -26044,20 +26106,6 @@ var staticRenderFns = [
         _vm._v("Thời gian kết thúc "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("label", [_c("b", [_vm._v("Thời gian trì hoãn")])])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "input-group-append" }, [
-      _c("span", { staticClass: "input-group-text" }, [_vm._v("( Ngày )")]),
     ])
   },
   function () {

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Model\User;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectResource extends JsonResource
 {
@@ -18,6 +19,12 @@ class ProjectResource extends JsonResource
         // return parent::toArray($request);
         $manager = User::find($this->manager);
         $created_by = User::find($this->created_by);
+
+        /** file đính kèm */
+        $file = $this->file;
+        if (!empty($file) && !preg_match('/^https?:/', $file)) {
+            $file = Storage::url($this->file);
+        }
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -36,7 +43,7 @@ class ProjectResource extends JsonResource
                 'fullname' => $created_by->fullname,
                 'username' => $created_by->username
             ],
-            'alias' => $this->alias,
+            'file' => $file,
             'created_at' => $this->created_at->format('H:i:s, d-m-Y'),
             'updated_at' => $this->updated_at->format('H:i:s, d-m-Y')
         ];
