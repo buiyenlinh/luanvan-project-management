@@ -14,6 +14,7 @@ use App\Model\DepartmentUserJobStatus;
 use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Storage;
 class ProjectController extends Controller
 {
     use Functions;
@@ -80,7 +81,6 @@ class ProjectController extends Controller
         $name = $request->name;
         $start_time = $request->start_time;
         $end_time = $request->end_time;
-        $delay_time = $request->delay_time;
         $active = $request->active;
         $manager = $request->manager;
         $describe = $request->describe;
@@ -99,8 +99,6 @@ class ProjectController extends Controller
             return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
         } else if ($active != 1 && $active != 0) {
             return $this->error('Trạng thái là bắt buộc');
-        }else if ($delay_time < 0) {
-            return $this->error('Thời gian trì hoãn không hợp lệ');
         }
         
         if ($this->checkExist('name', $name)) {
@@ -110,14 +108,21 @@ class ProjectController extends Controller
         $start_time = strtotime($start_time);
         $end_time = strtotime($end_time);
 
+        $file = '';
+        if ($request->file('file')) {
+            $file = $request->file('file')->store('public/files');
+            $file = str_replace('public/', '', $file);
+        }
+
         Project::create([
             'name' => $name,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'delay_time' => $delay_time,
+            'delay_time' => 0,
             'active' => $active,
             'manager' => $manager,
             'created_by' => $created_by,
+            'file' => $file,
             'describe' => $describe,
         ]);
         return $this->success('Thêm dự án thành công');
@@ -130,15 +135,17 @@ class ProjectController extends Controller
         $name = $request->name;
         $start_time = $request->start_time;
         $end_time = $request->end_time;
-        $delay_time = $request->delay_time;
         $active = $request->active;
         $manager = $request->manager;
         $describe = $request->describe;
-        $created_by = $request->created_by;
 
         if (!$describe) {
             $describe = '';
         }
+
+        $project = Project::find($request->id);
+        if (!$project) 
+            return $this->error('Dự án không tồn tại');
 
         if (!$name) {
             return $this->error('Tên dự án là bắt buộc');
@@ -150,8 +157,6 @@ class ProjectController extends Controller
             return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
         } else if ($active != 1 && $active != 0) {
             return $this->error('Trạng thái là bắt buộc');
-        }else if ($delay_time < 0) {
-            return $this->error('Thời gian trì hoãn không hợp lệ');
         }
         
         if ($this->checkExist('name', $name, $request->id)) {
@@ -161,14 +166,24 @@ class ProjectController extends Controller
         $start_time = strtotime($start_time);
         $end_time = strtotime($end_time);
 
+        $file = $project->file;
+        if ($request->file('file')) {
+            if (!empty($file)) {
+                Storage::disk('public')->delete($file);
+            }
+
+            $file = $request->file('file')->store('public/files');
+            $file = str_replace('public/', '', $file);
+        }
+        
+
         Project::find($request->id)->update([
             'name' => $name,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'delay_time' => $delay_time,
             'active' => $active,
             'manager' => $manager,
-            'created_by' => $created_by,
+            'file' => $file,
             'describe' => $describe,
         ]);
         return $this->success('Cập nhật dự án thành công');
@@ -229,5 +244,19 @@ class ProjectController extends Controller
 
         $project = new ProjectResource(Project::find($project_id));
         return $this->success('Thông tin dự án', $project);
+    }
+
+    /** Xóa tệp đính kèm */
+    public function deleteFile(Request $request) {
+        $id = $request->id_task;
+        $project = Project::find($id);
+        if (!$project) return $this->error('Dự án không tồn tại');
+
+        Storage::disk('public')->delete($project->file);
+
+        $project->update([
+            'file' => ''
+        ]);
+        return $this->success('Xóa tệp đính kèm thành công');
     }
 }

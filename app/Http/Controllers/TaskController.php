@@ -93,13 +93,9 @@ class TaskController extends Controller
         $result = $request->result;
         $start_time = $request->start_time;
         $end_time = $request->end_time;
-        $delay_time = $request->delay_time;
         $label_id = $request->label_id;
         $pre_task_ids = $request->pre_task_ids;
         $department_id = $request->department_id;
-
-        
-        // return $this->success('', $pre_task_ids);
 
         $project = Project::find($project_id);
         if (!$project) {
@@ -117,12 +113,14 @@ class TaskController extends Controller
         }
 
         if (!$name) return $this->error('Tên công việc là bắt buộc');
+
+        $checkNameExist = Task::where('name', $name)->first();
+        if ($checkNameExist) return $this->error('Tên công việc đã tồn tại');
+
         if (!$describe) $describe = '';
         if (!$result) $result = '';
         if (!$start_time) return $this->error('Thời gian bắt đầu là bắt buộc');
         if (!$end_time) return $this->error('Thời gian kết thúc là bắt buộc');
-        if (!$delay_time) $delay_time = 0;
-        if ($delay_time < 0) return $this->error('Thời gian trì hoãn không hợp lệ');
 
         $start_time = strtotime($start_time);
         $end_time = strtotime($end_time);
@@ -130,7 +128,7 @@ class TaskController extends Controller
             return $this->error('Thời gian bắt đầu công việc phải sau thời gian bắt đầu của dự án');
 
         if ($start_time > $end_time) return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
-        if ($end_time + intval($delay_time) * 24 * 3600 > $project->end_time + intval($project->delay_time) * 24 * 3600) {
+        if ($end_time > $project->end_time) {
             return $this->error('Thời gian kết thúc công việc quá hạn thời gian dự án');
         }
 
@@ -164,7 +162,7 @@ class TaskController extends Controller
             'result' => $result,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'delay_time' => $delay_time,
+            'delay_time' => 0,
             'label_id' => $label_id,
             'project_id' => $project_id,
             'file' => $file
@@ -202,7 +200,6 @@ class TaskController extends Controller
         $result = $request->result;
         $start_time = $request->start_time;
         $end_time = $request->end_time;
-        $delay_time = $request->delay_time;
         $label_id = $request->label_id;
         $pre_task_ids = $request->pre_task_ids;
         $department_id = $request->department_id;
@@ -238,12 +235,14 @@ class TaskController extends Controller
         }
 
         if (!$name) return $this->error('Tên công việc là bắt buộc');
+
+        $checkNameExist = Task::where('name', $name)->where('id', '!=', $id)->first();
+        if ($checkNameExist) return $this->error('Tên công việc đã tồn tại');
+
         if (!$describe) $describe = '';
         if (!$result) $result = '';
         if (!$start_time) return $this->error('Thời gian bắt đầu là bắt buộc');
         if (!$end_time) return $this->error('Thời gian kết thúc là bắt buộc');
-        if (!$delay_time) $delay_time = 0;
-        if ($delay_time < 0) return $this->error('Thời gian trì hoãn không hợp lệ');
 
         $start_time = strtotime($start_time);
         $end_time = strtotime($end_time);
@@ -251,7 +250,7 @@ class TaskController extends Controller
             return $this->error('Thời gian bắt đầu công việc phải sau thời gian bắt đầu của dự án');
 
         if ($start_time > $end_time) return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
-        if ($end_time + intval($delay_time) * 24 * 3600 > $project->end_time + intval($project->delay_time) * 24 * 3600) {
+        if ($end_time > $project->end_time) {
             return $this->error('Thời gian kết thúc công việc quá hạn thời gian dự án');
         }
 
@@ -324,7 +323,6 @@ class TaskController extends Controller
             'result' => $result,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'delay_time' => $delay_time,
             'label_id' => $label_id,
             'project_id' => $project_id,
             'file' => $file
@@ -368,5 +366,22 @@ class TaskController extends Controller
         $pre_tasks = PreTask::where('task_id', $id)->delete();
         $task->delete();
         return $this->success('Xóa công việc thành công', []);
+    }
+
+
+    /** Xóa file đính kèm */
+    public function deleteFile(Request $request, $project_id) {
+        $id = $request->id_task;
+        $task = Task::find($id);
+        if ($task->project_id != $project_id) 
+            return $this->error('Công việc không thuộc dự án. Vui lòng thử lại');
+        if (!$task) return $this->error('Công việc không tồn tại');
+
+        Storage::disk('public')->delete($task->file);
+
+        $task->update([
+            'file' => ''
+        ]);
+        return $this->success('Xóa tệp đính kèm thành công');
     }
 }

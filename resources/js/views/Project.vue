@@ -19,7 +19,10 @@ export default {
       search: {
         name: '',
         manager: -1
-      }
+      },
+      file_show: '',
+      file_updated: '',
+      loading_delete_file: false
     }
   },
   methods: {
@@ -39,8 +42,17 @@ export default {
       }
       if (this.project.name && this.project.start_time && this.project.end_time && this.project.manager && (this.project.active == 1 | this.project.active == 0)) {
         this.loading_add = true;
+        let formData = new FormData();
+        formData.append('name', this.project.name);
+        formData.append('start_time', this.project.start_time);
+        formData.append('end_time', this.project.end_time);
+        formData.append('active', this.project.active);
+        formData.append('manager', this.project.manager);
+        formData.append('file', this.project.file);
+
         if (this.project.id > 0) { // Cập nhật
-          this.$root.api.post('project/update', this.project).then(res => {
+          formData.append('id', this.project.id);
+          this.$root.api.post('project/update', formData).then(res => {
             if (res.data.status == 'OK') {
               this.$notify(res.data.message, 'success');
               $('#project_modal_add').modal('hide');
@@ -54,8 +66,8 @@ export default {
             this.$root.showError(err);
           })
         } else { // Thêm mới
-          this.project.created_by = this.$root.auth.id;
-          this.$root.api.post('project/add', this.project).then(res => {
+          formData.append('created_by', this.$root.auth.id);
+          this.$root.api.post('project/add', formData).then(res => {
             this.loading_add = false;
             if (res.data.status == "OK") {
               this.$notify(res.data.message, 'success');
@@ -83,8 +95,8 @@ export default {
         describe: '',
         start_time: '',
         end_time: '',
-        delay_time: 0,
         active: 1,
+        file: '',
         manager: null,
         created_by: null
       }
@@ -92,10 +104,12 @@ export default {
         name: '',
         start_time: '',
         end_time: '',
-        delay_time: '',
         manager: '',
         created_by: ''
       }
+      this.file_show = '';
+      this.file_updated = '';
+
       this.text_select = '-- Tìm quản lý --';
       this.reset_select_comp = !this.reset_select_comp;
       setTimeout(() => {
@@ -138,6 +152,9 @@ export default {
       this.project.manager = _project.manager.id;
       this.project.created_by = _project.created_by.id;
       this.text_select = _project.manager.fullname || _project.manager.username;
+
+      this.file_updated = _project.file;
+
     },
     getList() {
       this.loading_list = true;
@@ -171,6 +188,10 @@ export default {
 			this.current_page = page;
 			this.getList();
 		},
+    handleGetFile(_file) {
+      this.project.file = _file.target.files[0];
+      this.file_show = _file.target.files[0].name;
+    },
     onSubmitDelete() {
       this.loading_delete = true;
       this.$root.api.delete(`project/delete/${this.project.id}`).then(res => {
@@ -193,6 +214,27 @@ export default {
     handleSearch() {
       this.last_page = 1;
       this.changePage(1);
+    },
+    deleteFile() {
+      this.loading_delete_file = true;
+      this.$root.api.delete(`project/delete-file/${this.project.id}`).then(res => {
+        this.loading_delete_file = false;
+        if (res.data.status == 'OK') {
+          this.$notify(res.data.message, 'success');
+          this.getList();
+          this.project.file = '';
+          this.file_updated = '';
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.loading_delete_file = false;
+        this.$root.showError(err);
+      })
+    },
+    removeFile() {
+      this.file_show = '';
+      this.project.file = '';
     }
   },
   created() {
@@ -340,15 +382,6 @@ export default {
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
-                  <label><b>Thời gian trì hoãn</b></label>
-                  <div class="input-group input-group-sm mb-3">
-                    <input type="number" class="form-control form-control-sm" v-model="project.delay_time">
-                    <div class="input-group-append">
-                      <span class="input-group-text">( Ngày )</span>
-                    </div>
-                  </div>
-                </div>
                 <div class="col-md-6 col-sm-12 col-12" v-if="$root.isAdmin()">
                   <div class="form-group">
                     <label><b>Quản lý <span class="text-danger">*</span></b></label>
@@ -383,6 +416,27 @@ export default {
                   <div class="form-group">
                     <label><b>Mô tả</b></label><br>
                     <textarea type="text" class="form-control form-control-sm" rows="5" v-model="project.describe"></textarea>
+                  </div>
+                </div>
+
+                <div class="col-md-6 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Đính kèm</b></label>
+                    <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
+                    <input
+                      type="file"
+                      ref="ref_file"
+                      style="display: none"
+                      @change="handleGetFile"
+                    />
+                    <div v-if="file_show">
+                      <span>File được chọn: {{ file_show }}</span>
+                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="removeFile"></i>
+                    </div>
+                    <div v-if="file_updated">
+                      <a target="_blank" :href="file_updated">Xem tệp đã chọn</a> &nbsp;
+                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="deleteFile"></i>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -425,5 +479,6 @@ export default {
       </div>
     </div>
     <m-loading v-if="loading_add" :title="this.project.id != null ? 'Đang cập nhật dự án' : 'Đang thêm dự án'" :full="true" />
+    <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm của dự án" :full="true" />
   </div>
 </template>
