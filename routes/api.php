@@ -47,6 +47,11 @@ Route::middleware('is-token')->group(function() {
       Route::delete('delete/{id_task}', 'TaskController@delete');
       Route::delete('delete-file/{id_task}', 'TaskController@deleteFile');
     });
+
+    Route::prefix('task/{task_id}')->group(function() {
+      Route::get('info', 'JobController@getInfo');
+      Route::post('search-user-member', 'JobController@searchUserMember');
+    });
   });
 
   Route::prefix('label')->middleware('check-role:1|2')->group(function() {

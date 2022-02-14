@@ -58,7 +58,7 @@ class DepartmentController extends Controller
             }
         }
 
-        $list = $db->orderBy('id','desc')->paginate(2);
+        $list = $db->orderBy('id','desc')->paginate(5);
         $data = DepartmentResource::collection($list)->response()->getData();
         return $this->success('Danh sách phòng ban', $data);
     }
