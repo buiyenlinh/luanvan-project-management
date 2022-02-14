@@ -367,246 +367,248 @@ export default {
 </script>
 <template>
   <div id="task">
-    <h3 v-if="project" class="mb-2">Dự án: {{ project.name }}</h3>
-    <m-spinner v-else class="mb-2" />
-    <form @submit.prevent="getList">
-      <div class="row">
-        <div class="col-md-3 col-sm-5 col-12 mb-2">
-          <input type="text" class="form-control form-control-sm" placeholder="Tên công việc..." v-model="search.name">
+    <div v-if="project">
+      <h3 class="mb-3">Dự án: {{ project.name }}</h3>
+      <form @submit.prevent="getList">
+        <div class="row">
+          <div class="col-md-3 col-sm-5 col-12 mb-2">
+            <input type="text" class="form-control form-control-sm" placeholder="Tên công việc..." v-model="search.name">
+          </div>
+          <div class="col-md-3 col-sm-5 col-12 mb-2">
+            <m-select
+              :size="'sm'"
+              text="--Tìm theo phòng ban--"
+              url="department/search"
+              :statusReset="false"
+              @changeValue="getDepartmentSearch"
+              @remove="removeDepartmentSearch"
+              :variable="{first: 'name'}"
+            />
+          </div>
+          <div class="col-md-2 col-sm-2 col-6 mb-2"> 
+            <button type="submit" class="btn btn-info btn-sm">
+              <i class="fas fa-search"></i> Tìm
+            </button>
+          </div>  
+          <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isManager()">
+            <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add_update">Thêm</button>
+          </div>
         </div>
-        <div class="col-md-3 col-sm-5 col-12 mb-2">
-          <m-select
-            :size="'sm'"
-            text="--Tìm theo phòng ban--"
-            url="department/search"
-            :statusReset="false"
-            @changeValue="getDepartmentSearch"
-            @remove="removeDepartmentSearch"
-            :variable="{first: 'name'}"
-          />
+      </form>
+      <div class="list">
+        <div class="text-center" v-if="loading_list">
+          <m-spinner/>
         </div>
-        <div class="col-md-2 col-sm-2 col-6 mb-2"> 
-          <button type="submit" class="btn btn-info btn-sm">
-            <i class="fas fa-search"></i> Tìm
-          </button>
-        </div>  
-        <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isManager()">
-          <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add_update">Thêm</button>
-        </div>
-      </div>
-    </form>
-    <div class="list">
-      <div class="text-center" v-if="loading_list">
-        <m-spinner/>
-      </div>
-      <div v-else-if="list && list.length > 0">
-        <div class="mb-3"><b>Danh sách công việc</b></div>
-        <ul class="row">
-          <li class="col-md-3 col-sm-4 col-12 mb-3"
-            v-for="(item, index) in list"
-            :key="index"
-          >
-            <div class="bg-fff info">
-              <router-link :to="{name: 'task', params: { 'id': item.id }}">
-                <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                <p style="font-size: 12px; margin-bottom: 0px">
-                  <b>Phân cho: </b>{{item.department.name}} <br>
-                  <b>Tạo lúc: </b>{{item.created_at}} <br>
-                  <b v-if="item.status != null" >Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
-                </p>
-              </router-link>
+        <div v-else-if="list && list.length > 0">
+          <div class="mb-3"><b>Danh sách công việc</b></div>
+          <ul class="row">
+            <li class="col-md-3 col-sm-4 col-12 mb-3"
+              v-for="(item, index) in list"
+              :key="index"
+            >
+              <div class="bg-fff info">
+                <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
+                  <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+                  <p style="font-size: 12px; margin-bottom: 0px"> 
+                    <b>Phân cho: </b>{{item.department.name}} <br>
+                    <b>Tạo lúc: </b>{{item.created_at}} <br>
+                    <b v-if="item.status != null" >Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
+                  </p>
+                </router-link>
 
-              <div class="text-right" style="padding: 0px 10px 10px 0px" v-if="$root.isManager()">
-                <span
-                  class="text-danger"
-                  @click="getTaskUpdate(item)"
-                  data-toggle="modal"
-                  data-target="#task_modal_delete"
-                  style="cursor: pointer"
-                >
-                  <b>Xóa</b>
-                </span>
-                <span
-                  class="text-info"
-                  @click="getTaskUpdate(item)"
-                  data-toggle="modal"
-                  data-target="#task_modal_add_update"
-                  style="cursor: pointer"
-                >
-                  <b>Sửa</b>
+                <div class="text-right" style="padding: 0px 10px 10px 0px" v-if="$root.isManager()">
+                  <span
+                    class="text-danger"
+                    @click="getTaskUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#task_modal_delete"
+                    style="cursor: pointer"
+                  >
+                    <b>Xóa</b>
+                  </span>
+                  <span
+                    class="text-info"
+                    @click="getTaskUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#task_modal_add_update"
+                    style="cursor: pointer"
+                  >
+                    <b>Sửa</b>
+                  </span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          Không có công việc nào
+        </div>
+      </div>
+
+      <div class="modal fade" id="task_modal_add_update">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Công việc</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="onSubmit">
+                <div class="row">
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Tên công việc <span class="text-danger">*</span></b></label>
+                      <input type="text" class="form-control form-control-sm" v-model="task.name">
+                      <div class="text-danger font-italic error">{{error.name}}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
+                      <input type="date" class="form-control form-control-sm" v-model="task.start_time">
+                      <div class="text-danger font-italic error">{{error.start_time}}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
+                      <input type="date" class="form-control form-control-sm" v-model="task.end_time">
+                      <div class="text-danger font-italic error">{{error.end_time}}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Phân công cho phòng ban <span class="text-danger">*</span></b></label>
+                      <m-select
+                        :size="'sm'"
+                        :text="select_department.text"
+                        url="department/search"
+                        :statusReset="select_department.status"
+                        @changeValue="getDepartment"
+                        @remove="removeDepartment"
+                        :variable="{first: 'name'}"
+                      />
+                      <div class="text-danger font-italic error">{{error.department}}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Nhãn </b></label>
+                      <m-select
+                        :size="'sm'"
+                        :text="select_label.text"
+                        url="label/search"
+                        :statusReset="select_label.status"
+                        @changeValue="getLabel"
+                        @remove="removeLabel"
+                        :variable="{first: 'name'}"
+                      />
+                      <div class="text-danger font-italic error">{{error.manager}}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Công việc tiên quyết</b></label>
+                      <m-select
+                        :size="'sm'"
+                        :text="select_pre_task.text"
+                        :url="`project/${this.project_id}/task/search`"
+                        :statusReset="select_pre_task.status"
+                        @changeValue="getPreTask"
+                        @remove="removePreTask"
+                        :variable="{first: 'name'}"
+                      />
+                    </div>
+                    <div class="pre-tasks">
+                      <ul>
+                        <li v-for="(item, index) in pre_task_ids_show" :key="index">
+                          {{item.name }}
+                          <i class="fas fa-times icon-remove" @click="removePreTaskId(index)"></i>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div class="col-md-12 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Mô tả</b></label><br>
+                      <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.describe"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="col-md-12 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Kết quả</b></label>
+                      <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.result"></textarea>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6 col-sm-12 col-12">
+                    <div class="form-group">
+                      <label><b>Đính kèm</b></label>
+                      <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
+                      <input
+                        type="file"
+                        ref="ref_file"
+                        style="display: none"
+                        @change="handleGetFile"
+                      />
+                      <div v-if="file_show">
+                        <span>File được chọn: {{ file_show }}</span>
+                        <i class="fas fa-times text-danger" style="cursor: pointer" @click="removeFile"></i>
+                      </div>
+                      <div v-if="file_updated">
+                        <a target="_blank" :href="file_updated">Xem tệp đã chọn</a>
+                        <i class="fas fa-times text-danger" style="cursor: pointer" @click="deleteFile"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-info btn-sm">
+                    {{ task.id ? 'Cập nhật' : 'Thêm'}}
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="task_modal_delete">
+        <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Xóa Công việc</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div v-if="task.name" class="d-flex justify-content-start">
+                <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+                <span>
+                  Bạn có muốn xóa công việc <b>{{ task.name }}</b>
                 </span>
               </div>
             </div>
-          </li>
-        </ul>
-      </div>
-      <div v-else>
-        Không có công việc nào
-      </div>
-    </div>
-
-    <div class="modal fade" id="task_modal_add_update">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Công việc</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="onSubmit">
-              <div class="row">
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Tên công việc <span class="text-danger">*</span></b></label>
-                    <input type="text" class="form-control form-control-sm" v-model="task.name">
-                    <div class="text-danger font-italic error">{{error.name}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
-                    <input type="date" class="form-control form-control-sm" v-model="task.start_time">
-                    <div class="text-danger font-italic error">{{error.start_time}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
-                    <input type="date" class="form-control form-control-sm" v-model="task.end_time">
-                    <div class="text-danger font-italic error">{{error.end_time}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Phân công cho phòng ban <span class="text-danger">*</span></b></label>
-                    <m-select
-                      :size="'sm'"
-                      :text="select_department.text"
-                      url="department/search"
-                      :statusReset="select_department.status"
-                      @changeValue="getDepartment"
-                      @remove="removeDepartment"
-                      :variable="{first: 'name'}"
-                    />
-                    <div class="text-danger font-italic error">{{error.department}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Nhãn </b></label>
-                    <m-select
-                      :size="'sm'"
-                      :text="select_label.text"
-                      url="label/search"
-                      :statusReset="select_label.status"
-                      @changeValue="getLabel"
-                      @remove="removeLabel"
-                      :variable="{first: 'name'}"
-                    />
-                    <div class="text-danger font-italic error">{{error.manager}}</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Công việc tiên quyết</b></label>
-                    <m-select
-                      :size="'sm'"
-                      :text="select_pre_task.text"
-                      :url="`project/${this.project_id}/task/search`"
-                      :statusReset="select_pre_task.status"
-                      @changeValue="getPreTask"
-                      @remove="removePreTask"
-                      :variable="{first: 'name'}"
-                    />
-                  </div>
-                  <div class="pre-tasks">
-                    <ul>
-                      <li v-for="(item, index) in pre_task_ids_show" :key="index">
-                        {{item.name }}
-                        <i class="fas fa-times icon-remove" @click="removePreTaskId(index)"></i>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div class="col-md-12 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Mô tả</b></label><br>
-                    <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.describe"></textarea>
-                  </div>
-                </div>
-
-                <div class="col-md-12 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Kết quả</b></label>
-                    <textarea type="text" class="form-control form-control-sm" rows="4" v-model="task.result"></textarea>
-                  </div>
-                </div>
-
-                <div class="col-md-6 col-sm-12 col-12">
-                  <div class="form-group">
-                    <label><b>Đính kèm</b></label>
-                    <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
-                    <input
-                      type="file"
-                      ref="ref_file"
-                      style="display: none"
-                      @change="handleGetFile"
-                    />
-                    <div v-if="file_show">
-                      <span>File được chọn: {{ file_show }}</span>
-                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="removeFile"></i>
-                    </div>
-                    <div v-if="file_updated">
-                      <a target="_blank" :href="file_updated">Xem tệp đã chọn</a>
-                      <i class="fas fa-times text-danger" style="cursor: pointer" @click="deleteFile"></i>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-info btn-sm">
-                  {{ task.id ? 'Cập nhật' : 'Thêm'}}
-                </button>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-danger btn-sm" @click="onSubmitDelete">Xóa</button>
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
               </div>
-            </form>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="modal fade" id="task_modal_delete">
-      <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Xóa Công việc</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div v-if="task.name" class="d-flex justify-content-start">
-              <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
-              <span>
-                Bạn có muốn xóa công việc <b>{{ task.name }}</b>
-              </span>
-            </div>
-          </div>
-          <div class="modal-footer">
-              <button type="submit" class="btn btn-danger btn-sm" @click="onSubmitDelete">Xóa</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-      </div>
+      <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
+      <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
+      <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm" :full="true" />
     </div>
-
-    <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
-    <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
-    <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm" :full="true" />
+    <m-spinner v-else class="mb-2" />
   </div>
 </template>

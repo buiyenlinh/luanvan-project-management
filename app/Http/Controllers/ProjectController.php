@@ -45,14 +45,16 @@ class ProjectController extends Controller
         } else if ($this->isUser()) {
             $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
             $project_ids = array();
-
-            $department_task = DepartmentTask::where('department_id', $department_user->department_id);
-            foreach ($department_task->get() as $_department_task) {
-                $task = Task::find($_department_task->task_id);
-                if ($task) {
-                    $project_ids[] = $task->project_id;
+            if ($department_user) {
+                $department_task = DepartmentTask::where('department_id', $department_user->department_id);
+                foreach ($department_task->get() as $_department_task) {
+                    $task = Task::find($_department_task->task_id);
+                    if ($task) {
+                        $project_ids[] = $task->project_id;
+                    }
                 }
             }
+            
             
             if (count($project_ids) > 0) {
                 $db->whereIn('id', $project_ids);
@@ -238,8 +240,10 @@ class ProjectController extends Controller
      */
     public function getProjectById(Request $request) {
         $project_id = $request->id;
-        if (!$project_id) {
-            return $this->success('Thông tin dự án', []);
+        $project = Project::find($project_id);
+    
+        if (!$project) {
+            return $this->error('Dự án không tồn tại');
         }
 
         $project = new ProjectResource(Project::find($project_id));

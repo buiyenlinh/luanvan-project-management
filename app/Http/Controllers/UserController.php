@@ -60,7 +60,7 @@ class UserController extends Controller
             $db->where('active', $active);
         }
 
-        $users = $db->orderby('id', 'desc')->paginate(3);
+        $users = $db->orderby('id', 'desc')->paginate(5);
         $data = UserResource::collection($users)->response()->getData();
         return $this->success('Danh sách người dùng', $data);
     }

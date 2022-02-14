@@ -16,7 +16,8 @@ class CreateJobsTable extends Migration
         Schema::create('yl_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('content');
+            $table->text('content')->default('');
+            $table->string('file')->default('');
             $table->foreignId('task_id')->constrained('yl_tasks')->unsigned();
             $table->timestamps();
         });

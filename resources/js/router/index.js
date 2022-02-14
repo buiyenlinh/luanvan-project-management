@@ -51,6 +51,15 @@ const router = new VueRouter({
           },
         },
         {
+          path: 'du-an/:project_id/cong-viec/:id',
+          name: 'job',
+          component: require('../views/Job.vue').default,
+          meta: {
+            auth: true,
+            title: 'Nhiệm vụ'
+          },
+        },
+        {
           path: 'phong-ban',
           name: 'department',
           component: require('../views/Department.vue').default,
