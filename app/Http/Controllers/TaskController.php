@@ -174,12 +174,13 @@ class TaskController extends Controller
         ]);
 
         /** Thêm công việc tiên quyết */
-        if ($pre_task_ids)
-        foreach ($pre_task_ids as $_pre_task_id) {
-            PreTask::create([
-                'task_id' => $new_task->id,
-                'pre_task_id' => $_pre_task_id
-            ]);
+        if ($pre_task_ids) {
+            foreach ($pre_task_ids as $_pre_task_id) {
+                PreTask::create([
+                    'task_id' => $new_task->id,
+                    'pre_task_id' => $_pre_task_id
+                ]);
+            }
         }
 
         DepartmentTaskStatus::create([

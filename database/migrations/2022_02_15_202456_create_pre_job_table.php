@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateJobsTable extends Migration
+class CreatePreJobTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,10 @@ class CreateJobsTable extends Migration
      */
     public function up()
     {
-        Schema::create('yl_jobs', function (Blueprint $table) {
+        Schema::create('yl_pre_job', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('content')->default('');
-            $table->string('file')->default('');
-            $table->smallinteger('delay_time')->default(0);
-            $table->foreignId('task_id')->constrained('yl_tasks')->unsigned();
+            $table->foreignId('job_id')->constrained('yl_jobs')->unsigned();
+            $table->foreignId('pre_job_id')->constrained('yl_jobs')->unsigned();
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ class CreateJobsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('yl_jobs');
+        Schema::dropIfExists('yl_pre_job');
     }
 }

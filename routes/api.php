@@ -51,6 +51,8 @@ Route::middleware('is-token')->group(function() {
     Route::prefix('task/{task_id}')->group(function() {
       Route::get('info', 'JobController@getInfo');
       Route::post('search-user-member', 'JobController@searchUserMember');
+      Route::post('search-job', 'JobController@searchJob');
+      Route::post('add', 'JobController@add');
     });
   });
 

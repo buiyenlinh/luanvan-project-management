@@ -2681,7 +2681,8 @@ __webpack_require__.r(__webpack_exports__);
       select_pre_job: null,
       select_user: null,
       error: null,
-      loading_delete_file: false
+      loading_delete_file: false,
+      loading_add: false
     };
   },
   methods: {
@@ -2758,10 +2759,75 @@ __webpack_require__.r(__webpack_exports__);
       this.select_user.text = '--- Tìm thành viên ---';
     },
     onSubmit: function onSubmit() {
+      var _this3 = this;
+
       this.checkName();
       this.checkStartTime();
       this.checkEndTime();
-      console.log("OnSubmit");
+      this.checkUser();
+      var check = false;
+
+      if (this.pre_job_id.show.length > 0) {
+        for (var i in this.pre_job_id.show) {
+          if (!this.checkTimePreJob(this.pre_job_id.show[i], this.job)) {
+            check = true;
+          }
+        }
+      }
+
+      if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.pre_job_ids == '') {
+        var formData = new FormData();
+        formData.append('name', this.job.name);
+        formData.append('content', this.job.content);
+        formData.append('user_id', this.job.user_id);
+        formData.append('file', this.job.file);
+        formData.append('start_time', this.job.start_time);
+        formData.append('end_time', this.job.end_time);
+
+        if (this.pre_job_id.show.length > 0) {
+          for (var _i in this.pre_job_id.show) {
+            formData.append('pre_job_ids[]', this.pre_job_id.show[_i].id);
+          }
+        }
+
+        if (this.job.id != null) {
+          // cập nhật
+          formData.append('id', this.task.id);
+          this.loading_add = true;
+          console.log("Update"); // this.$root.api.post(`project/${this.project_id}/task/update`, formData).then(res => {
+          //   this.loading_add = false;
+          //   if (res.data.status == 'OK') {
+          //     this.$notify(res.data.message, 'success');
+          //     $('#task_modal_add_update').modal('hide');
+          //     this.getList();
+          //   } else {
+          //     this.$root.showError(res.data.error);
+          //   }
+          // }).catch (err => {
+          //   this.$root.showError(err);
+          //   this.loading_add = false;
+          // })
+        } else {
+          this.loading_add = true;
+          this.$root.api.post("project/".concat(this.info.project.id, "/task/").concat(this.info.task.id, "/add"), formData).then(function (res) {
+            _this3.loading_add = false;
+
+            if (res.data.status == 'OK') {
+              _this3.$notify(res.data.message, 'success');
+
+              $('#modal_add_update').modal('hide');
+
+              _this3.getList();
+            } else {
+              _this3.$root.showError(res.data.error);
+            }
+          })["catch"](function (err) {
+            _this3.$root.showError(err);
+
+            _this3.loading_add = false;
+          });
+        }
+      }
     },
     removePreJobId: function removePreJobId(_index) {
       this.pre_job_id.show.splice(_index, 1);
@@ -2771,6 +2837,13 @@ __webpack_require__.r(__webpack_exports__);
         this.error.name = 'Tên nhiệm vụ là bắt buộc';
       } else {
         this.error.name = '';
+      }
+    },
+    checkUser: function checkUser() {
+      if (this.job.user_id == '' || this.job.user_id == null) {
+        this.error.user_id = 'Phân công cho thành viên là bắt buộc';
+      } else {
+        this.error.user_id = '';
       }
     },
     checkStartTime: function checkStartTime() {
@@ -2824,36 +2897,68 @@ __webpack_require__.r(__webpack_exports__);
       this.job.file = '';
     },
     deleteFile: function deleteFile() {
-      var _this3 = this;
+      var _this4 = this;
 
       this.loading_delete_file = true;
       this.$root.api["delete"]("project/".concat(this.info.project.id, "/task/").concat(this.info.task.id, "/delete-file/").concat(this.job.id)).then(function (res) {
-        _this3.loading_delete_file = false;
+        _this4.loading_delete_file = false;
 
         if (res.data.status == "OK") {
-          _this3.$notify(res.data.message, 'success');
+          _this4.$notify(res.data.message, 'success');
 
-          _this3.job.file = '';
-          _this3.file.updated = '';
+          _this4.job.file = '';
+          _this4.file.updated = '';
 
-          _this3.getList();
+          _this4.getList();
         } else {
-          _this3.$root.showError(res.data.error);
+          _this4.$root.showError(res.data.error);
         }
       })["catch"](function (err) {
-        _this3.$root.showError(err);
+        _this4.$root.showError(err);
 
-        _this3.loading_delete_file = false;
+        _this4.loading_delete_file = false;
       });
+    },
+    getPreJob: function getPreJob(_pre_job) {
+      if (this.checkTimePreJob(_pre_job, this.job)) {
+        if (!this.pre_job_id.check.includes(_pre_job.id) && _pre_job.id != this.job.id) {
+          this.pre_job_id.check.push(_pre_job.id);
+          this.pre_job_ids.show.push(_pre_job);
+        } else {
+          this.select_pre_job.text = '';
+          this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
+        }
+      }
+    },
+    checkTimePreJob: function checkTimePreJob(_pre_job, _job) {
+      var start_time_job = new Date(_job.start_time).getTime(); // đơn vị mili giây
+
+      var end_time_pre_job = new Date(_pre_job.end_time).getTime();
+
+      if (start_time_job <= end_time_pre_job) {
+        this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với nhiệm vụ tiên quyết "' + _pre_job.name + '"';
+        this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
+        return false;
+      }
+
+      return true;
+    },
+    removePreJob: function removePreJob() {
+      this.select_pre_job.text = '--- Tìm tên nhiệm vụ ---';
     }
   },
   created: function created() {
     this.closeModal();
   },
   mounted: function mounted() {
+    var _this5 = this;
+
     this.params.project_id = this.$route.params.project_id;
     this.params.task_id = this.$route.params.id;
     this.getInfo();
+    $(document).on('hidden.bs.modal', '#job_modal_add_update, #job_modal_delete', function () {
+      _this5.closeModal();
+    });
   },
   watch: {
     'job.name': function jobName() {
@@ -2867,6 +2972,10 @@ __webpack_require__.r(__webpack_exports__);
     'job.end_time': function jobEnd_time() {
       if (!this.validate_form) return;
       this.checkEndTime();
+    },
+    'job.user_id': function jobUser_id() {
+      if (!this.validate_form) return;
+      this.checkUser();
     }
   }
 });
@@ -24183,10 +24292,76 @@ var render = function () {
                         _vm._v(" "),
                         _c(
                           "div",
+                          { staticClass: "col-md-6 col-sm-12 col-12" },
+                          [
+                            _c(
+                              "div",
+                              { staticClass: "form-group" },
+                              [
+                                _vm._m(6),
+                                _vm._v(" "),
+                                _vm.info
+                                  ? _c("m-select", {
+                                      attrs: {
+                                        size: "sm",
+                                        text: _vm.select_pre_job.text,
+                                        url:
+                                          "project/" +
+                                          _vm.info.project.id +
+                                          "/task/" +
+                                          _vm.info.task.id +
+                                          "/search-job",
+                                        statusReset: _vm.select_pre_job.status,
+                                        variable: { first: "name" },
+                                      },
+                                      on: {
+                                        changeValue: _vm.getPreJob,
+                                        remove: _vm.removePreJob,
+                                      },
+                                    })
+                                  : _vm._e(),
+                              ],
+                              1
+                            ),
+                            _vm._v(" "),
+                            _c("div", { staticClass: "pre-tasks" }, [
+                              _vm.pre_job_id
+                                ? _c(
+                                    "ul",
+                                    _vm._l(
+                                      _vm.pre_job_id.show,
+                                      function (item, index) {
+                                        return _c("li", { key: index }, [
+                                          _vm._v(
+                                            "\n                      " +
+                                              _vm._s(item.name) +
+                                              "\n                      "
+                                          ),
+                                          _c("i", {
+                                            staticClass:
+                                              "fas fa-times icon-remove",
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.removePreJobId(index)
+                                              },
+                                            },
+                                          }),
+                                        ])
+                                      }
+                                    ),
+                                    0
+                                  )
+                                : _vm._e(),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
                           { staticClass: "col-md-12 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(6),
+                              _vm._m(7),
                               _c("br"),
                               _vm._v(" "),
                               _c("textarea", {
@@ -24223,7 +24398,7 @@ var render = function () {
                           { staticClass: "col-md-6 col-sm-12 col-12" },
                           [
                             _c("div", { staticClass: "form-group" }, [
-                              _vm._m(7),
+                              _vm._m(8),
                               _vm._v(" "),
                               _c(
                                 "button",
@@ -24297,9 +24472,9 @@ var render = function () {
                           },
                           [
                             _vm._v(
-                              "\n                  " +
+                              "\n                " +
                                 _vm._s(_vm.job.id ? "Cập nhật" : "Thêm") +
-                                "\n                "
+                                "\n              "
                             ),
                           ]
                         ),
@@ -24321,6 +24496,18 @@ var render = function () {
           ),
         ]
       ),
+      _vm._v(" "),
+      _vm.loading_add
+        ? _c("m-loading", {
+            attrs: {
+              title:
+                _vm.job.id != null
+                  ? "Đang cập nhật nhiệm vụ"
+                  : "Đang thêm nhiệm vụ",
+              full: true,
+            },
+          })
+        : _vm._e(),
     ],
     1
   )
@@ -24398,6 +24585,12 @@ var staticRenderFns = [
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Nhiệm vụ tiên quyết")])])
   },
   function () {
     var _vm = this
