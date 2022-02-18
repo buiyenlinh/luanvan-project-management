@@ -134,7 +134,6 @@ export default {
       })
     },
     getDepartmentSearch(_department) {
-      console.log(_department);
       this.search.department_id = _department.id;
     },
     removeDepartmentSearch() {
@@ -412,7 +411,16 @@ export default {
                   <p style="font-size: 12px; margin-bottom: 0px"> 
                     <b>Phân cho: </b>{{item.department.name}} <br>
                     <b>Tạo lúc: </b>{{item.created_at}} <br>
-                    <b v-if="item.status != null" >Trạng thái: </b> {{ $root.getStatusTaskName(item.status.status) }}
+                    <b v-if="item.status != null" >Trạng thái: </b>
+                    <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 5">
+                      {{ $root.getStatusTaskName(item.status.status) }}
+                    </span>
+                    <span class="badge badge-success" v-else>
+                      {{ $root.getStatusTaskName(item.status.status) }}
+                    </span> <br>
+
+                     <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
+                    <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
                   </p>
                 </router-link>
 
@@ -435,6 +443,24 @@ export default {
                   >
                     <b>Sửa</b>
                   </span>
+                </div>
+
+                <div v-else-if="item && item.department.leader.id == $root.auth.id" style="padding: 0px 5px 5px 0px" class="text-right">
+                  <div v-if="item.status.status == 0">
+                    <span @click="handleTakeTask(item)" style="cursor: pointer" class="text-info">
+                      <b>Tiếp nhận</b>
+                    </span>
+                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal"
+                      style="cursor: pointer" class="text-danger">
+                      <b>Từ chối</b>
+                    </span>
+                  </div>
+                  <div v-else-if="item.status.status == 1">
+                    <span @click="getTaskUpdate(item)" data-toggle="modal" data-target="#job_modal_delete"
+                      style="cursor: pointer" class="text-success">
+                      <b>Hoàn thành</b>
+                    </span>
+                  </div>
                 </div>
               </div>
             </li>

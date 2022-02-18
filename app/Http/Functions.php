@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Model\User;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
+use App\Model\DepartmentUser;
 use App\Model\Role;
 
 trait Functions {
@@ -89,6 +90,17 @@ trait Functions {
    */
   public function isUser() {
     return $this->auth->role->level == 4;
+  }
+
+  /**
+   * Kiểm tra có phải trưởng phòng không
+   */
+  public function isLeader() {
+    $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+    if ($department_user && $department_user->leader) {
+      return true;
+    }
+    return false;
   }
 
   /**

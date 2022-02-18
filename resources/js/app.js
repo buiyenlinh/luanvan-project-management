@@ -388,13 +388,26 @@ new Vue({
 		},
 		getStatusTaskName($num_status) {
 			if ($num_status == 0) return 'Đã giao';
-			if ($num_status == 1) return 'Tiếp nhận';
-			if ($num_status == 2) return 'Đang thực hiện';
-			if ($num_status == 3) return 'Hoàn thành';
-			if ($num_status == 4) return 'Chờ duyệt';
-			if ($num_status == 5) return 'Đã duyệt';
-			if ($num_status == 6) return 'Không được duyệt';
-			if ($num_status == 7) return 'Từ chối nhận';
+			if ($num_status == 1) return 'Đã tiếp nhận';
+			if ($num_status == 2) return 'Chờ duyệt';
+			if ($num_status == 3) return 'Đã duyệt';
+			if ($num_status == 4) return 'Từ chối duyệt';
+			if ($num_status == 5) return 'Từ chối nhận';
+		},
+		checkDeadline(_param) {
+			let today = new Date();
+			let date = today.getFullYear() +'-0'+(today.getMonth()+1)+'-'+today.getDate();
+
+			date = new Date(date).getTime();
+			let end_time_param = new Date(_param.end_time).getTime();
+
+			let check = date - end_time_param;
+			if (check > 0) {
+				check = check / 86400000;
+				return 'Trễ ' + check + ' ngày';
+			} else {
+				return 'Chưa tới hạn'	
+			}
 		}
   },
   created() {

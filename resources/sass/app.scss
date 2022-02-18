@@ -880,3 +880,29 @@ $side-bar-width-small: 65px;
         }
     }
 }
+
+/* job */
+#job {
+    ul {
+        padding: 0px;
+        list-style: none;
+
+        li .info {
+            border: 1px solid #17a2b8;
+            padding: 10px;
+        }
+    }
+
+    .pre-jobs {
+        ul li {
+            border: 1px solid #ddd;
+            display: inline-block;
+            padding: 3px 8px 5px 8px;
+            border-radius: 30px;
+            font-size: 13px;
+            i {
+                margin-left: 5px;
+            }
+        }
+    }
+}

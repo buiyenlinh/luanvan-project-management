@@ -984,3 +984,27 @@ a:hover {
   margin-left: 5px;
 }
 
+/* job */
+
+#job ul {
+  padding: 0px;
+  list-style: none;
+}
+
+#job ul li .info {
+  border: 1px solid #17a2b8;
+  padding: 10px;
+}
+
+#job .pre-jobs ul li {
+  border: 1px solid #ddd;
+  display: inline-block;
+  padding: 3px 8px 5px 8px;
+  border-radius: 30px;
+  font-size: 13px;
+}
+
+#job .pre-jobs ul li i {
+  margin-left: 5px;
+}
+

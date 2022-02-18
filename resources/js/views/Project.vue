@@ -147,6 +147,11 @@ export default {
     getManager(_user) {
       this.project.manager = _user.id;  
     },
+    removeManager() {
+      this.project.manager = null;
+      this.text_select =  '-- Tìm quản lý --';
+      this.reset_select_comp = !this.reset_select_comp;
+    },
     getProjectUpdate(_project) {
       this.project = _.clone(_project);
       this.project.manager = _project.manager.id;
@@ -320,7 +325,10 @@ export default {
                   <p style="font-size: 12px; margin-bottom: 0px">
                     <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
                     <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}} <br>
-                    <b>Tạo lúc: </b>{{item.created_at}}
+                    <b>Tạo lúc: </b>{{item.created_at}} <br>
+
+                     <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
+                    <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
                   </p>
                 </router-link>
                 <div class="text-right" style="padding: 10px" v-if="$root.isManager()">
@@ -391,6 +399,7 @@ export default {
                       url="user/search-manager"
                       :statusReset="reset_select_comp"
                       @changeValue="getManager"
+                      @remove="removeManager"
                       :variable="{first: 'fullname', second: 'username'}"
                     />
                     <div class="text-danger font-italic error">{{error.manager}}</div>
