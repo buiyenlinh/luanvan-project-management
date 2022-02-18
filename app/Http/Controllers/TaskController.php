@@ -55,8 +55,10 @@ class TaskController extends Controller
             if ($_department) {
                 $task_ids = array();
                 $department_user_job = DepartmentUserJob::where('department_user_id', $_department->id);
-                foreach ($department_user_job->get() as $_dep_user_job) {
-                    $task_ids[] = Job::find($_dep_user_job->job_id)->task_id;
+                if ($department_user_job->count() > 0) {
+                    foreach ($department_user_job->get() as $_dep_user_job) {
+                        $task_ids[] = Job::find($_dep_user_job->job_id)->task_id;
+                    }
                 }
 
                 if (count($task_ids) > 0) {

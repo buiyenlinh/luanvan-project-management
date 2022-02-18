@@ -53,6 +53,12 @@ Route::middleware('is-token')->group(function() {
       Route::post('search-user-member', 'JobController@searchUserMember');
       Route::post('search-job', 'JobController@searchJob');
       Route::post('add', 'JobController@add');
+      Route::get('list', 'JobController@list');
+      Route::post('update/{job_id}', 'JobController@update');
+      Route::delete('delete-file/{job_id}', 'JobController@deleteFile');
+      Route::delete('delete/{job_id}', 'JobController@delete');
+      Route::post('take-job/{job_id}', 'JobController@takeJob');
+      Route::post('refuse-job/{job_id}', 'JobController@refuseJob');
     });
   });
 

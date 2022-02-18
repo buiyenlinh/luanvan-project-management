@@ -26,11 +26,31 @@ export default {
       error: null,
       loading_delete_file: false,
       loading_add: false,
+      loading_delete: false,
+      loading_take_job: false,
+      loading_refuse_job: false,
+      reason: '',
+      reason_error: ''
     }
   },
   methods: {
     getList() {
-      console.log("get list");
+      this.loading_list = true;
+      this.$root.api.get(`project/${this.params.project_id}/task/${this.params.task_id}/list`, {
+        params: {
+          name: this.search,
+        }
+      }).then(res => {
+        this.loading_list = false;
+        if (res.data.status == "OK") {
+          this.list = res.data.data.data;
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch(err => {
+        this.loading_list = false;
+        this.$root.showError(err);
+      })
     },
     getInfo() {
       this.loading_info = true;
@@ -96,10 +116,12 @@ export default {
     getUser(_user) {
       this.job.user_id = _user.id;
       this.select_user.text = _user.fullname || _user.username;
+      this.checkUser();
     },
     removeUser() {
       this.job.user_id = null;
       this.select_user.text = '--- Tìm thành viên ---';
+      this.checkUser();
     },
     onSubmit() {
       this.checkName();
@@ -116,7 +138,7 @@ export default {
         }
       }
 
-      if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.pre_job_ids == '') {
+      if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.pre_job_ids == '' && this.error.user_id == '') {
         let formData = new FormData();
         formData.append('name', this.job.name);
         formData.append('content', this.job.content);
@@ -131,30 +153,30 @@ export default {
           }
         }
         
-        if (this.job.id != null) { // cập nhật
-          formData.append('id', this.task.id);
+        if (this.job.id != null && this.job.id != '' && this.job.id > 0) { // cập nhật
+          formData.append('id', this.job.id);
           this.loading_add = true;
-          console.log("Update");
-          // this.$root.api.post(`project/${this.project_id}/task/update`, formData).then(res => {
-          //   this.loading_add = false;
-          //   if (res.data.status == 'OK') {
-          //     this.$notify(res.data.message, 'success');
-          //     $('#task_modal_add_update').modal('hide');
-          //     this.getList();
-          //   } else {
-          //     this.$root.showError(res.data.error);
-          //   }
-          // }).catch (err => {
-          //   this.$root.showError(err);
-          //   this.loading_add = false;
-          // })
+
+          this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/update/${this.job.id}`, formData).then(res => {
+            this.loading_add = false;
+            if (res.data.status == 'OK') {
+              this.$notify(res.data.message, 'success');
+              $('#job_modal_add_update').modal('hide');
+              this.getList();
+            } else {
+              this.$root.showError(res.data.error);
+            }
+          }).catch (err => {
+            this.$root.showError(err);
+            this.loading_add = false;
+          })
         } else {
           this.loading_add = true;
           this.$root.api.post(`project/${this.info.project.id}/task/${this.info.task.id}/add`, formData).then(res => {
             this.loading_add = false;
             if (res.data.status == 'OK') {
               this.$notify(res.data.message, 'success');
-              $('#modal_add_update').modal('hide');
+              $('#job_modal_add_update').modal('hide');
               this.getList();
             } else {
               this.$root.showError(res.data.error);
@@ -165,11 +187,10 @@ export default {
           })
         }
       }
-
-
     },
     removePreJobId(_index) {
       this.pre_job_id.show.splice(_index, 1);
+      this.pre_job_id.check.splice(_index, 1);
     },
     checkName() {
       if (this.job.name == '') {
@@ -179,7 +200,7 @@ export default {
       }
     },
     checkUser() {
-      if (this.job.user_id == '' || this.job.user_id == null) {
+      if (this.job.user_id == null || this.job.user_id == '' || this.job.user_id <= 0) {
         this.error.user_id = 'Phân công cho thành viên là bắt buộc';
       } else {
         this.error.user_id = '';
@@ -209,9 +230,6 @@ export default {
       let start_time_task = new Date(this.info.task.start_time).getTime();
       let end_time_job = new Date(this.job.end_time).getTime();
       let start_time_job = new Date(this.job.start_time).getTime();
-
-      console.log('start time task: ' + start_time_task + ', start time job: ' + start_time_job);
-      console.log('end time task: ' + end_time_task + ', end time job: ' + end_time_job);
 
       if (this.job.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
@@ -255,7 +273,7 @@ export default {
       if (this.checkTimePreJob(_pre_job, this.job)) {
         if (!this.pre_job_id.check.includes(_pre_job.id) && _pre_job.id != this.job.id) {
           this.pre_job_id.check.push(_pre_job.id);
-          this.pre_job_ids.show.push(_pre_job);
+          this.pre_job_id.show.push(_pre_job);
         } else {
           this.select_pre_job.text = '';
           this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
@@ -274,6 +292,77 @@ export default {
     },
     removePreJob() {
       this.select_pre_job.text = '--- Tìm tên nhiệm vụ ---';
+    },
+    getJobUpdate(_job) {
+      this.job = _.clone(_job);
+      this.file.updated = _job.file;
+      this.job.user_id = _job.user.id;  
+      this.select_user.text = _job.user.fullname || _job.user.username;
+      this.pre_job_id.show = _job.pre_job_ids;
+
+      if (_job.pre_job_ids) {
+        for (let i in _job.pre_job_ids) {
+          this.pre_job_id.check.push(_job.pre_job_ids[i].id);
+        }
+      }
+    },
+    onSubmitDelete() {
+      this.loading_delete = true;
+      this.$root.api.delete(`project/${this.params.project_id}/task/${this.params.task_id}/delete/${this.job.id}`).then(res => {
+        this.loading_delete = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#job_modal_delete').modal('hide');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_delete = false;
+      })
+    },
+    handleTakeJob(_job) {
+      this.loading_take_job = true;
+      this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/take-job/${_job.id}`).then(res => {
+        this.loading_take_job = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_take_job = false;
+      })
+    },
+    checkReasonRefuse() {
+      if (this.reason == '')
+        this.reason_error = "Lý do từ chối nhiệm vụ là bắt buộc";
+      else 
+        this.reason_error = '';
+    },
+    handleRefuseJob() {
+      this.checkReasonRefuse();
+      if (this.reason_error == '') {
+        this.loading_refuse_job = true;
+        this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/refuse-job/${this.job.id}`, {
+          'content' : this.reason
+        }).then(res => {
+          this.loading_refuse_job = false;
+          if (res.data.status == "OK") {
+            this.$notify(res.data.message, 'success');
+            $('#job_refuse_modal').modal('hide');
+            this.getList();
+          } else {
+            this.$root.showError(res.data.error);
+          }
+        }).catch (err => {
+          this.$root.showError(err);
+          this.loading_refuse_job = false;
+        })
+      }
     }
   },
   created() {
@@ -283,6 +372,7 @@ export default {
     this.params.project_id = this.$route.params.project_id;
     this.params.task_id = this.$route.params.id;
     this.getInfo();
+    this.getList();
     $(document).on('hidden.bs.modal', '#job_modal_add_update, #job_modal_delete', () => {
       this.closeModal();
     });
@@ -303,6 +393,10 @@ export default {
     'job.user_id'() {
       if (!this.validate_form) return;
       this.checkUser();
+    },
+    'reason'() {
+      if (!this.validate_form) return;
+      this.checkReasonRefuse();
     }
   }
 }
@@ -310,7 +404,7 @@ export default {
 
 <template>
   <div id="job">
-    <div v-if="info">
+    <div v-if="info && info.task.status.status != 0">
       <h3 class="mb-3">Công việc: {{ info.task.name }}</h3>
       <form @submit.prevent="getList">
         <div class="row">
@@ -331,8 +425,80 @@ export default {
       <div class="text-center" v-if="loading_list">
         <m-spinner/>
       </div>
+      <div class="list" v-else-if="list && list.length > 0">
+        <div class="mb-1"><b>Danh sách nhiệm vụ</b></div>
+         <ul class="row">
+            <li class="col-md-3 col-sm-4 col-12 mb-3"
+              v-for="(item, index) in list"
+              :key="index"
+            >
+              <div class="bg-fff info">
+                <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+                <p style="font-size: 12px; margin-bottom: 0px"> 
+                  <b>Phân cho: </b>{{item.user.fullname || item.user.username}} <br>
+                  <b>Tạo lúc: </b>{{item.created_at}} <br>
+                  <b v-if="item.status != null" >Trạng thái: </b> 
+                  <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 5">
+                    {{ $root.getStatusTaskName(item.status.status) }}
+                  </span>
+                  <span class="badge badge-success" v-else>
+                    {{ $root.getStatusTaskName(item.status.status) }}
+                  </span> <br>
+                  <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
+                  <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
+                </p>
+
+                <div class="text-right" style="padding: 0px 5px 5x 0px"
+                  v-if="$root.isManager() || (info && $root.auth.id == info.task.department.leader.id)">
+                  <span
+                    class="text-info"
+                    @click="getJobUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#job_modal_add_update"
+                    style="cursor: pointer"
+                  >
+                    <b>Sửa</b>
+                  </span>
+
+                  <span
+                    class="text-danger"
+                    @click="getJobUpdate(item)"
+                    data-toggle="modal"
+                    data-target="#job_modal_delete"
+                    style="cursor: pointer"
+                  >
+                    <b>Xóa</b>
+                  </span>
+                </div>
+
+                <div v-if="item && item.user.id == $root.auth.id" 
+                  class="text-right" style="padding: 0px 5px 5px 0px">
+                  <div v-if="item.status.status == 0">
+                    <span @click="handleTakeJob(item)" style="cursor: pointer" class="text-info">
+                      <b>Tiếp nhận</b>
+                    </span>
+                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal"
+                      style="cursor: pointer" class="text-danger">
+                      <b>Từ chối</b>
+                    </span>
+                  </div>
+                  <div v-else-if="item.status.status == 1">
+                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_modal_delete"
+                      style="cursor: pointer" class="text-success">
+                      <b>Hoàn thành</b>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+      </div>
+      <div v-else><b>Không có nhiệm vụ</b></div>
     </div>
-    <m-spinner v-else class="mb-2" />
+    <div v-else>
+      <m-spinner class="mb-2" />
+      <b>Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ</b>
+    </div>
 
     <div class="modal fade" id="job_modal_add_update">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -399,7 +565,7 @@ export default {
                       :variable="{first: 'name'}"
                     />
                   </div>
-                  <div class="pre-tasks">
+                  <div class="pre-jobs">
                     <ul v-if="pre_job_id">
                       <li v-for="(item, index) in pre_job_id.show" :key="index">
                         {{item.name }}
@@ -450,6 +616,65 @@ export default {
       </div>
     </div>
 
+    <div class="modal fade" id="job_modal_delete">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Xóa nhiệm vụ</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="job.name" class="d-flex justify-content-start">
+              <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+              <span>
+                Bạn có muốn xóa nhiệm vụ <b>{{ job.name }}</b>
+              </span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="onSubmitDelete">Xóa</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="job_refuse_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Từ chối nhiệm vụ</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="job" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="job.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Lý do từ chối <span class="text-danger">*</span></b></label>
+                  <textarea class="form-control" rows="5" v-model="reason"></textarea>
+                  <div class="text-danger font-italic error">{{ reason_error }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="handleRefuseJob">Gửi</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add" :title="job.id != null ? 'Đang cập nhật nhiệm vụ' : 'Đang thêm nhiệm vụ'" :full="true" />
+    <m-loading v-if="loading_delete_file" title="Đang xóa tệp" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa nhiệm vụ" :full="true" />
+    <m-loading v-if="loading_refuse_job" title="Đang gửi yêu cầu từ chối nhiệm vụ" :full="true" />
   </div>
 </template>
