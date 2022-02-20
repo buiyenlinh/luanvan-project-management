@@ -31,7 +31,11 @@ export default {
       file_updated: '',
       pre_task_ids_show: [],
       pre_task_id_check: [],
-      loading_delete_file: false
+      loading_delete_file: false,
+      loading_take_task: false,
+      loading_refuse_task: false,
+      reason: '',
+      reason_error: ''
     }
   },
   methods: {
@@ -40,9 +44,9 @@ export default {
       this.$root.api.get(`project/${this.project_id}/task/list`, {
         params: this.search
       }).then(res => {
+        this.loading_list = false;
         if (res.data.status == "OK") {
-          this.list = res.data.data.data;
-          this.loading_list = false;
+          this.list = res.data.data.data;  
         } else {
           this.$root.showError(res.data.error);
         }
@@ -233,7 +237,8 @@ export default {
     },
     checkTimePreTask(_pre_task, _task) {
       let start_time_task = new Date(_task.start_time).getTime(); // đơn vị mili giây
-      if (start_time_task <= _pre_task.end_time * 1000) { // Dvi giây nên * 1000
+      let end_time_pre_task = new Date(_pre_task.end_time).getTime();
+      if (start_time_task <= end_time_pre_task) { 
         this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với công việc tiên quyết "' + _pre_task.name + '"';
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
         return false;
@@ -330,7 +335,49 @@ export default {
         }
         this.pre_task_ids_show = _task.pre_task_ids;
       }
-    }
+    },
+    handleTakeTask(_task) {
+      this.loading_take_task = true;
+      this.$root.api.post(`project/${this.project_id}/task/take-task/${_task.id}`).then(res => {
+        this.loading_take_task = false;
+        if (res.data.status == "OK") {
+          this.$root.$notify(res.data.message, 'success');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch(err => {
+        this.$root.showError(err);
+        this.loading_take_task = false;
+      })
+    },
+    handleRefuseTask() {
+      this.checkReasonRefuse();
+      if (this.reason_error == '') {
+        this.loading_refuse_task = true;
+        this.$root.api.post(`project/${this.project_id}/task/refuse-task/${this.task.id}`, {
+          'content' : this.reason
+        }).then(res => {
+          this.loading_refuse_task = false;
+          if (res.data.status == "OK") {
+            this.$notify(res.data.message, 'success');
+            $('#task_refuse_modal').modal('hide');
+            this.getList();
+          } else {
+            this.$root.showError(res.data.error);
+          }
+        }).catch (err => {
+          this.$root.showError(err);
+          this.loading_refuse_task = false;
+        })
+      }
+    },
+    checkReasonRefuse() {
+      if (this.reason == '')
+        this.reason_error = "Lý do từ chối công việc là bắt buộc";
+      else 
+        this.reason_error = '';
+    },
   },
   created() {
     this.closeModal();
@@ -360,6 +407,10 @@ export default {
     'task.department_id' () {
       if (!this.validate_form) return;
       this.checkDepartment();
+    },
+    'reason'() {
+      if (!this.validate_form) return;
+      this.checkReasonRefuse();
     }
   }
 }
@@ -367,7 +418,15 @@ export default {
 <template>
   <div id="task">
     <div v-if="project">
-      <h3 class="mb-3">Dự án: {{ project.name }}</h3>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <router-link :to="{ name: 'project' }">Dự án</router-link>  
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">{{ project.name }}</li>
+        </ol>
+      </nav>
+
       <form @submit.prevent="getList">
         <div class="row">
           <div class="col-md-3 col-sm-5 col-12 mb-2">
@@ -450,7 +509,7 @@ export default {
                     <span @click="handleTakeTask(item)" style="cursor: pointer" class="text-info">
                       <b>Tiếp nhận</b>
                     </span>
-                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal"
+                    <span @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_refuse_modal"
                       style="cursor: pointer" class="text-danger">
                       <b>Từ chối</b>
                     </span>
@@ -631,9 +690,44 @@ export default {
         </div>
       </div>
 
+      <div class="modal fade" id="task_refuse_modal">
+        <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Từ chối công việc</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div v-if="task" class="row">
+                <div class="col-md-12 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Tên công việc <span class="text-danger">*</span></b></label>
+                    <input type="text" class="form-control form-control-sm" disabled v-model="task.name">
+                  </div>
+                </div>
+
+                <div class="col-md-12 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Lý do từ chối <span class="text-danger">*</span></b></label>
+                    <textarea class="form-control" rows="5" v-model="reason"></textarea>
+                    <div class="text-danger font-italic error">{{ reason_error }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger btn-sm" @click="handleRefuseTask">Gửi</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
       <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
       <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm" :full="true" />
+      <m-loading v-if="loading_take_task" title="Đang thực hiện tiếp nhận công việc" :full="true" />
+      <m-loading v-if="loading_refuse_task" title="Đang gửi yêu cầu từ chối công việc" :full="true" />
     </div>
     <m-spinner v-else class="mb-2" />
   </div>

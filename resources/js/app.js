@@ -393,6 +393,8 @@ new Vue({
 			if ($num_status == 3) return 'Đã duyệt';
 			if ($num_status == 4) return 'Từ chối duyệt';
 			if ($num_status == 5) return 'Từ chối nhận';
+			if ($num_status == 6) return 'Không duyệt từ chối nhận';
+			if ($num_status == 7) return 'Chuyển thành viên khác';
 		},
 		checkDeadline(_param) {
 			let today = new Date();

@@ -8,12 +8,15 @@ use App\Model\User;
 use App\Model\Job;
 use App\Model\DepartmentUser;
 use App\Http\Resources\DepartmentUserJobStatusResource;
+use App\Http\Resources\UserResource;
 use App\Model\DepartmentUserJob;
 use App\Model\DepartmentUserJobStatus;
 use Illuminate\Support\Facades\Storage;
 
+
 class JobResource extends JsonResource
 {
+    
     /**
      * Transform the resource into an array.
      *
@@ -37,17 +40,17 @@ class JobResource extends JsonResource
         }
 
         $user = array();
+        $status = array();
 
-        $department_user_job = DepartmentUserJob::where('job_id', $this->id)->first();
+
+        $department_user_job = DepartmentUserJob::where('job_id', $this->id)->latest('id')->first();
         if ($department_user_job) {
             $department_user = DepartmentUser::find($department_user_job->department_user_id);
             $user = User::find($department_user->user_id);
+            $status = new DepartmentUserJobStatusResource(
+                DepartmentUserJobStatus::where('department_user_job_id', $department_user_job->id)->latest('id')->first()
+            );   
         }
-
-        $status = new DepartmentUserJobStatusResource(
-            DepartmentUserJobStatus::where('department_user_job_id', $department_user_job->id)
-                ->latest('created_at')->first()
-            );
 
         return [
             'id' => $this->id,

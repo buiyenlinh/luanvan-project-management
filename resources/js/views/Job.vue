@@ -30,7 +30,16 @@ export default {
       loading_take_job: false,
       loading_refuse_job: false,
       reason: '',
-      reason_error: ''
+      reason_error: '',
+      note_finish: '',
+      loading_finish_job: false,
+      loading_approval_job: false,
+      loading_not_approval_job: false,
+      reason_not_approval: '',
+      reason_not_approval_error: '',
+      reason_not_approval_refuse: '',
+      reason_not_approval_refuse_error: '',
+      loading_not_approval_refuse_job: '',
     }
   },
   methods: {
@@ -283,6 +292,7 @@ export default {
     checkTimePreJob(_pre_job, _job) {
       let start_time_job = new Date(_job.start_time).getTime(); // đơn vị mili giây
       let end_time_pre_job = new Date(_pre_job.end_time).getTime();
+
       if (start_time_job <= end_time_pre_job) {
         this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với nhiệm vụ tiên quyết "' + _pre_job.name + '"';
         this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
@@ -363,6 +373,96 @@ export default {
           this.loading_refuse_job = false;
         })
       }
+    },
+    handleFinishJob() {
+      this.loading_finish_job = true;
+      this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/finish-job/${this.job.id}`, {
+        'content' : this.note_finish
+      }).then(res => {
+        this.loading_finish_job = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#job_finish_modal').modal('hide');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_finish_job = false;
+      })
+    },
+    handleApprovalJob(_job) {
+      this.loading_approval_job = true;
+      this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/approval-job/${_job.id}`).then(res => {
+        this.loading_approval_job = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#job_finish_modal').modal('hide');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_approval_job = false;
+      })
+    },
+    handleNotApprovalJob() {
+      this.checkReasonNotApproval();
+      if (this.reason_not_approval_error == '') {
+        this.loading_not_approval_job = true;
+        this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/not-approval-job/${this.job.id}`, {
+          'content' : this.reason_not_approval
+        }).then(res => {
+          this.loading_not_approval_job = false;
+          if (res.data.status == "OK") {
+            this.$notify(res.data.message, 'success');
+            $('#job_not_approval_modal').modal('hide');
+            this.getList();
+          } else {
+            this.$root.showError(res.data.error);
+          }
+        }).catch (err => {
+          this.$root.showError(err);
+          this.loading_not_approval_job = false;
+        })
+      }
+    },
+    checkReasonNotApproval() {
+      if (this.reason_not_approval == '')
+        this.reason_not_approval_error = 'Lý do không duyệt nhiệm vụ là bắt buộc';
+      else {
+        this.reason_not_approval_error = '';
+      }
+    },
+    checkReasonNotApprovalRefuse() {
+      if (this.reason_not_approval_refuse == '')
+        this.reason_not_approval_refuse_error = 'Lý do không duyệt yêu cầu từ chối nhiệm vụ là bắt buộc';
+      else {
+        this.reason_not_approval_refuse_error = '';
+      }     
+    },
+    handleNotApprovalRefuseJob() {
+      this.checkReasonNotApprovalRefuse();
+      if (this.reason_not_approval_refuse_error == '') {
+        this.loading_not_approval_refuse_job = true;
+        this.$root.api.post(`project/${this.params.project_id}/task/${this.params.task_id}/not-approval-refuse-job/${this.job.id}`, {
+          'content' : this.reason_not_approval_refuse
+        }).then(res => {
+          this.loading_not_approval_refuse_job = false;
+          if (res.data.status == "OK") {
+            this.$notify(res.data.message, 'success');
+            $('#job_not_approval_refuse_modal').modal('hide');
+            this.getList();
+          } else {
+            this.$root.showError(res.data.error);
+          }
+        }).catch (err => {
+          this.$root.showError(err);
+          this.loading_not_approval_refuse_job = false;
+        })
+      }
     }
   },
   created() {
@@ -397,6 +497,14 @@ export default {
     'reason'() {
       if (!this.validate_form) return;
       this.checkReasonRefuse();
+    },
+    'reason_not_approval'() {
+      if (!this.validate_form) return;
+      this.checkReasonNotApproval();
+    },
+    'reason_not_approval_refuse'() {
+      if (!this.validate_form) return;
+      this.checkReasonNotApprovalRefuse();
     }
   }
 }
@@ -404,101 +512,158 @@ export default {
 
 <template>
   <div id="job">
-    <div v-if="info && info.task.status.status != 0">
-      <h3 class="mb-3">Công việc: {{ info.task.name }}</h3>
-      <form @submit.prevent="getList">
-        <div class="row">
-          <div class="col-md-4 col-sm-6 col-8 mb-2">
-            <input type="text" class="form-control form-control-sm" placeholder="Tên nhiệm vụ..." v-model="search">
+    <div v-if="info">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><router-link :to="{ name: 'project' }">Dự án</router-link>  </li>
+          <li class="breadcrumb-item">
+            <router-link :to="{name: 'task', params: { 'id': info.project.id }}">{{ info.project.name }}</router-link>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">{{ info.task.name }}</li>
+        </ol>
+      </nav>
+
+      <div v-if="info.task.status.status <= 0">
+        <m-spinner class="mb-2" />
+        <b>Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ</b>
+      </div>
+      <div v-else-if="info.task.status.status == 5">
+        <m-spinner class="mb-2" />
+        <b>Công việc đã gửi yêu cầu từ chối nhận</b>
+      </div>
+      <div v-else>
+        <form @submit.prevent="getList">
+          <div class="row">
+            <div class="col-md-4 col-sm-6 col-8 mb-2">
+              <input type="text" class="form-control form-control-sm" placeholder="Tên nhiệm vụ..." v-model="search">
+            </div>
+            <div class="col-md-2 col-sm-3 col-4 mb-2"> 
+              <button type="submit" class="btn btn-info btn-sm">
+                <i class="fas fa-search"></i> Tìm
+              </button>
+            </div>  
+            <div class="col-md-6 col-sm-3 col-12 text-right mb-2" v-if="$root.isManager() || $root.auth.id == info.task.department.leader.id">
+              <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#job_modal_add_update">Thêm</button>
+            </div>
           </div>
-          <div class="col-md-2 col-sm-3 col-4 mb-2"> 
-            <button type="submit" class="btn btn-info btn-sm">
-              <i class="fas fa-search"></i> Tìm
-            </button>
-          </div>  
-          <div class="col-md-6 col-sm-3 col-12 text-right mb-2" v-if="$root.isManager()">
-            <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#job_modal_add_update">Thêm</button>
-          </div>
+        </form>
+
+        <div class="text-center" v-if="loading_list">
+          <m-spinner/>
         </div>
-      </form>
+        <div class="list" v-else-if="list && list.length > 0">
+          <div class="mb-1"><b>Danh sách nhiệm vụ</b></div>
+          <ul class="row">
+              <li class="col-md-3 col-sm-4 col-12 mb-3"
+                v-for="(item, index) in list"
+                :key="index"
+              >
+                <div class="bg-fff info">
+                  <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+                  <div style="font-size: 12px; margin-bottom: 0px"> 
+                    <b>Phân cho: </b>{{item.user.fullname || item.user.username}} <br>
+                    <b>Tạo lúc: </b>{{item.created_at}} <br>
 
-      <div class="text-center" v-if="loading_list">
-        <m-spinner/>
-      </div>
-      <div class="list" v-else-if="list && list.length > 0">
-        <div class="mb-1"><b>Danh sách nhiệm vụ</b></div>
-         <ul class="row">
-            <li class="col-md-3 col-sm-4 col-12 mb-3"
-              v-for="(item, index) in list"
-              :key="index"
-            >
-              <div class="bg-fff info">
-                <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                <p style="font-size: 12px; margin-bottom: 0px"> 
-                  <b>Phân cho: </b>{{item.user.fullname || item.user.username}} <br>
-                  <b>Tạo lúc: </b>{{item.created_at}} <br>
-                  <b v-if="item.status != null" >Trạng thái: </b> 
-                  <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 5">
-                    {{ $root.getStatusTaskName(item.status.status) }}
-                  </span>
-                  <span class="badge badge-success" v-else>
-                    {{ $root.getStatusTaskName(item.status.status) }}
-                  </span> <br>
-                  <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
-                  <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
-                </p>
-
-                <div class="text-right" style="padding: 0px 5px 5x 0px"
-                  v-if="$root.isManager() || (info && $root.auth.id == info.task.department.leader.id)">
-                  <span
-                    class="text-info"
-                    @click="getJobUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#job_modal_add_update"
-                    style="cursor: pointer"
-                  >
-                    <b>Sửa</b>
-                  </span>
-
-                  <span
-                    class="text-danger"
-                    @click="getJobUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#job_modal_delete"
-                    style="cursor: pointer"
-                  >
-                    <b>Xóa</b>
-                  </span>
-                </div>
-
-                <div v-if="item && item.user.id == $root.auth.id" 
-                  class="text-right" style="padding: 0px 5px 5px 0px">
-                  <div v-if="item.status.status == 0">
-                    <span @click="handleTakeJob(item)" style="cursor: pointer" class="text-info">
-                      <b>Tiếp nhận</b>
+                    <b v-if="item.status != null" >Trạng thái: </b> 
+                    <span class="badge badge-danger" v-if="item.status.status == 4 || item.status.status == 5 || item.status.status == 6">
+                      {{ $root.getStatusTaskName(item.status.status) }}
                     </span>
-                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal"
-                      style="cursor: pointer" class="text-danger">
-                      <b>Từ chối</b>
+
+                    <span class="badge badge-info" v-else-if="item.status.status == 2">
+                      {{ $root.getStatusTaskName(item.status.status) }}
                     </span>
+
+                    <span class="badge badge-success" v-else>
+                      {{ $root.getStatusTaskName(item.status.status) }}
+                    </span>
+
+                    <div v-if="item.status.status == 3">
+                      <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                      <b v-else  class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                    </div>
+                    <div v-else>
+                      <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
+                      <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
+                    </div>
                   </div>
-                  <div v-else-if="item.status.status == 1">
-                    <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_modal_delete"
-                      style="cursor: pointer" class="text-success">
-                      <b>Hoàn thành</b>
+
+                  <div class="text-right"
+                    v-if="item.status.status != 3 && ($root.isManager() || (info && $root.auth.id == info.task.department.leader.id))">
+                    <span
+                      class="text-info"
+                      @click="getJobUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#job_modal_add_update"
+                      style="cursor: pointer"
+                    >
+                      <b>Sửa</b>
                     </span>
+
+                    <span
+                      class="text-danger"
+                      @click="getJobUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#job_modal_delete"
+                      style="cursor: pointer"
+                    >
+                      <b>Xóa</b>
+                    </span>
+
+                    <div 
+                      style="display: inline-block; padding-left: 7px;"
+                      v-if="$root.auth.id == info.task.department.leader.id && item.status.status == 2">
+                      <span
+                        class="text-info"
+                        @click="handleApprovalJob(item)"
+                        style="cursor: pointer">
+                        <b>Duyệt</b>
+                      </span>
+                      <span
+                        class="text-danger"
+                        @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_not_approval_modal"
+                        style="cursor: pointer">
+                        <b>Không duyệt</b>
+                      </span>
+                    </div>
+
+                    <div v-if="$root.auth.id == info.task.department.leader.id && item.status.status == 5">
+                      <span
+                        class="text-danger"
+                        @click="getJobUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#job_not_approval_refuse_modal"
+                        style="cursor: pointer">  
+                        <b>Không duyệt từ chối</b>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div v-if="item && item.user.id == $root.auth.id" 
+                    class="text-right">
+                    <div v-if="item.status.status == 0">
+                      <span @click="handleTakeJob(item)" style="cursor: pointer" class="text-info">
+                        <b>Tiếp nhận</b>
+                      </span>
+                      <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal"
+                        style="cursor: pointer" class="text-danger">
+                        <b>Từ chối</b>
+                      </span>
+                    </div>
+                    <div v-else-if="item.status.status == 1 || item.status.status == 4 || item.status.status == 6">
+                      <span @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_finish_modal"
+                        style="cursor: pointer" class="text-success">
+                        <b>Hoàn thành</b>
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          </ul>
+              </li>
+            </ul>
+        </div>
+        <div v-else><b>Không có nhiệm vụ</b></div>
       </div>
-      <div v-else><b>Không có nhiệm vụ</b></div>
     </div>
-    <div v-else>
-      <m-spinner class="mb-2" />
-      <b>Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ</b>
-    </div>
+    <m-spinner v-else class="mb-2" />
 
     <div class="modal fade" id="job_modal_add_update">
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -672,9 +837,113 @@ export default {
       </div>
     </div>
 
+    <div class="modal fade" id="job_finish_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Hoàn thành nhiệm vụ</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="job" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="job.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Ghi chú </b></label>
+                  <textarea class="form-control" rows="5" v-model="note_finish"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="handleFinishJob">Gửi</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="job_not_approval_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Từ chối duyệt nhiệm vụ</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="job" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="job.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Lý do </b></label>
+                  <textarea class="form-control" rows="5" v-model="reason_not_approval"></textarea>
+                  <div class="text-danger font-italic error">{{ reason_not_approval_error }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="handleNotApprovalJob">Từ chối duyệt</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="modal fade" id="job_not_approval_refuse_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Không duyệt yêu cầu từ chối nhiệm vụ</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="job" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="job.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Lý do <span class="text-danger">*</span></b></label>
+                  <textarea class="form-control" rows="5" v-model="reason_not_approval_refuse"></textarea>
+                  <div class="text-danger font-italic error">{{ reason_not_approval_refuse_error }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="handleNotApprovalRefuseJob">Từ chối duyệt</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add" :title="job.id != null ? 'Đang cập nhật nhiệm vụ' : 'Đang thêm nhiệm vụ'" :full="true" />
     <m-loading v-if="loading_delete_file" title="Đang xóa tệp" :full="true" />
     <m-loading v-if="loading_delete" title="Đang xóa nhiệm vụ" :full="true" />
     <m-loading v-if="loading_refuse_job" title="Đang gửi yêu cầu từ chối nhiệm vụ" :full="true" />
+    <m-loading v-if="loading_take_job" title="Đang thực hiện tiếp nhận nhiệm vụ" :full="true" />
+    <m-loading v-if="loading_finish_job" title="Đang gửi yêu cầu duyệt hoàn thành nhiệm vụ" :full="true" />
+    <m-loading v-if="loading_approval_job" title="Đang duyệt nhiệm vụ" :full="true" />  
+    <m-loading v-if="loading_not_approval_job" title="Đang từ chối duyệt nhiệm vụ" :full="true" />  
+    <m-loading v-if="loading_not_approval_refuse_job" title="Đang thực hiện không duyệt yêu cầu từ chối nhiệm vụ" :full="true" />  
   </div>
 </template>

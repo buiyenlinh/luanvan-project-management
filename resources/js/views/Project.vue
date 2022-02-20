@@ -284,6 +284,7 @@ export default {
 
 <template>
   <div id="project">
+    <h3>Danh sách dự án</h3>
     <form @submit.prevent="handleSearch">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
