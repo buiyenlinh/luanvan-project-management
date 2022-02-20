@@ -969,7 +969,7 @@ a:hover {
 #task ul li .info a {
   color: #333;
   padding: 10px;
-  display: inline-block;
+  display: block;
 }
 
 #task .pre-tasks ul li {

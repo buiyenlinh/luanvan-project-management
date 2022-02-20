@@ -51,15 +51,25 @@ class TaskController extends Controller
         }
 
         if ($this->isUser()) {
-            $_department = DepartmentUser::where('user_id', $this->auth->id)->first();
-            if ($_department) {
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+            if ($department_user) {
                 $task_ids = array();
-                $department_user_job = DepartmentUserJob::where('department_user_id', $_department->id);
-                if ($department_user_job->count() > 0) {
-                    foreach ($department_user_job->get() as $_dep_user_job) {
-                        $task_ids[] = Job::find($_dep_user_job->job_id)->task_id;
+                if ($department_user->leader) {
+                    $department_task = DepartmentTask::where('department_id', $department_user->department_id);
+                    if ($department_task->count() > 0) {
+                        foreach ($department_task->get() as $_department_task) {
+                            $task_ids[] = $_department_task->task_id;
+                        }
+                    }
+                } else {
+                    $department_user_job = DepartmentUserJob::where('department_user_id', $department_user->id);
+                    if ($department_user_job->count() > 0) {
+                        foreach ($department_user_job->get() as $_dep_user_job) {
+                            $task_ids[] = Job::find($_dep_user_job->job_id)->task_id;
+                        }
                     }
                 }
+                
 
                 if (count($task_ids) > 0) {
                     $db->whereIn('id', $task_ids);
@@ -82,8 +92,17 @@ class TaskController extends Controller
         if (!$name) {
             return $this->success('Danh sách công việc tìm kiếm', []);
         }
+        
+
+        $data = array();
         $tasks = Task::where('name', 'LIKE', '%' . $name . '%')->where('project_id', $project->id)->get();
-        return $this->success('Danh sách công việc tìm kiếm', $tasks);
+        if ($tasks->count() > 0) {
+            foreach($tasks as $_task) {
+                $data[] = new TaskResource($_task);
+            }
+        }
+
+        return $this->success('Danh sách công việc tìm kiếm', $data);
     }
 
     /**
@@ -386,5 +405,67 @@ class TaskController extends Controller
             'file' => ''
         ]);
         return $this->success('Xóa tệp đính kèm thành công');
+    }
+
+
+    /**
+     * Check
+     */
+    public function checkError($project_id, $task_id) {
+        $project = Project::find($project_id);
+        if (!$project) return 'Dự án không tồn tại';
+
+        $task = Task::find($task_id);
+        if (!$task) return 'Công việc không tồn tại';
+
+        if ($project_id != $task->project_id)
+            return 'Công việc "' . $task->name . '" không nằm trong dự án "' . $project->name . '"'; 
+    }
+
+    /**
+     * Tiếp nhận task
+     */
+    public function takeTask(Request $request, $project_id, $task_id) {
+        $project = Project::find($project_id);
+        $task = Task::find($task_id);
+
+        $check_error = $this->checkError($project_id, $task_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+            
+
+        $department_task = DepartmentTask::where('task_id', $task_id)->first();
+        if ($department_task) {
+            DepartmentTaskStatus::create([
+                'content' => '',
+                'status' => 1,
+                'department_task_id' => $department_task->id
+            ]);
+        }
+
+        return $this->success('Tiếp nhận công việc thành công', []);
+    }
+
+    public function refuseTask(Request $request, $project_id, $task_id) {
+        $project = Project::find($project_id);
+        $task = Task::find($task_id);
+
+        $check_error = $this->checkError($project_id, $task_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+
+        $content = $request->content;
+        if (!$content) return $this->error('Lý do từ chối công việc là bắt buộc');
+
+        $department_task = DepartmentTask::where('task_id', $task_id)->first();
+        if ($department_task) {
+            DepartmentTaskStatus::create([
+                'content' => $content,
+                'status' => 5,
+                'department_task_id' => $department_task->id
+            ]);
+        }
+
+        return $this->success('Yêu cầu từ chối công việc đã được gửi thành công', []);
     }
 }

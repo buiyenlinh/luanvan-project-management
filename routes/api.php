@@ -46,6 +46,8 @@ Route::middleware('is-token')->group(function() {
       Route::post('update', 'TaskController@update');
       Route::delete('delete/{id_task}', 'TaskController@delete');
       Route::delete('delete-file/{id_task}', 'TaskController@deleteFile');
+      Route::post('take-task/{task_id}', 'TaskController@takeTask')->withoutMiddleware('check-role:1|2|3');
+      Route::post('refuse-task/{task_id}', 'TaskController@refuseTask')->withoutMiddleware('check-role:1|2|3');
     });
 
     Route::prefix('task/{task_id}')->group(function() {
@@ -59,6 +61,10 @@ Route::middleware('is-token')->group(function() {
       Route::delete('delete/{job_id}', 'JobController@delete');
       Route::post('take-job/{job_id}', 'JobController@takeJob');
       Route::post('refuse-job/{job_id}', 'JobController@refuseJob');
+      Route::post('finish-job/{job_id}', 'JobController@finishJob');
+      Route::post('approval-job/{job_id}', 'JobController@approvalJob');
+      Route::post('not-approval-job/{job_id}', 'JobController@notApprovalJob');
+      Route::post('not-approval-refuse-job/{job_id}', 'JobController@notApprovalRefuseJob');
     });
   });
 

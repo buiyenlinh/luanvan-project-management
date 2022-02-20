@@ -2687,7 +2687,16 @@ __webpack_require__.r(__webpack_exports__);
       loading_take_job: false,
       loading_refuse_job: false,
       reason: '',
-      reason_error: ''
+      reason_error: '',
+      note_finish: '',
+      loading_finish_job: false,
+      loading_approval_job: false,
+      loading_not_approval_job: false,
+      reason_not_approval: '',
+      reason_not_approval_error: '',
+      reason_not_approval_refuse: '',
+      reason_not_approval_refuse_error: '',
+      loading_not_approval_refuse_job: ''
     };
   },
   methods: {
@@ -3060,20 +3069,132 @@ __webpack_require__.r(__webpack_exports__);
           _this8.loading_refuse_job = false;
         });
       }
+    },
+    handleFinishJob: function handleFinishJob() {
+      var _this9 = this;
+
+      this.loading_finish_job = true;
+      this.$root.api.post("project/".concat(this.params.project_id, "/task/").concat(this.params.task_id, "/finish-job/").concat(this.job.id), {
+        'content': this.note_finish
+      }).then(function (res) {
+        _this9.loading_finish_job = false;
+
+        if (res.data.status == "OK") {
+          _this9.$notify(res.data.message, 'success');
+
+          $('#job_finish_modal').modal('hide');
+
+          _this9.getList();
+        } else {
+          _this9.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this9.$root.showError(err);
+
+        _this9.loading_finish_job = false;
+      });
+    },
+    handleApprovalJob: function handleApprovalJob(_job) {
+      var _this10 = this;
+
+      this.loading_approval_job = true;
+      this.$root.api.post("project/".concat(this.params.project_id, "/task/").concat(this.params.task_id, "/approval-job/").concat(_job.id)).then(function (res) {
+        _this10.loading_approval_job = false;
+
+        if (res.data.status == "OK") {
+          _this10.$notify(res.data.message, 'success');
+
+          $('#job_finish_modal').modal('hide');
+
+          _this10.getList();
+        } else {
+          _this10.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this10.$root.showError(err);
+
+        _this10.loading_approval_job = false;
+      });
+    },
+    handleNotApprovalJob: function handleNotApprovalJob() {
+      var _this11 = this;
+
+      this.checkReasonNotApproval();
+
+      if (this.reason_not_approval_error == '') {
+        this.loading_not_approval_job = true;
+        this.$root.api.post("project/".concat(this.params.project_id, "/task/").concat(this.params.task_id, "/not-approval-job/").concat(this.job.id), {
+          'content': this.reason_not_approval
+        }).then(function (res) {
+          _this11.loading_not_approval_job = false;
+
+          if (res.data.status == "OK") {
+            _this11.$notify(res.data.message, 'success');
+
+            $('#job_not_approval_modal').modal('hide');
+
+            _this11.getList();
+          } else {
+            _this11.$root.showError(res.data.error);
+          }
+        })["catch"](function (err) {
+          _this11.$root.showError(err);
+
+          _this11.loading_not_approval_job = false;
+        });
+      }
+    },
+    checkReasonNotApproval: function checkReasonNotApproval() {
+      if (this.reason_not_approval == '') this.reason_not_approval_error = 'Lý do không duyệt nhiệm vụ là bắt buộc';else {
+        this.reason_not_approval_error = '';
+      }
+    },
+    checkReasonNotApprovalRefuse: function checkReasonNotApprovalRefuse() {
+      if (this.reason_not_approval_refuse == '') this.reason_not_approval_refuse_error = 'Lý do không duyệt yêu cầu từ chối nhiệm vụ là bắt buộc';else {
+        this.reason_not_approval_refuse_error = '';
+      }
+    },
+    handleNotApprovalRefuseJob: function handleNotApprovalRefuseJob() {
+      var _this12 = this;
+
+      this.checkReasonNotApprovalRefuse();
+
+      if (this.reason_not_approval_refuse_error == '') {
+        this.loading_not_approval_refuse_job = true;
+        this.$root.api.post("project/".concat(this.params.project_id, "/task/").concat(this.params.task_id, "/not-approval-refuse-job/").concat(this.job.id), {
+          'content': this.reason_not_approval_refuse
+        }).then(function (res) {
+          _this12.loading_not_approval_refuse_job = false;
+
+          if (res.data.status == "OK") {
+            _this12.$notify(res.data.message, 'success');
+
+            $('#job_not_approval_refuse_modal').modal('hide');
+
+            _this12.getList();
+          } else {
+            _this12.$root.showError(res.data.error);
+          }
+        })["catch"](function (err) {
+          _this12.$root.showError(err);
+
+          _this12.loading_not_approval_refuse_job = false;
+        });
+      }
     }
   },
   created: function created() {
     this.closeModal();
   },
   mounted: function mounted() {
-    var _this9 = this;
+    var _this13 = this;
 
     this.params.project_id = this.$route.params.project_id;
     this.params.task_id = this.$route.params.id;
     this.getInfo();
     this.getList();
     $(document).on('hidden.bs.modal', '#job_modal_add_update, #job_modal_delete', function () {
-      _this9.closeModal();
+      _this13.closeModal();
     });
   },
   watch: {
@@ -3096,6 +3217,14 @@ __webpack_require__.r(__webpack_exports__);
     'reason': function reason() {
       if (!this.validate_form) return;
       this.checkReasonRefuse();
+    },
+    'reason_not_approval': function reason_not_approval() {
+      if (!this.validate_form) return;
+      this.checkReasonNotApproval();
+    },
+    'reason_not_approval_refuse': function reason_not_approval_refuse() {
+      if (!this.validate_form) return;
+      this.checkReasonNotApprovalRefuse();
     }
   }
 });
@@ -3664,7 +3793,11 @@ __webpack_require__.r(__webpack_exports__);
       file_updated: '',
       pre_task_ids_show: [],
       pre_task_id_check: [],
-      loading_delete_file: false
+      loading_delete_file: false,
+      loading_take_task: false,
+      loading_refuse_task: false,
+      reason: '',
+      reason_error: ''
     };
   },
   methods: {
@@ -3675,9 +3808,10 @@ __webpack_require__.r(__webpack_exports__);
       this.$root.api.get("project/".concat(this.project_id, "/task/list"), {
         params: this.search
       }).then(function (res) {
+        _this.loading_list = false;
+
         if (res.data.status == "OK") {
           _this.list = res.data.data.data;
-          _this.loading_list = false;
         } else {
           _this.$root.showError(res.data.error);
         }
@@ -3889,8 +4023,9 @@ __webpack_require__.r(__webpack_exports__);
     checkTimePreTask: function checkTimePreTask(_pre_task, _task) {
       var start_time_task = new Date(_task.start_time).getTime(); // đơn vị mili giây
 
-      if (start_time_task <= _pre_task.end_time * 1000) {
-        // Dvi giây nên * 1000
+      var end_time_pre_task = new Date(_pre_task.end_time).getTime();
+
+      if (start_time_task <= end_time_pre_task) {
         this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với công việc tiên quyết "' + _pre_task.name + '"';
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
         return false;
@@ -3994,19 +4129,70 @@ __webpack_require__.r(__webpack_exports__);
 
         this.pre_task_ids_show = _task.pre_task_ids;
       }
+    },
+    handleTakeTask: function handleTakeTask(_task) {
+      var _this7 = this;
+
+      this.loading_take_task = true;
+      this.$root.api.post("project/".concat(this.project_id, "/task/take-task/").concat(_task.id)).then(function (res) {
+        _this7.loading_take_task = false;
+
+        if (res.data.status == "OK") {
+          _this7.$root.$notify(res.data.message, 'success');
+
+          _this7.getList();
+        } else {
+          _this7.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this7.$root.showError(err);
+
+        _this7.loading_take_task = false;
+      });
+    },
+    handleRefuseTask: function handleRefuseTask() {
+      var _this8 = this;
+
+      this.checkReasonRefuse();
+
+      if (this.reason_error == '') {
+        this.loading_refuse_task = true;
+        this.$root.api.post("project/".concat(this.project_id, "/task/refuse-task/").concat(this.task.id), {
+          'content': this.reason
+        }).then(function (res) {
+          _this8.loading_refuse_task = false;
+
+          if (res.data.status == "OK") {
+            _this8.$notify(res.data.message, 'success');
+
+            $('#task_refuse_modal').modal('hide');
+
+            _this8.getList();
+          } else {
+            _this8.$root.showError(res.data.error);
+          }
+        })["catch"](function (err) {
+          _this8.$root.showError(err);
+
+          _this8.loading_refuse_task = false;
+        });
+      }
+    },
+    checkReasonRefuse: function checkReasonRefuse() {
+      if (this.reason == '') this.reason_error = "Lý do từ chối công việc là bắt buộc";else this.reason_error = '';
     }
   },
   created: function created() {
     this.closeModal();
   },
   mounted: function mounted() {
-    var _this7 = this;
+    var _this9 = this;
 
     this.project_id = this.$route.params.id;
     this.getList();
     this.getProject();
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', function () {
-      _this7.closeModal();
+      _this9.closeModal();
     });
   },
   watch: {
@@ -4025,6 +4211,10 @@ __webpack_require__.r(__webpack_exports__);
     'task.department_id': function taskDepartment_id() {
       if (!this.validate_form) return;
       this.checkDepartment();
+    },
+    'reason': function reason() {
+      if (!this.validate_form) return;
+      this.checkReasonRefuse();
     }
   }
 });
@@ -24134,327 +24324,561 @@ var render = function () {
     "div",
     { attrs: { id: "job" } },
     [
-      _vm.info && _vm.info.task.status.status != 0
+      _vm.info
         ? _c("div", [
-            _c("h3", { staticClass: "mb-3" }, [
-              _vm._v("Công việc: " + _vm._s(_vm.info.task.name)),
-            ]),
-            _vm._v(" "),
-            _c(
-              "form",
-              {
-                on: {
-                  submit: function ($event) {
-                    $event.preventDefault()
-                    return _vm.getList.apply(null, arguments)
-                  },
-                },
-              },
-              [
-                _c("div", { staticClass: "row" }, [
-                  _c("div", { staticClass: "col-md-4 col-sm-6 col-8 mb-2" }, [
-                    _c("input", {
-                      directives: [
-                        {
-                          name: "model",
-                          rawName: "v-model",
-                          value: _vm.search,
-                          expression: "search",
-                        },
-                      ],
-                      staticClass: "form-control form-control-sm",
-                      attrs: { type: "text", placeholder: "Tên nhiệm vụ..." },
-                      domProps: { value: _vm.search },
-                      on: {
-                        input: function ($event) {
-                          if ($event.target.composing) {
-                            return
-                          }
-                          _vm.search = $event.target.value
+            _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
+              _c("ol", { staticClass: "breadcrumb" }, [
+                _c(
+                  "li",
+                  { staticClass: "breadcrumb-item" },
+                  [
+                    _c("router-link", { attrs: { to: { name: "project" } } }, [
+                      _vm._v("Dự án"),
+                    ]),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "li",
+                  { staticClass: "breadcrumb-item" },
+                  [
+                    _c(
+                      "router-link",
+                      {
+                        attrs: {
+                          to: {
+                            name: "task",
+                            params: { id: _vm.info.project.id },
+                          },
                         },
                       },
-                    }),
-                  ]),
-                  _vm._v(" "),
-                  _vm._m(0),
-                  _vm._v(" "),
-                  _vm.$root.isManager()
-                    ? _c(
-                        "div",
-                        {
-                          staticClass:
-                            "col-md-6 col-sm-3 col-12 text-right mb-2",
-                        },
-                        [
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-info btn-sm",
-                              attrs: {
-                                "data-toggle": "modal",
-                                "data-target": "#job_modal_add_update",
-                              },
-                            },
-                            [_vm._v("Thêm")]
-                          ),
-                        ]
-                      )
-                    : _vm._e(),
-                ]),
-              ]
-            ),
+                      [_vm._v(_vm._s(_vm.info.project.name))]
+                    ),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "li",
+                  {
+                    staticClass: "breadcrumb-item active",
+                    attrs: { "aria-current": "page" },
+                  },
+                  [_vm._v(_vm._s(_vm.info.task.name))]
+                ),
+              ]),
+            ]),
             _vm._v(" "),
-            _vm.loading_list
-              ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
-              : _vm.list && _vm.list.length > 0
-              ? _c("div", { staticClass: "list" }, [
-                  _vm._m(1),
-                  _vm._v(" "),
+            _vm.info.task.status.status <= 0
+              ? _c(
+                  "div",
+                  [
+                    _c("m-spinner", { staticClass: "mb-2" }),
+                    _vm._v(" "),
+                    _c("b", [
+                      _vm._v(
+                        "Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ"
+                      ),
+                    ]),
+                  ],
+                  1
+                )
+              : _vm.info.task.status.status == 5
+              ? _c(
+                  "div",
+                  [
+                    _c("m-spinner", { staticClass: "mb-2" }),
+                    _vm._v(" "),
+                    _c("b", [_vm._v("Công việc đã gửi yêu cầu từ chối nhận")]),
+                  ],
+                  1
+                )
+              : _c("div", [
                   _c(
-                    "ul",
-                    { staticClass: "row" },
-                    _vm._l(_vm.list, function (item, index) {
-                      return _c(
-                        "li",
-                        {
-                          key: index,
-                          staticClass: "col-md-3 col-sm-4 col-12 mb-3",
+                    "form",
+                    {
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.getList.apply(null, arguments)
                         },
-                        [
-                          _c("div", { staticClass: "bg-fff info" }, [
-                            _c("p", [
-                              _c("i", { staticClass: "fas fa-folder" }),
-                              _vm._v("  "),
-                              _c("b", [_vm._v(_vm._s(item.name))]),
-                            ]),
-                            _vm._v(" "),
-                            _c(
-                              "p",
-                              {
-                                staticStyle: {
-                                  "font-size": "12px",
-                                  "margin-bottom": "0px",
+                      },
+                    },
+                    [
+                      _c("div", { staticClass: "row" }, [
+                        _c(
+                          "div",
+                          { staticClass: "col-md-4 col-sm-6 col-8 mb-2" },
+                          [
+                            _c("input", {
+                              directives: [
+                                {
+                                  name: "model",
+                                  rawName: "v-model",
+                                  value: _vm.search,
+                                  expression: "search",
+                                },
+                              ],
+                              staticClass: "form-control form-control-sm",
+                              attrs: {
+                                type: "text",
+                                placeholder: "Tên nhiệm vụ...",
+                              },
+                              domProps: { value: _vm.search },
+                              on: {
+                                input: function ($event) {
+                                  if ($event.target.composing) {
+                                    return
+                                  }
+                                  _vm.search = $event.target.value
                                 },
                               },
+                            }),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _vm._m(0),
+                        _vm._v(" "),
+                        _vm.$root.isManager() ||
+                        _vm.$root.auth.id == _vm.info.task.department.leader.id
+                          ? _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "col-md-6 col-sm-3 col-12 text-right mb-2",
+                              },
                               [
-                                _c("b", [_vm._v("Phân cho: ")]),
-                                _vm._v(
-                                  _vm._s(
-                                    item.user.fullname || item.user.username
-                                  ) + " "
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-info btn-sm",
+                                    attrs: {
+                                      "data-toggle": "modal",
+                                      "data-target": "#job_modal_add_update",
+                                    },
+                                  },
+                                  [_vm._v("Thêm")]
                                 ),
-                                _c("br"),
-                                _vm._v(" "),
-                                _c("b", [_vm._v("Tạo lúc: ")]),
-                                _vm._v(_vm._s(item.created_at) + " "),
-                                _c("br"),
-                                _vm._v(" "),
-                                item.status != null
-                                  ? _c("b", [_vm._v("Trạng thái: ")])
-                                  : _vm._e(),
-                                _vm._v(" "),
-                                item.status.status == 2 ||
-                                item.status.status == 5
-                                  ? _c(
-                                      "span",
-                                      { staticClass: "badge badge-danger" },
-                                      [
-                                        _vm._v(
-                                          "\n                  " +
-                                            _vm._s(
-                                              _vm.$root.getStatusTaskName(
-                                                item.status.status
-                                              )
-                                            ) +
-                                            "\n                "
-                                        ),
-                                      ]
-                                    )
-                                  : _c(
-                                      "span",
-                                      { staticClass: "badge badge-success" },
-                                      [
-                                        _vm._v(
-                                          "\n                  " +
-                                            _vm._s(
-                                              _vm.$root.getStatusTaskName(
-                                                item.status.status
-                                              )
-                                            ) +
-                                            "\n                "
-                                        ),
-                                      ]
-                                    ),
-                                _vm._v(" "),
-                                _c("br"),
-                                _vm._v(" "),
-                                _vm.$root.checkDeadline(item) == "Chưa tới hạn"
-                                  ? _c(
-                                      "b",
-                                      { staticClass: "badge badge-info" },
-                                      [
-                                        _vm._v(
-                                          _vm._s(_vm.$root.checkDeadline(item))
-                                        ),
-                                      ]
-                                    )
-                                  : _c(
-                                      "b",
-                                      { staticClass: "badge badge-danger" },
-                                      [
-                                        _vm._v(
-                                          _vm._s(_vm.$root.checkDeadline(item))
-                                        ),
-                                      ]
-                                    ),
                               ]
-                            ),
-                            _vm._v(" "),
-                            _vm.$root.isManager() ||
-                            (_vm.info &&
-                              _vm.$root.auth.id ==
-                                _vm.info.task.department.leader.id)
-                              ? _c(
-                                  "div",
-                                  {
-                                    staticClass: "text-right",
-                                    staticStyle: { padding: "0px 5px 5x 0px" },
-                                  },
-                                  [
-                                    _c(
-                                      "span",
-                                      {
-                                        staticClass: "text-info",
-                                        staticStyle: { cursor: "pointer" },
-                                        attrs: {
-                                          "data-toggle": "modal",
-                                          "data-target":
-                                            "#job_modal_add_update",
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.getJobUpdate(item)
-                                          },
-                                        },
-                                      },
-                                      [_c("b", [_vm._v("Sửa")])]
-                                    ),
-                                    _vm._v(" "),
-                                    _c(
-                                      "span",
-                                      {
-                                        staticClass: "text-danger",
-                                        staticStyle: { cursor: "pointer" },
-                                        attrs: {
-                                          "data-toggle": "modal",
-                                          "data-target": "#job_modal_delete",
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.getJobUpdate(item)
-                                          },
-                                        },
-                                      },
-                                      [_c("b", [_vm._v("Xóa")])]
-                                    ),
-                                  ]
-                                )
-                              : _vm._e(),
-                            _vm._v(" "),
-                            item && item.user.id == _vm.$root.auth.id
-                              ? _c(
-                                  "div",
-                                  {
-                                    staticClass: "text-right",
-                                    staticStyle: { padding: "0px 5px 5px 0px" },
-                                  },
-                                  [
-                                    item.status.status == 0
-                                      ? _c("div", [
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass: "text-info",
-                                              staticStyle: {
-                                                cursor: "pointer",
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.handleTakeJob(item)
-                                                },
-                                              },
-                                            },
-                                            [_c("b", [_vm._v("Tiếp nhận")])]
-                                          ),
-                                          _vm._v(" "),
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass: "text-danger",
-                                              staticStyle: {
-                                                cursor: "pointer",
-                                              },
-                                              attrs: {
-                                                "data-toggle": "modal",
-                                                "data-target":
-                                                  "#job_refuse_modal",
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.getJobUpdate(item)
-                                                },
-                                              },
-                                            },
-                                            [_c("b", [_vm._v("Từ chối")])]
-                                          ),
-                                        ])
-                                      : item.status.status == 1
-                                      ? _c("div", [
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass: "text-success",
-                                              staticStyle: {
-                                                cursor: "pointer",
-                                              },
-                                              attrs: {
-                                                "data-toggle": "modal",
-                                                "data-target":
-                                                  "#job_modal_delete",
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.getJobUpdate(item)
-                                                },
-                                              },
-                                            },
-                                            [_c("b", [_vm._v("Hoàn thành")])]
-                                          ),
-                                        ])
-                                      : _vm._e(),
-                                  ]
-                                )
-                              : _vm._e(),
-                          ]),
-                        ]
-                      )
-                    }),
-                    0
+                            )
+                          : _vm._e(),
+                      ]),
+                    ]
                   ),
-                ])
-              : _c("div", [_c("b", [_vm._v("Không có nhiệm vụ")])]),
+                  _vm._v(" "),
+                  _vm.loading_list
+                    ? _c(
+                        "div",
+                        { staticClass: "text-center" },
+                        [_c("m-spinner")],
+                        1
+                      )
+                    : _vm.list && _vm.list.length > 0
+                    ? _c("div", { staticClass: "list" }, [
+                        _vm._m(1),
+                        _vm._v(" "),
+                        _c(
+                          "ul",
+                          { staticClass: "row" },
+                          _vm._l(_vm.list, function (item, index) {
+                            return _c(
+                              "li",
+                              {
+                                key: index,
+                                staticClass: "col-md-3 col-sm-4 col-12 mb-3",
+                              },
+                              [
+                                _c("div", { staticClass: "bg-fff info" }, [
+                                  _c("p", [
+                                    _c("i", { staticClass: "fas fa-folder" }),
+                                    _vm._v("  "),
+                                    _c("b", [_vm._v(_vm._s(item.name))]),
+                                  ]),
+                                  _vm._v(" "),
+                                  _c(
+                                    "div",
+                                    {
+                                      staticStyle: {
+                                        "font-size": "12px",
+                                        "margin-bottom": "0px",
+                                      },
+                                    },
+                                    [
+                                      _c("b", [_vm._v("Phân cho: ")]),
+                                      _vm._v(
+                                        _vm._s(
+                                          item.user.fullname ||
+                                            item.user.username
+                                        ) + " "
+                                      ),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("b", [_vm._v("Tạo lúc: ")]),
+                                      _vm._v(_vm._s(item.created_at) + " "),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      item.status != null
+                                        ? _c("b", [_vm._v("Trạng thái: ")])
+                                        : _vm._e(),
+                                      _vm._v(" "),
+                                      item.status.status == 4 ||
+                                      item.status.status == 5 ||
+                                      item.status.status == 6
+                                        ? _c(
+                                            "span",
+                                            {
+                                              staticClass: "badge badge-danger",
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                    " +
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  ) +
+                                                  "\n                  "
+                                              ),
+                                            ]
+                                          )
+                                        : item.status.status == 2
+                                        ? _c(
+                                            "span",
+                                            { staticClass: "badge badge-info" },
+                                            [
+                                              _vm._v(
+                                                "\n                    " +
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  ) +
+                                                  "\n                  "
+                                              ),
+                                            ]
+                                          )
+                                        : _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "badge badge-success",
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                    " +
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  ) +
+                                                  "\n                  "
+                                              ),
+                                            ]
+                                          ),
+                                      _vm._v(" "),
+                                      item.status.status == 3
+                                        ? _c("div", [
+                                            item.delay_time == 0
+                                              ? _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-success",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành đúng hạn"
+                                                    ),
+                                                  ]
+                                                )
+                                              : _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-danger",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành trễ " +
+                                                        _vm._s(
+                                                          item.delay_time
+                                                        ) +
+                                                        " ngày"
+                                                    ),
+                                                  ]
+                                                ),
+                                          ])
+                                        : _c("div", [
+                                            _vm.$root.checkDeadline(item) ==
+                                            "Chưa tới hạn"
+                                              ? _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-info",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.$root.checkDeadline(
+                                                          item
+                                                        )
+                                                      )
+                                                    ),
+                                                  ]
+                                                )
+                                              : _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-danger",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      _vm._s(
+                                                        _vm.$root.checkDeadline(
+                                                          item
+                                                        )
+                                                      )
+                                                    ),
+                                                  ]
+                                                ),
+                                          ]),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  item.status.status != 3 &&
+                                  (_vm.$root.isManager() ||
+                                    (_vm.info &&
+                                      _vm.$root.auth.id ==
+                                        _vm.info.task.department.leader.id))
+                                    ? _c("div", { staticClass: "text-right" }, [
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass: "text-info",
+                                            staticStyle: { cursor: "pointer" },
+                                            attrs: {
+                                              "data-toggle": "modal",
+                                              "data-target":
+                                                "#job_modal_add_update",
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.getJobUpdate(item)
+                                              },
+                                            },
+                                          },
+                                          [_c("b", [_vm._v("Sửa")])]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "span",
+                                          {
+                                            staticClass: "text-danger",
+                                            staticStyle: { cursor: "pointer" },
+                                            attrs: {
+                                              "data-toggle": "modal",
+                                              "data-target":
+                                                "#job_modal_delete",
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.getJobUpdate(item)
+                                              },
+                                            },
+                                          },
+                                          [_c("b", [_vm._v("Xóa")])]
+                                        ),
+                                        _vm._v(" "),
+                                        _vm.$root.auth.id ==
+                                          _vm.info.task.department.leader.id &&
+                                        item.status.status == 2
+                                          ? _c(
+                                              "div",
+                                              {
+                                                staticStyle: {
+                                                  display: "inline-block",
+                                                  "padding-left": "7px",
+                                                },
+                                              },
+                                              [
+                                                _c(
+                                                  "span",
+                                                  {
+                                                    staticClass: "text-info",
+                                                    staticStyle: {
+                                                      cursor: "pointer",
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.handleApprovalJob(
+                                                          item
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [_c("b", [_vm._v("Duyệt")])]
+                                                ),
+                                                _vm._v(" "),
+                                                _c(
+                                                  "span",
+                                                  {
+                                                    staticClass: "text-danger",
+                                                    staticStyle: {
+                                                      cursor: "pointer",
+                                                    },
+                                                    attrs: {
+                                                      "data-toggle": "modal",
+                                                      "data-target":
+                                                        "#job_not_approval_modal",
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.getJobUpdate(
+                                                          item
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("b", [
+                                                      _vm._v("Không duyệt"),
+                                                    ]),
+                                                  ]
+                                                ),
+                                              ]
+                                            )
+                                          : _vm._e(),
+                                        _vm._v(" "),
+                                        _vm.$root.auth.id ==
+                                          _vm.info.task.department.leader.id &&
+                                        item.status.status == 5
+                                          ? _c("div", [
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass: "text-danger",
+                                                  staticStyle: {
+                                                    cursor: "pointer",
+                                                  },
+                                                  attrs: {
+                                                    "data-toggle": "modal",
+                                                    "data-target":
+                                                      "#job_not_approval_refuse_modal",
+                                                  },
+                                                  on: {
+                                                    click: function ($event) {
+                                                      return _vm.getJobUpdate(
+                                                        item
+                                                      )
+                                                    },
+                                                  },
+                                                },
+                                                [
+                                                  _c("b", [
+                                                    _vm._v(
+                                                      "Không duyệt từ chối"
+                                                    ),
+                                                  ]),
+                                                ]
+                                              ),
+                                            ])
+                                          : _vm._e(),
+                                      ])
+                                    : _vm._e(),
+                                  _vm._v(" "),
+                                  item && item.user.id == _vm.$root.auth.id
+                                    ? _c("div", { staticClass: "text-right" }, [
+                                        item.status.status == 0
+                                          ? _c("div", [
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass: "text-info",
+                                                  staticStyle: {
+                                                    cursor: "pointer",
+                                                  },
+                                                  on: {
+                                                    click: function ($event) {
+                                                      return _vm.handleTakeJob(
+                                                        item
+                                                      )
+                                                    },
+                                                  },
+                                                },
+                                                [_c("b", [_vm._v("Tiếp nhận")])]
+                                              ),
+                                              _vm._v(" "),
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass: "text-danger",
+                                                  staticStyle: {
+                                                    cursor: "pointer",
+                                                  },
+                                                  attrs: {
+                                                    "data-toggle": "modal",
+                                                    "data-target":
+                                                      "#job_refuse_modal",
+                                                  },
+                                                  on: {
+                                                    click: function ($event) {
+                                                      return _vm.getJobUpdate(
+                                                        item
+                                                      )
+                                                    },
+                                                  },
+                                                },
+                                                [_c("b", [_vm._v("Từ chối")])]
+                                              ),
+                                            ])
+                                          : item.status.status == 1 ||
+                                            item.status.status == 4 ||
+                                            item.status.status == 6
+                                          ? _c("div", [
+                                              _c(
+                                                "span",
+                                                {
+                                                  staticClass: "text-success",
+                                                  staticStyle: {
+                                                    cursor: "pointer",
+                                                  },
+                                                  attrs: {
+                                                    "data-toggle": "modal",
+                                                    "data-target":
+                                                      "#job_finish_modal",
+                                                  },
+                                                  on: {
+                                                    click: function ($event) {
+                                                      return _vm.getJobUpdate(
+                                                        item
+                                                      )
+                                                    },
+                                                  },
+                                                },
+                                                [
+                                                  _c("b", [
+                                                    _vm._v("Hoàn thành"),
+                                                  ]),
+                                                ]
+                                              ),
+                                            ])
+                                          : _vm._e(),
+                                      ])
+                                    : _vm._e(),
+                                ]),
+                              ]
+                            )
+                          }),
+                          0
+                        ),
+                      ])
+                    : _c("div", [_c("b", [_vm._v("Không có nhiệm vụ")])]),
+                ]),
           ])
-        : _c(
-            "div",
-            [
-              _c("m-spinner", { staticClass: "mb-2" }),
-              _vm._v(" "),
-              _c("b", [
-                _vm._v("Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ"),
-              ]),
-            ],
-            1
-          ),
+        : _c("m-spinner", { staticClass: "mb-2" }),
       _vm._v(" "),
       _c(
         "div",
@@ -25017,6 +25441,311 @@ var render = function () {
         ]
       ),
       _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "job_finish_modal" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(14),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _vm.job
+                  ? _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(15),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.job.name,
+                                expression: "job.name",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text", disabled: "" },
+                            domProps: { value: _vm.job.name },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(_vm.job, "name", $event.target.value)
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(16),
+                          _vm._v(" "),
+                          _c("textarea", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.note_finish,
+                                expression: "note_finish",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { rows: "5" },
+                            domProps: { value: _vm.note_finish },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.note_finish = $event.target.value
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-danger btn-sm",
+                    attrs: { type: "submit" },
+                    on: { click: _vm.handleFinishJob },
+                  },
+                  [_vm._v("Gửi")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-secondary btn-sm",
+                    attrs: { type: "button", "data-dismiss": "modal" },
+                  },
+                  [_vm._v("Đóng")]
+                ),
+              ]),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "job_not_approval_modal" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(17),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _vm.job
+                  ? _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(18),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.job.name,
+                                expression: "job.name",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text", disabled: "" },
+                            domProps: { value: _vm.job.name },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(_vm.job, "name", $event.target.value)
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(19),
+                          _vm._v(" "),
+                          _c("textarea", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.reason_not_approval,
+                                expression: "reason_not_approval",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { rows: "5" },
+                            domProps: { value: _vm.reason_not_approval },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.reason_not_approval = $event.target.value
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [_vm._v(_vm._s(_vm.reason_not_approval_error))]
+                          ),
+                        ]),
+                      ]),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-danger btn-sm",
+                    attrs: { type: "submit" },
+                    on: { click: _vm.handleNotApprovalJob },
+                  },
+                  [_vm._v("Từ chối duyệt")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-secondary btn-sm",
+                    attrs: { type: "button", "data-dismiss": "modal" },
+                  },
+                  [_vm._v("Đóng")]
+                ),
+              ]),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass: "modal fade",
+          attrs: { id: "job_not_approval_refuse_modal" },
+        },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(20),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _vm.job
+                  ? _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(21),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.job.name,
+                                expression: "job.name",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text", disabled: "" },
+                            domProps: { value: _vm.job.name },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(_vm.job, "name", $event.target.value)
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(22),
+                          _vm._v(" "),
+                          _c("textarea", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.reason_not_approval_refuse,
+                                expression: "reason_not_approval_refuse",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { rows: "5" },
+                            domProps: { value: _vm.reason_not_approval_refuse },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.reason_not_approval_refuse =
+                                  $event.target.value
+                              },
+                            },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [
+                              _vm._v(
+                                _vm._s(_vm.reason_not_approval_refuse_error)
+                              ),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-danger btn-sm",
+                    attrs: { type: "submit" },
+                    on: { click: _vm.handleNotApprovalRefuseJob },
+                  },
+                  [_vm._v("Từ chối duyệt")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-secondary btn-sm",
+                    attrs: { type: "button", "data-dismiss": "modal" },
+                  },
+                  [_vm._v("Đóng")]
+                ),
+              ]),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
       _vm.loading_add
         ? _c("m-loading", {
             attrs: {
@@ -25042,6 +25771,42 @@ var render = function () {
             attrs: { title: "Đang gửi yêu cầu từ chối nhiệm vụ", full: true },
           })
         : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_take_job
+        ? _c("m-loading", {
+            attrs: { title: "Đang thực hiện tiếp nhận nhiệm vụ", full: true },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_finish_job
+        ? _c("m-loading", {
+            attrs: {
+              title: "Đang gửi yêu cầu duyệt hoàn thành nhiệm vụ",
+              full: true,
+            },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_approval_job
+        ? _c("m-loading", {
+            attrs: { title: "Đang duyệt nhiệm vụ", full: true },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_not_approval_job
+        ? _c("m-loading", {
+            attrs: { title: "Đang từ chối duyệt nhiệm vụ", full: true },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_not_approval_refuse_job
+        ? _c("m-loading", {
+            attrs: {
+              title: "Đang thực hiện không duyệt yêu cầu từ chối nhiệm vụ",
+              full: true,
+            },
+          })
+        : _vm._e(),
     ],
     1
   )
@@ -25055,7 +25820,10 @@ var staticRenderFns = [
       _c(
         "button",
         { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
-        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n          ")]
+        [
+          _c("i", { staticClass: "fas fa-search" }),
+          _vm._v(" Tìm\n            "),
+        ]
       ),
     ])
   },
@@ -25198,6 +25966,117 @@ var staticRenderFns = [
     return _c("label", [
       _c("b", [
         _vm._v("Lý do từ chối "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Hoàn thành nhiệm vụ")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên nhiệm vụ "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Ghi chú ")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [
+        _vm._v("Từ chối duyệt nhiệm vụ"),
+      ]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên nhiệm vụ "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Lý do ")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [
+        _vm._v("Không duyệt yêu cầu từ chối nhiệm vụ"),
+      ]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên nhiệm vụ "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Lý do "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])
@@ -25912,6 +26791,8 @@ var render = function () {
     "div",
     { attrs: { id: "project" } },
     [
+      _c("h3", [_vm._v("Danh sách dự án")]),
+      _vm._v(" "),
       _c(
         "form",
         {
@@ -26862,8 +27743,30 @@ var render = function () {
         ? _c(
             "div",
             [
-              _c("h3", { staticClass: "mb-3" }, [
-                _vm._v("Dự án: " + _vm._s(_vm.project.name)),
+              _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
+                _c("ol", { staticClass: "breadcrumb" }, [
+                  _c(
+                    "li",
+                    { staticClass: "breadcrumb-item" },
+                    [
+                      _c(
+                        "router-link",
+                        { attrs: { to: { name: "project" } } },
+                        [_vm._v("Dự án")]
+                      ),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "li",
+                    {
+                      staticClass: "breadcrumb-item active",
+                      attrs: { "aria-current": "page" },
+                    },
+                    [_vm._v(_vm._s(_vm.project.name))]
+                  ),
+                ]),
               ]),
               _vm._v(" "),
               _c(
@@ -27209,11 +28112,11 @@ var render = function () {
                                                     attrs: {
                                                       "data-toggle": "modal",
                                                       "data-target":
-                                                        "#job_refuse_modal",
+                                                        "#task_refuse_modal",
                                                     },
                                                     on: {
                                                       click: function ($event) {
-                                                        return _vm.getJobUpdate(
+                                                        return _vm.getTaskUpdate(
                                                           item
                                                         )
                                                       },
@@ -27835,6 +28738,133 @@ var render = function () {
                 ]
               ),
               _vm._v(" "),
+              _c(
+                "div",
+                {
+                  staticClass: "modal fade",
+                  attrs: { id: "task_refuse_modal" },
+                },
+                [
+                  _c(
+                    "div",
+                    { staticClass: "modal-dialog modal-dialog-scrollable" },
+                    [
+                      _c("div", { staticClass: "modal-content" }, [
+                        _vm._m(13),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "modal-body" }, [
+                          _vm.task
+                            ? _c("div", { staticClass: "row" }, [
+                                _c(
+                                  "div",
+                                  { staticClass: "col-md-12 col-sm-12 col-12" },
+                                  [
+                                    _c("div", { staticClass: "form-group" }, [
+                                      _vm._m(14),
+                                      _vm._v(" "),
+                                      _c("input", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.task.name,
+                                            expression: "task.name",
+                                          },
+                                        ],
+                                        staticClass:
+                                          "form-control form-control-sm",
+                                        attrs: { type: "text", disabled: "" },
+                                        domProps: { value: _vm.task.name },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.$set(
+                                              _vm.task,
+                                              "name",
+                                              $event.target.value
+                                            )
+                                          },
+                                        },
+                                      }),
+                                    ]),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  { staticClass: "col-md-12 col-sm-12 col-12" },
+                                  [
+                                    _c("div", { staticClass: "form-group" }, [
+                                      _vm._m(15),
+                                      _vm._v(" "),
+                                      _c("textarea", {
+                                        directives: [
+                                          {
+                                            name: "model",
+                                            rawName: "v-model",
+                                            value: _vm.reason,
+                                            expression: "reason",
+                                          },
+                                        ],
+                                        staticClass: "form-control",
+                                        attrs: { rows: "5" },
+                                        domProps: { value: _vm.reason },
+                                        on: {
+                                          input: function ($event) {
+                                            if ($event.target.composing) {
+                                              return
+                                            }
+                                            _vm.reason = $event.target.value
+                                          },
+                                        },
+                                      }),
+                                      _vm._v(" "),
+                                      _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "text-danger font-italic error",
+                                        },
+                                        [_vm._v(_vm._s(_vm.reason_error))]
+                                      ),
+                                    ]),
+                                  ]
+                                ),
+                              ])
+                            : _vm._e(),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "modal-footer" }, [
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-danger btn-sm",
+                              attrs: { type: "submit" },
+                              on: { click: _vm.handleRefuseTask },
+                            },
+                            [_vm._v("Gửi")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-secondary btn-sm",
+                              attrs: {
+                                type: "button",
+                                "data-dismiss": "modal",
+                              },
+                            },
+                            [_vm._v("Đóng")]
+                          ),
+                        ]),
+                      ]),
+                    ]
+                  ),
+                ]
+              ),
+              _vm._v(" "),
               _vm.loading_add
                 ? _c("m-loading", {
                     attrs: {
@@ -27856,6 +28886,24 @@ var render = function () {
               _vm.loading_delete_file
                 ? _c("m-loading", {
                     attrs: { title: "Đang xóa tệp đính kèm", full: true },
+                  })
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.loading_take_task
+                ? _c("m-loading", {
+                    attrs: {
+                      title: "Đang thực hiện tiếp nhận công việc",
+                      full: true,
+                    },
+                  })
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.loading_refuse_task
+                ? _c("m-loading", {
+                    attrs: {
+                      title: "Đang gửi yêu cầu từ chối công việc",
+                      full: true,
+                    },
                   })
                 : _vm._e(),
             ],
@@ -27993,6 +29041,45 @@ var staticRenderFns = [
         },
         [_vm._v("×")]
       ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Từ chối công việc")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên công việc "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Lý do từ chối "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
     ])
   },
 ]
@@ -45088,6 +46175,8 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       if ($num_status == 3) return 'Đã duyệt';
       if ($num_status == 4) return 'Từ chối duyệt';
       if ($num_status == 5) return 'Từ chối nhận';
+      if ($num_status == 6) return 'Không duyệt từ chối nhận';
+      if ($num_status == 7) return 'Chuyển thành viên khác';
     },
     checkDeadline: function checkDeadline(_param) {
       var today = new Date();

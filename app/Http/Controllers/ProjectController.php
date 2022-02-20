@@ -47,10 +47,12 @@ class ProjectController extends Controller
             $project_ids = array();
             if ($department_user) {
                 $department_task = DepartmentTask::where('department_id', $department_user->department_id);
-                foreach ($department_task->get() as $_department_task) {
-                    $task = Task::find($_department_task->task_id);
-                    if ($task) {
-                        $project_ids[] = $task->project_id;
+                if ($department_task) {
+                    foreach ($department_task->get() as $_department_task) {
+                        $task = Task::find($_department_task->task_id);
+                        if ($task) {
+                            $project_ids[] = $task->project_id;
+                        }
                     }
                 }
             }

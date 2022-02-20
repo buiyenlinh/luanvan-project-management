@@ -128,8 +128,14 @@ class JobController extends Controller
         if (!$name) 
             return $this->success('Danh sách công việc tìm kiếm', []);
 
+        $data = array();
         $jobs = Job::where('name', 'LIKE', '%' . $name . '%')->where('task_id', $task_id)->get();
-        return $this->success('Danh sách nhiệm vụ tìm kiếm', $jobs);
+        if ($jobs->count() > 0) {
+            foreach($jobs as $_job) {
+                $data[] = new JobResource($_job);
+            }
+        }
+        return $this->success('Danh sách nhiệm vụ tìm kiếm', $data);
     }
 
     /**
@@ -287,6 +293,8 @@ class JobController extends Controller
         if ($department_user->department_id != $department_task->department_id)
             return $this->error('Thành viên không thuộc phòng ban được phân công');
 
+        
+        // Kiểm tr danh sách công việc tiên quyết
         if (is_array($pre_job_ids)) {
             foreach ($pre_job_ids as $_pre_job_id) {
                 $pre_job_check = Job::where('id', $_pre_job_id)
@@ -294,9 +302,14 @@ class JobController extends Controller
                     ->count();
                 if ($pre_job_check <= 0)
                     return $this->error('Có một nhiệm vụ tiên quyết không tồn tại trong công việc');
+
+                $pre_job_check_time = Job::find($_pre_job_id);
+                if ($pre_job_check_time->end_time < $job->start_time)
+                    return $this->error('Thời gian nhiệm vụ không phù hợp với một nhiệm vụ tiên quyết');
             }
         }
 
+        // File đính kèm
         $file = $job->file;
         if ($request->file('file')) {
             if (!empty($file)) {
@@ -307,6 +320,7 @@ class JobController extends Controller
             $file = str_replace('public/', '', $file);
         }
 
+        // Cập nhật nhiệm vụ
         Job::find($job_id)->update([
             'name' => $name,
             'start_time' => $start_time,
@@ -315,6 +329,36 @@ class JobController extends Controller
             'file' => $file,
             'task_id' => $task_id
         ]);
+
+        // Kiểm tra user cập nhật có bị thay đổi
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->latest('id')->first();
+        if ($department_user_job) {
+            $department_user_old = DepartmentUser::find($department_user_job->department_user_id);
+            if ($department_user_old && $department_user_old->user_id != $user_id) {
+                // Cập nhật status cho user cũ
+                DepartmentUserJobStatus::create([
+                    'content' => '',
+                    'status' => 7, // chuyển cho thành viên khác
+                    'department_user_job_id' => $department_user_job->id
+                ]);
+
+                // Thêm department_user_job & status cho user mới
+                $department_user_new = DepartmentUser::where('user_id', $user_id)->first();
+                if ($department_user_new) {
+                    $department_user_job_new = DepartmentUserJob::create([
+                        'department_user_id' => $department_user_new->id,
+                        'job_id' => $job_id
+                    ]);
+
+                    DepartmentUserJobStatus::create([
+                        'content' => '',
+                        'status' => 0,
+                        'department_user_job_id' => $department_user_job_new->id
+                    ]);
+                }
+            }
+        }
+       
 
         // Nhiệm vụ tiên quyết
         if (is_array($pre_job_ids)) {
@@ -388,7 +432,10 @@ class JobController extends Controller
                     $department_user_job = DepartmentUserJob::where('department_user_id', $deparment_user->id)->get();
                     if ($department_user_job) {
                         foreach ($department_user_job as $_department_user_job) {
-                            $job_ids[] = $_department_user_job->job_id;
+                            $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->latest('id')->first();
+                            if ($department_user_job_status && $department_user_job_status->status != 7) {
+                                $job_ids[] = $_department_user_job->job_id;
+                            }
                         }
                     }
                     $db->whereIn('id', $job_ids);
@@ -468,16 +515,31 @@ class JobController extends Controller
         if ($check_error != '')
             return $this->error($check_error);
 
-        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->first();
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
         if ($department_user_job) {
-            DepartmentUserJobStatus::create([
-                'content' => '',
-                'status' => 1,
-                'department_user_job_id' => $department_user_job->id
-            ]);
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => '',
+                        'status' => 1,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
         }
 
         return $this->success('Tiếp nhận thành công', []);
+    }
+
+    /**
+     * Check status job có là chuyển cho ng khác ko
+     */
+    public function checkStatusJob($_department_user_job_id) {
+        $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job_id)
+            ->latest('id')->first();
+        if ($department_user_job_status && $department_user_job_status->status != 7) 
+            return true;
+        return false;
     }
 
     /**
@@ -496,15 +558,159 @@ class JobController extends Controller
         
         if (!$content) return $this->error('Lý do từ chối nhiệm vụ là bắt buộc');
 
-        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->first();
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
         if ($department_user_job) {
-            DepartmentUserJobStatus::create([
-                'content' => $content,
-                'status' => 5,
-                'department_user_job_id' => $department_user_job->id
-            ]);
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => $content,
+                        'status' => 5,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
         }
 
         return $this->success('Từ chối nhận nhiệm vụ đã được gửi', []);
+    }
+
+
+    /**
+     * không duyệt yêu cầu từ chối nhận job
+     */
+    public function notApprovalRefuseJob(Request $request, $id, $task_id, $job_id) {
+        $project = Project::find($id);
+        $task = Task::find($task_id);
+        $job = Job::find($job_id);
+
+        $check_error = $this->check($id, $task_id, $job_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+
+        $content = $request->content;
+        
+        if (!$content) return $this->error('Lý do không duyệt yêu cầu từ chối nhiệm vụ là bắt buộc');
+
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
+        if ($department_user_job) {
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => $content,
+                        'status' => 6,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
+        }
+
+        return $this->success('Từ chối nhận nhiệm vụ đã được gửi', []);
+    }
+
+
+
+    /**
+     * Hoàn thành job
+     */
+    public function finishJob(Request $request, $id, $task_id, $job_id) {
+        $project = Project::find($id);
+        $task = Task::find($task_id);
+        $job = Job::find($job_id);
+
+        $check_error = $this->check($id, $task_id, $job_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+
+        $content = $request->content;
+        if (!$content) $content = '';
+
+
+        // Tính thời gian delay
+        $time_now = date("Y-m-d");
+        $time_now = strtotime($time_now);
+        $delay_time = ($time_now - $job->end_time);
+        if ($delay_time > 0)
+            $delay_time = $delay_time / (24 * 3600);
+        else 
+            $delay_time = 0;
+        
+        $job->update([
+            'delay_time' => $delay_time
+        ]);
+
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
+        if ($department_user_job) {
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => $content,
+                        'status' => 2,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
+        }
+
+        return $this->success('Yêu cầu duyệt hoàn thành nhiệm vụ đã được gửi', []);
+    }
+
+
+    /**
+     * duyệt job
+     */
+    public function approvalJob(Request $request, $id, $task_id, $job_id) {
+        $project = Project::find($id);
+        $task = Task::find($task_id);
+        $job = Job::find($job_id);
+
+        $check_error = $this->check($id, $task_id, $job_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
+        if ($department_user_job) {
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => '',
+                        'status' => 3,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
+        }
+
+        return $this->success('Duyệt thành công', []);
+    }
+
+    /**
+     * không duyệt job
+     */
+    public function notApprovalJob(Request $request, $id, $task_id, $job_id) {
+        $project = Project::find($id);
+        $task = Task::find($task_id);
+        $job = Job::find($job_id);
+
+        $check_error = $this->check($id, $task_id, $job_id);
+        if ($check_error != '')
+            return $this->error($check_error);
+
+        $content = $request->content;
+        if (!$content) return $this->error('Lý do từ chối duyệt là bắt buộc');
+
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id)->get();
+        if ($department_user_job) {
+            foreach ($department_user_job as $_department_user_job) {
+                if ($this->checkStatusJob($_department_user_job->id)) {
+                    DepartmentUserJobStatus::create([
+                        'content' => $content,
+                        'status' => 4,
+                        'department_user_job_id' => $_department_user_job->id
+                    ]);
+                }
+            }
+        }
+
+        return $this->success('Từ chối duyệt thành công', []);
     }
 }
