@@ -47,7 +47,9 @@ Route::middleware('is-token')->group(function() {
       Route::delete('delete/{id_task}', 'TaskController@delete');
       Route::delete('delete-file/{id_task}', 'TaskController@deleteFile');
       Route::post('take-task/{task_id}', 'TaskController@takeTask')->withoutMiddleware('check-role:1|2|3');
-      Route::post('refuse-task/{task_id}', 'TaskController@refuseTask')->withoutMiddleware('check-role:1|2|3');
+      Route::post('finish-task/{task_id}', 'TaskController@finishTask')->withoutMiddleware('check-role:1|2|3');
+      Route::post('approval-finish-task/{task_id}', 'TaskController@approvalFinishTask')->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
+      Route::post('not-approval-finish-task/{task_id}', 'TaskController@notApprovalFinishTask')->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
     });
 
     Route::prefix('task/{task_id}')->group(function() {

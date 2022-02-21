@@ -254,33 +254,12 @@ class JobController extends Controller
         if ($check_error != '')
             return $this->error($check_error);
 
-        $name = $request->name;
-        $start_time = $request->start_time;
-        $end_time = $request->end_time;
         $user_id = $request->user_id;
         $content = $request->content;
-        $pre_job_ids = $request->pre_job_ids;
 
-        if (!$name) return $this->error('Tên nhiệm vụ là bắt buộc');
-
-        $check_job = Job::where('name', $name)->where('id', '!=', $job_id)->count();
-        if ($check_job > 0) return $this->error('Tên nhiệm vụ đã tồn tại');
-
-        if (!$start_time) return $this->error('Thời gian bắt đầu là bắt buộc');
-        if (!$end_time) return $this->error('Thời gian kết thúc là bắt buộc');
         if (!$user_id) return $this->error('Người dùng là bắt buộc');
         if (!$content) $content = '';
 
-        $start_time = strtotime($start_time);
-        $end_time = strtotime($end_time);
-        if ($start_time > $end_time) return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
-
-        if ($start_time < $task->start_time) 
-            return $this->error('Thời gian bắt đầu nhiệm vụ phải sau thời gian bắt đầu của công việc');
-
-        if ($end_time > $task->end_time)
-            return $this->error('Thời gian kết thúc nhiệm vụ quá hạn thời gian công việc');
-        
         $user = User::find($user_id);
         if (!$user || !$user->active) return $this->error('Thành viên được phân công không tồn tại hoặc đã bị khóa');
 
@@ -292,22 +271,6 @@ class JobController extends Controller
 
         if ($department_user->department_id != $department_task->department_id)
             return $this->error('Thành viên không thuộc phòng ban được phân công');
-
-        
-        // Kiểm tr danh sách công việc tiên quyết
-        if (is_array($pre_job_ids)) {
-            foreach ($pre_job_ids as $_pre_job_id) {
-                $pre_job_check = Job::where('id', $_pre_job_id)
-                    ->where('task_id', $task_id)
-                    ->count();
-                if ($pre_job_check <= 0)
-                    return $this->error('Có một nhiệm vụ tiên quyết không tồn tại trong công việc');
-
-                $pre_job_check_time = Job::find($_pre_job_id);
-                if ($pre_job_check_time->end_time < $job->start_time)
-                    return $this->error('Thời gian nhiệm vụ không phù hợp với một nhiệm vụ tiên quyết');
-            }
-        }
 
         // File đính kèm
         $file = $job->file;
@@ -322,12 +285,8 @@ class JobController extends Controller
 
         // Cập nhật nhiệm vụ
         Job::find($job_id)->update([
-            'name' => $name,
-            'start_time' => $start_time,
-            'end_time' => $end_time,
             'content' => $content,
-            'file' => $file,
-            'task_id' => $task_id
+            'file' => $file
         ]);
 
         // Kiểm tra user cập nhật có bị thay đổi
@@ -357,45 +316,6 @@ class JobController extends Controller
                     ]);
                 }
             }
-        }
-       
-
-        // Nhiệm vụ tiên quyết
-        if (is_array($pre_job_ids)) {
-            // Lấy danh sách nhiệm vụ tiên quyết cũ
-            $pre_job_list_old = PreJob::where('job_id', $job_id)->get();
-            // Xóa nhiệm vụ tiên quyết đã bỏ
-            if ($pre_job_list_old) {
-                foreach ($pre_job_list_old as $_pre_job_list_old) {
-                    if (!in_array($_pre_job_list_old->pre_job_id, $pre_job_ids)) {
-                        PreJob::find($_pre_job_list_old->id)->delete();
-                    }
-                }
-            }
-
-            // Lấy lại danh sách sau khi xóa
-            $pre_job_list_old = Prejob::where('job_id', $id)->get();
-            $pre_job_ids_old = array();
-            if ($pre_job_list_old) {
-                foreach ($pre_job_list_old as $_pre_job_list_old) {
-                    $pre_job_ids_old[] = $_pre_job_list_old->pre_job_id;
-                }
-            }
-
-            if ($pre_job_ids) {
-                foreach ($pre_job_ids as $_pre_job_id) {
-                    if (!in_array($_pre_job_id, $pre_job_ids_old)) {
-                        Prejob::create([
-                            'job_id' => $job_id,
-                            'pre_job_id' => $_pre_job_id
-                        ]);
-                    }
-                }
-            }
-
-        } else {
-            // Xóa hết các nhiệm vụ tiên quyết
-            PreJob::where('job_id', $job_id)->delete();
         }
 
         return $this->success("Cập nhật nhiệm vụ thành công", []);

@@ -118,6 +118,10 @@ export default {
         status: false
       }
 
+      this.reason =  '';
+      this.reason_not_approval = '';
+      this.reason_not_approval_refuse = '';
+
       setTimeout(() => {
         this.validate_form = true;
       }, 300);
@@ -149,18 +153,9 @@ export default {
 
       if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.pre_job_ids == '' && this.error.user_id == '') {
         let formData = new FormData();
-        formData.append('name', this.job.name);
         formData.append('content', this.job.content);
         formData.append('user_id', this.job.user_id);
         formData.append('file', this.job.file);
-        formData.append('start_time', this.job.start_time);
-        formData.append('end_time', this.job.end_time);
-
-        if (this.pre_job_id.show.length > 0) {
-          for (let i in this.pre_job_id.show) {
-            formData.append('pre_job_ids[]', this.pre_job_id.show[i].id);
-          }
-        }
         
         if (this.job.id != null && this.job.id != '' && this.job.id > 0) { // cập nhật
           formData.append('id', this.job.id);
@@ -179,7 +174,16 @@ export default {
             this.$root.showError(err);
             this.loading_add = false;
           })
-        } else {
+        } else { // Thêm
+          formData.append('name', this.job.name);
+          formData.append('start_time', this.job.start_time);
+          formData.append('end_time', this.job.end_time);
+          if (this.pre_job_id.show.length > 0) {
+            for (let i in this.pre_job_id.show) {
+              formData.append('pre_job_ids[]', this.pre_job_id.show[i].id);
+            }
+          }
+
           this.loading_add = true;
           this.$root.api.post(`project/${this.info.project.id}/task/${this.info.task.id}/add`, formData).then(res => {
             this.loading_add = false;
@@ -223,8 +227,10 @@ export default {
 
       if (this.job.start_time == '') {
         this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
-      } else if (start_time_job < start_time_task || end_time_job > end_time_task) {
-        this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với thời gian của công việc'
+      } else if (start_time_job < start_time_task) {
+        this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với thời gian bắt đầu của công việc';
+      } else if (end_time_job > end_time_task) {
+        this.error.end_time = 'Thời gian kết thúc nhiệm vụ không phù hợp với thời gian kết thúc của công việc';
       } else if (this.job.end_time != '' && this.job.start_time > this.job.end_time) {
         this.error.start_time = 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc'
       } else {
@@ -473,7 +479,9 @@ export default {
     this.params.task_id = this.$route.params.id;
     this.getInfo();
     this.getList();
-    $(document).on('hidden.bs.modal', '#job_modal_add_update, #job_modal_delete', () => {
+    $(document).on('hidden.bs.modal', 
+      '#job_modal_add_update, #job_modal_delete, #job_modal_details, #job_not_approval_modal, #job_refuse_modal, #job_finish_modal, #job_not_approval_refuse_modal',
+      () => {
       this.closeModal();
     });
   },
@@ -587,28 +595,37 @@ export default {
                     </div>
                   </div>
 
-                  <div class="text-right"
-                    v-if="item.status.status != 3 && ($root.isManager() || (info && $root.auth.id == info.task.department.leader.id))">
+                  <div class="text-right">
                     <span
-                      class="text-info"
                       @click="getJobUpdate(item)"
                       data-toggle="modal"
-                      data-target="#job_modal_add_update"
+                      data-target="#job_modal_details"
                       style="cursor: pointer"
                     >
-                      <b>Sửa</b>
+                      <b>Xem</b>
                     </span>
+                    <div style="display: inline-block"
+                      v-if="item.status.status != 3 && ($root.isManager() || (info && $root.auth.id == info.task.department.leader.id))">
+                        <span
+                          class="text-info"
+                          @click="getJobUpdate(item)"
+                          data-toggle="modal"
+                          data-target="#job_modal_add_update"
+                          style="cursor: pointer"
+                        >
+                        <b>Sửa</b>
+                      </span>
 
-                    <span
-                      class="text-danger"
-                      @click="getJobUpdate(item)"
-                      data-toggle="modal"
-                      data-target="#job_modal_delete"
-                      style="cursor: pointer"
-                    >
-                      <b>Xóa</b>
-                    </span>
-
+                      <span
+                        class="text-danger"
+                        @click="getJobUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#job_modal_delete"
+                        style="cursor: pointer"
+                      >
+                        <b>Xóa</b>
+                      </span>
+                    </div>
                     <div 
                       style="display: inline-block; padding-left: 7px;"
                       v-if="$root.auth.id == info.task.department.leader.id && item.status.status == 2">
@@ -678,12 +695,13 @@ export default {
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
-                    <input type="text" class="form-control form-control-sm" v-model="job.name">
+                    <input type="text" class="form-control form-control-sm" v-model="job.name" v-if="job.id" disabled>
+                    <input type="text" class="form-control form-control-sm" v-model="job.name" v-else>
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>
 
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="!job.id">
                   <div class="form-group">
                     <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="job.start_time">
@@ -691,7 +709,7 @@ export default {
                   </div>
                 </div>
 
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="!job.id">
                   <div class="form-group">
                     <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="job.end_time">
@@ -716,7 +734,7 @@ export default {
                   </div>
                 </div>
 
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="!job.id">
                   <div class="form-group">
                     <label><b>Nhiệm vụ tiên quyết</b></label>
                     <m-select
@@ -776,6 +794,68 @@ export default {
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="job_modal_details">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Thông tin chi tiết</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body" v-if="job">
+            <div class="form-group">
+              <b class="text-info">Tên: {{ job.name }}</b>
+            </div>
+            <div class="form-group" v-if="job.user">
+              <b>Phân công cho: </b> <span>{{ job.user.fullname || job.user.username }}</span>
+            </div>
+
+            <div class="form-group">
+              <b>Thời gian bắt đầu: </b> <span>{{ job.start_time }}</span>
+            </div>
+
+            <div class="form-group">
+              <b>Hạn chót: </b> <span>{{ job.end_time }}</span>
+            </div>
+
+            <div class="form-group" v-if="job.content">
+              <b>Nội dung: </b> <span>{{ job.content }}</span>
+            </div>
+
+            <div class="form-group" v-if="file && file.updated">
+              <b>Tệp đính kèm: </b>
+              <a target="_blank" :href="file.updated">Xem tệp</a>
+            </div>
+
+            <div class="form-group">
+              <b>Nhiệm vụ tiên quyết: </b>
+              <div class="pre-jobs mt-2" v-if="pre_job_id && pre_job_id.show.length > 0">
+                <ul>
+                  <li v-for="(item, index) in pre_job_id.show" :key="index">
+                    {{item.name }}
+                  </li>
+                </ul>
+              </div>
+              <span v-else >Không có</span>
+            </div>
+
+            <div class="form-group" v-if="job.status">
+              <b>Trạng thái: </b><span>{{ $root.getStatusTaskName(job.status.status) }}</span>
+              <div class="pl-2" v-if="job.status.content"><b>Nội dung phản hồi: </b>
+              <br><span>{{ job.status.content }}</span> </div>
+            </div> 
+
+            <div class="form-group">
+              <b v-if="$root.checkDeadline(job) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(job) }}</b>
+              <b v-else class="badge badge-danger">{{ $root.checkDeadline(job) }}</b>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
           </div>
         </div>
       </div>

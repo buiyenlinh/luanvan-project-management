@@ -24,10 +24,10 @@ class TaskResource extends JsonResource
      */
     public function toArray($request)
     {
-        $department_task = DepartmentTask::where('task_id', $this->id)->first();
+        $department_task = DepartmentTask::where('task_id', $this->id)->latest('id')->first();
         $status = new DepartmentTaskStatusResource(
             DepartmentTaskStatus::where('department_task_id', $department_task->id)
-                ->latest('created_at')->first()
+                ->latest('id')->first()
             );
         $department = new DepartmentResource(Department::find($department_task->department_id));
 

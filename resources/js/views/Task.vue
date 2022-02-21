@@ -33,9 +33,12 @@ export default {
       pre_task_id_check: [],
       loading_delete_file: false,
       loading_take_task: false,
-      loading_refuse_task: false,
-      reason: '',
-      reason_error: ''
+      loading_finish_task: false,
+      response_finish: '',
+      loading_approval_task: false,
+      reason_not_approval_finish: '',
+      reason_not_approval_finish_error: '',
+      loading_reason_not_approval_finish: false
     }
   },
   methods: {
@@ -71,23 +74,14 @@ export default {
 
       if (!check && this.error.name == '' && this.error.start_time == '' && this.error.end_time == '' && this.error.department == '' && this.error.pre_task_ids == '') {
         let formData = new FormData();
-        formData.append('name', this.task.name);
+        
         formData.append('describe', this.task.describe);
         formData.append('result', this.task.result);
         formData.append('label_id', this.task.label_id);
         formData.append('project_id', this.task.project_id);
-        formData.append('department_id', this.task.department_id);
         formData.append('file', this.task.file);
-        formData.append('start_time', this.task.start_time);
-        formData.append('end_time', this.task.end_time);
-
-        if (this.pre_task_ids_show.length > 0) {
-          for (let i in this.pre_task_ids_show) {
-            formData.append('pre_task_ids[]', this.pre_task_ids_show[i].id);
-          }
-        }
         
-        if (this.task.id != null) {
+        if (this.task.id != null) { // Cập nhật task
           formData.append('id', this.task.id);
           this.loading_add = true;
           this.$root.api.post(`project/${this.project_id}/task/update`, formData).then(res => {
@@ -103,7 +97,18 @@ export default {
             this.$root.showError(err);
             this.loading_add = false;
           })
-        } else {
+        } else { // Thêm task
+          formData.append('name', this.task.name);
+          formData.append('start_time', this.task.start_time);
+          formData.append('end_time', this.task.end_time);
+          formData.append('department_id', this.task.department_id);
+
+          if (this.pre_task_ids_show.length > 0) {
+            for (let i in this.pre_task_ids_show) {
+              formData.append('pre_task_ids[]', this.pre_task_ids_show[i].id);
+            }
+          }
+
           this.loading_add = true;
           this.$root.api.post(`project/${this.project_id}/task/add`, formData).then(res => {
             this.loading_add = false;
@@ -174,6 +179,8 @@ export default {
       this.file_updated = '';
       this.pre_task_ids_show = [];
       this.pre_task_id_check = [];
+
+      this.response_finish = '';
 
       this.select_department = {
         text: '--- Tìm phòng ban ---',
@@ -351,33 +358,67 @@ export default {
         this.loading_take_task = false;
       })
     },
-    handleRefuseTask() {
-      this.checkReasonRefuse();
-      if (this.reason_error == '') {
-        this.loading_refuse_task = true;
-        this.$root.api.post(`project/${this.project_id}/task/refuse-task/${this.task.id}`, {
-          'content' : this.reason
+    handleFinishTask() {
+      this.loading_finish_task = true;
+      this.$root.api.post(`project/${this.project_id}/task/finish-task/${this.task.id}`, {
+        'content' : this.response_finish
+      }).then(res => {
+        this.loading_finish_task = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          $('#task_modal_finish').modal('hide');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_finish_task = false;
+      })
+    },
+    handleApprovalTask(_task) {
+      this.loading_approval_task = true;
+      this.$root.api.post(`project/${this.project_id}/task/approval-finish-task/${_task.id}`).then(res => {
+        this.loading_approval_task = false;
+        if (res.data.status == "OK") {
+          this.$notify(res.data.message, 'success');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.$root.showError(err);
+        this.loading_approval_task = false;
+      })
+    },
+    checkReasonNotApprovalFinish() {
+      if (this.reason_not_approval_finish == '') {
+        this.reason_not_approval_finish_error = 'Lý do từ chối duyệt là bắt buộc';
+      } else {
+        this.reason_not_approval_finish_error = '';
+      }
+    },
+    handleNotApprovalFinishTask() {
+      this.checkReasonNotApprovalFinish();
+      if (this.reason_not_approval_finish_error == '') {
+        this.loading_reason_not_approval_finish = true;
+        this.$root.api.post(`project/${this.project_id}/task/not-approval-finish-task/${this.task.id}`, {
+          'content' : this.reason_not_approval_finish
         }).then(res => {
-          this.loading_refuse_task = false;
+          this.loading_reason_not_approval_finish = false;
           if (res.data.status == "OK") {
             this.$notify(res.data.message, 'success');
-            $('#task_refuse_modal').modal('hide');
+            $('#task_modal_not_approval_finish').modal('hide');
             this.getList();
           } else {
             this.$root.showError(res.data.error);
           }
         }).catch (err => {
           this.$root.showError(err);
-          this.loading_refuse_task = false;
+          this.loading_reason_not_approval_finish = false;
         })
       }
-    },
-    checkReasonRefuse() {
-      if (this.reason == '')
-        this.reason_error = "Lý do từ chối công việc là bắt buộc";
-      else 
-        this.reason_error = '';
-    },
+    }
   },
   created() {
     this.closeModal();
@@ -387,11 +428,15 @@ export default {
     this.getList();
     this.getProject();
 
-    $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete', () => {
+    $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete, #task_modal_details, #task_modal_finish, #task_modal_not_approval_finish', () => {
       this.closeModal();
     });
   },
   watch: {
+    'reason_not_approval_finish'() {
+      if (!this.validate_form) return;
+      this.checkReasonNotApprovalFinish();
+    },
     'task.name' () {
       if (!this.validate_form) return;
       this.checkName();
@@ -407,10 +452,6 @@ export default {
     'task.department_id' () {
       if (!this.validate_form) return;
       this.checkDepartment();
-    },
-    'reason'() {
-      if (!this.validate_form) return;
-      this.checkReasonRefuse();
     }
   }
 }
@@ -467,55 +508,87 @@ export default {
               <div class="bg-fff info">
                 <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
                   <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                  <p style="font-size: 12px; margin-bottom: 0px"> 
+                  <div style="font-size: 12px; margin-bottom: 0px"> 
                     <b>Phân cho: </b>{{item.department.name}} <br>
                     <b>Tạo lúc: </b>{{item.created_at}} <br>
                     <b v-if="item.status != null" >Trạng thái: </b>
-                    <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 5">
+                    <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5">
                       {{ $root.getStatusTaskName(item.status.status) }}
                     </span>
                     <span class="badge badge-success" v-else>
                       {{ $root.getStatusTaskName(item.status.status) }}
                     </span> <br>
 
-                     <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
-                    <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
-                  </p>
+                    <div v-if="item.status.status == 3">
+                      <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                      <b v-else  class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                    </div>
+                    <div v-else>
+                      <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
+                      <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
+                    </div>
+                     
+                  </div>
                 </router-link>
 
-                <div class="text-right" style="padding: 0px 10px 10px 0px" v-if="$root.isManager()">
+                <div class="text-right" style="padding: 0px 10px 10px 0px;">
                   <span
-                    class="text-danger"
                     @click="getTaskUpdate(item)"
                     data-toggle="modal"
-                    data-target="#task_modal_delete"
+                    data-target="#task_modal_details"
                     style="cursor: pointer"
                   >
-                    <b>Xóa</b>
+                    <b>Xem</b>
                   </span>
-                  <span
-                    class="text-info"
-                    @click="getTaskUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#task_modal_add_update"
-                    style="cursor: pointer"
-                  >
-                    <b>Sửa</b>
-                  </span>
-                </div>
+                  <div style="display: inline-block" 
+                    v-if="item.status.status != 3 && project && project.manager.id == $root.auth.id">
+                    <span
+                      class="text-info"
+                      @click="getTaskUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#task_modal_add_update"
+                      style="cursor: pointer"
+                    >
+                      <b>Sửa</b>
+                    </span>
 
-                <div v-else-if="item && item.department.leader.id == $root.auth.id" style="padding: 0px 5px 5px 0px" class="text-right">
-                  <div v-if="item.status.status == 0">
-                    <span @click="handleTakeTask(item)" style="cursor: pointer" class="text-info">
+                    <span
+                      class="text-danger"
+                      @click="getTaskUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#task_modal_delete"
+                      style="cursor: pointer"
+                    >
+                      <b>Xóa</b>
+                    </span> 
+
+                    <div style="display: inline-block" class="pl-2" v-if="item.status.status == 2">
+                      <span
+                        class="text-info"
+                        @click="handleApprovalTask(item)"
+                        style="cursor: pointer"
+                      >
+                        <b>Duyệt</b>
+                      </span>
+                      <span
+                          class="text-danger"
+                          @click="getTaskUpdate(item)"
+                          data-toggle="modal"
+                          data-target="#task_modal_not_approval_finish"
+                          style="cursor: pointer"
+                        >
+                          <b>Không duyệt</b>
+                        </span>
+                      </div>
+                  </div>
+
+                  <div style="display: inline-block" v-else-if="item.status.status != 3 && item && item.department.leader.id == $root.auth.id">
+                    <span v-if="item.status.status == 0" 
+                      @click="handleTakeTask(item)" style="cursor: pointer" class="text-info">
                       <b>Tiếp nhận</b>
                     </span>
-                    <span @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_refuse_modal"
-                      style="cursor: pointer" class="text-danger">
-                      <b>Từ chối</b>
-                    </span>
-                  </div>
-                  <div v-else-if="item.status.status == 1">
-                    <span @click="getTaskUpdate(item)" data-toggle="modal" data-target="#job_modal_delete"
+                    <span v-if="item.status.status == 1 || item.status.status == 4"
+                      @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_modal_finish"
                       style="cursor: pointer" class="text-success">
                       <b>Hoàn thành</b>
                     </span>
@@ -543,12 +616,13 @@ export default {
                   <div class="col-md-6 col-sm-12 col-12">
                     <div class="form-group">
                       <label><b>Tên công việc <span class="text-danger">*</span></b></label>
-                      <input type="text" class="form-control form-control-sm" v-model="task.name">
+                      <input type="text" class="form-control form-control-sm" v-model="task.name" v-if="task.id" disabled>
+                      <input type="text" class="form-control form-control-sm" v-model="task.name" v-else>
                       <div class="text-danger font-italic error">{{error.name}}</div>
                     </div>
                   </div>
 
-                  <div class="col-md-6 col-sm-12 col-12">
+                  <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
                       <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
                       <input type="date" class="form-control form-control-sm" v-model="task.start_time">
@@ -556,7 +630,7 @@ export default {
                     </div>
                   </div>
 
-                  <div class="col-md-6 col-sm-12 col-12">
+                  <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
                       <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
                       <input type="date" class="form-control form-control-sm" v-model="task.end_time">
@@ -564,7 +638,7 @@ export default {
                     </div>
                   </div>
 
-                  <div class="col-md-6 col-sm-12 col-12">
+                  <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
                       <label><b>Phân công cho phòng ban <span class="text-danger">*</span></b></label>
                       <m-select
@@ -592,11 +666,10 @@ export default {
                         @remove="removeLabel"
                         :variable="{first: 'name'}"
                       />
-                      <div class="text-danger font-italic error">{{error.manager}}</div>
                     </div>
                   </div>
 
-                  <div class="col-md-6 col-sm-12 col-12">
+                  <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
                       <label><b>Công việc tiên quyết</b></label>
                       <m-select
@@ -667,6 +740,79 @@ export default {
         </div>
       </div>
 
+      <div class="modal fade" id="task_modal_details">
+        <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Thông tin chi tiết</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <b class="text-info">Tên: {{ task.name }}</b>
+              </div>
+
+              <div class="form-group" v-if="task.user">
+                <b>Phân công cho: </b> <span>{{ task.department.name }}</span>
+              </div>
+
+              <div class="form-group">
+                <b>Thời gian bắt đầu: </b> <span>{{ task.start_time }}</span>
+              </div>
+
+              <div class="form-group">
+                <b>Hạn chót: </b> <span>{{ task.end_time }}</span>
+              </div>
+
+              <div class="form-group">
+                <b>Công việc tiên quyết: </b>
+                <div class="pre-tasks mt-2" v-if="pre_task_ids_show && pre_task_ids_show.length > 0">
+                  <ul>
+                    <li v-for="(item, index) in pre_task_ids_show" :key="index">
+                      {{item.name }}
+                    </li>
+                  </ul>
+                </div>
+                <span v-else>Không có</span>
+              </div>
+
+              <div class="form-group" v-if="task.label">
+                <b>Nhãn: </b> <span>{{ task.label.name }}</span>
+              </div>
+
+              <div class="form-group" v-if="task.describe">
+                <b>Mô tả: </b> <span>{{ task.describe }}</span>
+              </div>
+
+               <div class="form-group" v-if="task.result">
+                <b>Kết quả: </b>
+                <span>{{ task.result }}</span>
+              </div>
+
+              <div class="form-group" v-if="file_updated">
+                <b>Tệp đính kèm: </b>
+                <a target="_blank" :href="file_updated">Xem tệp</a>
+              </div>
+
+              <div class="form-group" v-if="task.status">
+                <b>Trạng thái: </b><span>{{ $root.getStatusTaskName(task.status.status) }} </span>
+                <div v-if="task.status.status == 3">
+                  <b v-if="task.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                  <b v-else  class="badge badge-danger">Hoàn thành trễ {{ task.delay_time }} ngày</b> 
+                </div>
+                <div class="pl-2" v-if="task.status.content"><b>Nội dung phản hồi: </b>
+                <br><span>{{ task.status.content }}</span> </div>
+              </div> 
+
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="modal fade" id="task_modal_delete">
         <div class="modal-dialog modal-dialog-scrollable">
           <div class="modal-content">
@@ -690,11 +836,11 @@ export default {
         </div>
       </div>
 
-      <div class="modal fade" id="task_refuse_modal">
+      <div class="modal fade" id="task_modal_finish">
         <div class="modal-dialog modal-dialog-scrollable">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title">Từ chối công việc</h4>
+              <h4 class="modal-title">Hoàn thành công việc</h4>
               <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
@@ -708,26 +854,61 @@ export default {
 
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Lý do từ chối <span class="text-danger">*</span></b></label>
-                    <textarea class="form-control" rows="5" v-model="reason"></textarea>
-                    <div class="text-danger font-italic error">{{ reason_error }}</div>
+                    <label><b>Phản hồi </b></label>
+                    <textarea class="form-control" rows="5" v-model="response_finish"></textarea>
                   </div>
                 </div>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="submit" class="btn btn-danger btn-sm" @click="handleRefuseTask">Gửi</button>
+              <button type="submit" class="btn btn-danger btn-sm" @click="handleFinishTask">Gửi</button>
               <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
             </div>
           </div>
         </div>
       </div>
 
+      <div class="modal fade" id="task_modal_not_approval_finish">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Không duyệt hoàn thành công việc</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="task" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên công việc <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="task.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Lý do <span class="text-danger">*</span></b></label>
+                  <textarea class="form-control" rows="5" v-model="reason_not_approval_finish"></textarea>
+                  <div class="text-danger font-italic error">{{ reason_not_approval_finish_error }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-sm" @click="handleNotApprovalFinishTask">Từ chối duyệt</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
       <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
       <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />
       <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm" :full="true" />
       <m-loading v-if="loading_take_task" title="Đang thực hiện tiếp nhận công việc" :full="true" />
-      <m-loading v-if="loading_refuse_task" title="Đang gửi yêu cầu từ chối công việc" :full="true" />
+      <m-loading v-if="loading_finish_task" title="Đang gửi yêu cầu duyệt công việc" :full="true" />
+      <m-loading v-if="loading_approval_task" title="Đang duyệt công việc" :full="true" />
+      <m-loading v-if="loading_reason_not_approval_finish" title="Đang từ chối duyệt công việc" :full="true" />
+      
     </div>
     <m-spinner v-else class="mb-2" />
   </div>
