@@ -389,13 +389,14 @@ new Vue({
 		getStatusTaskName($num_status) {
 			if ($num_status == 0) return 'Đã giao';
 			if ($num_status == 1) return 'Đã tiếp nhận';
-			if ($num_status == 2) return 'Chờ duyệt';
+			if ($num_status == 2) return 'Chờ duyệt hoàn thành';
 			if ($num_status == 3) return 'Đã duyệt';
 			if ($num_status == 4) return 'Từ chối duyệt';
 			if ($num_status == 5) return 'Từ chối nhận';
 			if ($num_status == 6) return 'Không duyệt từ chối nhận';
 			if ($num_status == 7) return 'Đổi thành viên';
 			if ($num_status == 8) return 'Đổi phòng ban';
+			if ($num_status == 9) return 'Đã hoàn thành';
 		},
 		checkDeadline(_param) {
 			let today = new Date();

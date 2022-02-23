@@ -495,111 +495,99 @@ export default {
         </div>
       </form>
       <div class="list">
-        <div class="text-center" v-if="loading_list">
-          <m-spinner/>
-        </div>
-        <div v-else-if="list && list.length > 0">
-          <div class="mb-3"><b>Danh sách công việc</b></div>
-          <ul class="row">
-            <li class="col-md-3 col-sm-4 col-12 mb-3"
-              v-for="(item, index) in list"
-              :key="index"
-            >
-              <div class="bg-fff info">
-                <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
-                  <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                  <div style="font-size: 12px; margin-bottom: 0px"> 
-                    <b>Phân cho: </b>{{item.department.name}} <br>
-                    <b>Tạo lúc: </b>{{item.created_at}} <br>
-                    <b v-if="item.status != null" >Trạng thái: </b>
-                    <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5">
-                      {{ $root.getStatusTaskName(item.status.status) }}
-                    </span>
-                    <span class="badge badge-success" v-else>
-                      {{ $root.getStatusTaskName(item.status.status) }}
-                    </span> <br>
-
-                    <div v-if="item.status.status == 3">
-                      <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
-                      <b v-else  class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
-                    </div>
-                    <div v-else>
-                      <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
-                      <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
-                    </div>
-                     
-                  </div>
-                </router-link>
-
-                <div class="text-right" style="padding: 0px 10px 10px 0px;">
-                  <span
-                    @click="getTaskUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#task_modal_details"
-                    style="cursor: pointer"
-                  >
-                    <b>Xem</b>
-                  </span>
-                  <div style="display: inline-block" 
-                    v-if="item.status.status != 3 && project && project.manager.id == $root.auth.id">
-                    <span
-                      class="text-info"
-                      @click="getTaskUpdate(item)"
-                      data-toggle="modal"
-                      data-target="#task_modal_add_update"
-                      style="cursor: pointer"
-                    >
-                      <b>Sửa</b>
-                    </span>
-
-                    <span
-                      class="text-danger"
-                      @click="getTaskUpdate(item)"
-                      data-toggle="modal"
-                      data-target="#task_modal_delete"
-                      style="cursor: pointer"
-                    >
-                      <b>Xóa</b>
-                    </span> 
-
-                    <div style="display: inline-block" class="pl-2" v-if="item.status.status == 2">
-                      <span
-                        class="text-info"
-                        @click="handleApprovalTask(item)"
-                        style="cursor: pointer"
-                      >
-                        <b>Duyệt</b>
+        <div class="card">
+        <div class="card-header bg-info text-white">Danh sách công việc</div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-stripped mb-0">
+              <thead>
+                <tr>
+                  <td><b>STT</b></td>
+                  <td><b>Tên</b></td>
+                  <td><b>Phòng ban</b></td>
+                  <td><b>Thống kê</b></td>
+                  <td><b>Trạng thái</b></td>
+                  <td><b>Ngày tạo</b></td>
+                  <td></td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="loading_list">
+                  <td colspan="1000" align="center">
+                    <m-spinner />
+                  </td>
+                </tr>
+                <template v-else-if="list && list.length > 0">
+                  <tr v-for="(item, index) in list" :key="index">
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.department.name }}</td>
+                    <td>SLHT / SLTH</td>
+                    <td>
+                      <span v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5" class="badge badge-danger">
+                        {{ $root.getStatusTaskName(item.status.status) }}
                       </span>
-                      <span
-                          class="text-danger"
+                      <span v-else-if="item.status.status == 3">
+                        <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                        <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                      </span>
+                      <span v-else class="badge badge-info">
+                        {{ $root.getStatusTaskName(item.status.status) }}
+                      </span>
+                      <span v-if="item.status.status != 3" :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-success' : 'badge-danger']">
+                        {{ $root.checkDeadline(item) }}
+                      </span>
+                    </td>
+                    <td>{{ item.created_at }}</td>
+                    <td>
+                      <button @click="getTaskUpdate(item)" class="btn btn-sm btn-secondary"
+                        data-toggle="modal"
+                        data-target="#task_modal_details"
+                      >Xem</button>
+
+                      <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
+                        <button v-if="item && item.status.status != 3 && item.status.status != 0" class="btn btn-dark btn-sm">Nhiệm vụ</button>
+                      </router-link>
+
+                      <template v-if="item.status.status != 3 && project && project.manager.id == $root.auth.id">
+                        <button class="btn btn-sm btn-info"
                           @click="getTaskUpdate(item)"
                           data-toggle="modal"
-                          data-target="#task_modal_not_approval_finish"
-                          style="cursor: pointer"
-                        >
-                          <b>Không duyệt</b>
-                        </span>
-                      </div>
-                  </div>
+                          data-target="#task_modal_add_update">Sửa</button>
 
-                  <div style="display: inline-block" v-else-if="item.status.status != 3 && item && item.department.leader.id == $root.auth.id">
-                    <span v-if="item.status.status == 0" 
-                      @click="handleTakeTask(item)" style="cursor: pointer" class="text-info">
-                      <b>Tiếp nhận</b>
-                    </span>
-                    <span v-if="item.status.status == 1 || item.status.status == 4"
-                      @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_modal_finish"
-                      style="cursor: pointer" class="text-success">
-                      <b>Hoàn thành</b>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div v-else>
-          Không có công việc nào
+                        <button class="btn btn-sm btn-danger"
+                          @click="getTaskUpdate(item)"
+                          data-toggle="modal"
+                          data-target="#task_modal_delete">Xóa</button> 
+                    
+                        <template v-if="item.status.status == 2">
+                          <button class="btn btn-sm btn-info" @click="handleApprovalTask(item)">Duyệt</button>
+                          <button class="btn btn-sm btn-danger"
+                            @click="getTaskUpdate(item)"
+                            data-toggle="modal"
+                            data-target="#task_modal_not_approval_finish">
+                            Không duyệt
+                          </button>
+                        </template>
+
+                      </template>
+                      <template v-if="item && item.department.leader.id == $root.auth.id">
+                        <button v-if="item.status.status == 0" 
+                          @click="handleTakeTask(item)" class="btn btn-sm btn-info">
+                          Tiếp nhận
+                        </button>
+                        <button v-if="item.status.status == 1 || item.status.status == 4"
+                          @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_modal_finish"
+                          class="btn btn-sm btn-success">
+                          Hoàn thành
+                        </button>
+                      </template>
+                    </td>
+                  </tr>
+                </template>
+                <tr v-else ><td colspan="1000" align="center">Không có công việc</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -861,7 +849,7 @@ export default {
               </div>
             </div>
             <div class="modal-footer">
-              <button type="submit" class="btn btn-danger btn-sm" @click="handleFinishTask">Gửi</button>
+              <button type="submit" class="btn btn-success btn-sm" @click="handleFinishTask">Hoàn thành</button>
               <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
             </div>
           </div>
@@ -869,37 +857,37 @@ export default {
       </div>
 
       <div class="modal fade" id="task_modal_not_approval_finish">
-      <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h4 class="modal-title">Không duyệt hoàn thành công việc</h4>
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div v-if="task" class="row">
-              <div class="col-md-12 col-sm-12 col-12">
-                <div class="form-group">
-                  <label><b>Tên công việc <span class="text-danger">*</span></b></label>
-                  <input type="text" class="form-control form-control-sm" disabled v-model="task.name">
+        <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Không duyệt hoàn thành công việc</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div v-if="task" class="row">
+                <div class="col-md-12 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Tên công việc <span class="text-danger">*</span></b></label>
+                    <input type="text" class="form-control form-control-sm" disabled v-model="task.name">
+                  </div>
                 </div>
-              </div>
 
-              <div class="col-md-12 col-sm-12 col-12">
-                <div class="form-group">
-                  <label><b>Lý do <span class="text-danger">*</span></b></label>
-                  <textarea class="form-control" rows="5" v-model="reason_not_approval_finish"></textarea>
-                  <div class="text-danger font-italic error">{{ reason_not_approval_finish_error }}</div>
+                <div class="col-md-12 col-sm-12 col-12">
+                  <div class="form-group">
+                    <label><b>Lý do <span class="text-danger">*</span></b></label>
+                    <textarea class="form-control" rows="5" v-model="reason_not_approval_finish"></textarea>
+                    <div class="text-danger font-italic error">{{ reason_not_approval_finish_error }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-danger btn-sm" @click="handleNotApprovalFinishTask">Từ chối duyệt</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger btn-sm" @click="handleNotApprovalFinishTask">Từ chối duyệt</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       <m-loading v-if="loading_add" :title="task.id != null ? 'Đang cập nhật công việc' : 'Đang thêm công việc'" :full="true" />
       <m-loading v-if="loading_delete" title="Đang xóa công việc" :full="true" />

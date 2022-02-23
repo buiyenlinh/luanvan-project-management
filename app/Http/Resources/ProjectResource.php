@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Model\User;
+use App\Model\ProjectStatus;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectResource extends JsonResource
@@ -19,6 +20,7 @@ class ProjectResource extends JsonResource
         // return parent::toArray($request);
         $manager = User::find($this->manager);
         $created_by = User::find($this->created_by);
+        $status = ProjectStatus::where('project_id', $this->id)->latest('id')->first();
 
         /** file đính kèm */
         $file = $this->file;
@@ -44,6 +46,7 @@ class ProjectResource extends JsonResource
                 'username' => $created_by->username
             ],
             'file' => $file,
+            'status' => $status,
             'created_at' => $this->created_at->format('H:i:s, d-m-Y'),
             'updated_at' => $this->updated_at->format('H:i:s, d-m-Y')
         ];

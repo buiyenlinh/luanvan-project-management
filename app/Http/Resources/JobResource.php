@@ -42,7 +42,6 @@ class JobResource extends JsonResource
         $user = array();
         $status = array();
 
-
         $department_user_job = DepartmentUserJob::where('job_id', $this->id)->latest('id')->first();
         if ($department_user_job) {
             $department_user = DepartmentUser::find($department_user_job->department_user_id);

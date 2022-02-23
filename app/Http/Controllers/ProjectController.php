@@ -11,6 +11,7 @@ use App\Model\DepartmentUser;
 use App\Model\DepartmentUserJob;
 use App\Model\DepartmentTaskStatus;
 use App\Model\DepartmentUserJobStatus;
+use App\Model\ProjectStatus;
 use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 
@@ -118,7 +119,7 @@ class ProjectController extends Controller
             $file = str_replace('public/', '', $file);
         }
 
-        Project::create([
+        $project_new = Project::create([
             'name' => $name,
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -129,6 +130,14 @@ class ProjectController extends Controller
             'file' => $file,
             'describe' => $describe,
         ]);
+
+        if ($project_new) {
+            ProjectStatus::create([
+                'project_id' => $project_new->id,
+                'content' => '',
+                'status' => 0 // Đã giao
+            ]);
+        }
         return $this->success('Thêm dự án thành công');
     }
 
@@ -136,11 +145,7 @@ class ProjectController extends Controller
      * Cập nhật dự án
      */
     public function updateProject(Request $request) {
-        $name = $request->name;
-        $start_time = $request->start_time;
-        $end_time = $request->end_time;
         $active = $request->active;
-        $manager = $request->manager;
         $describe = $request->describe;
 
         if (!$describe) {
@@ -151,25 +156,9 @@ class ProjectController extends Controller
         if (!$project) 
             return $this->error('Dự án không tồn tại');
 
-        if (!$name) {
-            return $this->error('Tên dự án là bắt buộc');
-        } else if (!$start_time) {
-            return $this->error('Thời gian bắt đầu là bắt buộc');
-        } else if (!$end_time) {
-            return $this->error('Thời gian kết thúc là bắt buộc');
-        } else if ($start_time > $end_time) {
-            return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
-        } else if ($active != 1 && $active != 0) {
+        if ($active != 1 && $active != 0) {
             return $this->error('Trạng thái là bắt buộc');
         }
-        
-        if ($this->checkExist('name', $name, $request->id)) {
-            return $this->error('Tên dự án đã tồn tại');
-        }
-
-        $start_time = strtotime($start_time);
-        $end_time = strtotime($end_time);
-
         $file = $project->file;
         if ($request->file('file')) {
             if (!empty($file)) {
@@ -182,11 +171,7 @@ class ProjectController extends Controller
         
 
         Project::find($request->id)->update([
-            'name' => $name,
-            'start_time' => $start_time,
-            'end_time' => $end_time,
             'active' => $active,
-            'manager' => $manager,
             'file' => $file,
             'describe' => $describe,
         ]);
@@ -198,8 +183,9 @@ class ProjectController extends Controller
      */
     public function deleteProject(Request $request) {
         $id = $request->id;
-        if (!$id) {
-            return $this->error('Vui lòng thử lại');
+        $project = Project::find($id);
+        if (!$project) {
+            return $this->error('Dự án không tồn tại');
         }
         $tasks = Task::where('project_id', $id);
         foreach($tasks->get() as $_task) {
@@ -264,5 +250,53 @@ class ProjectController extends Controller
             'file' => ''
         ]);
         return $this->success('Xóa tệp đính kèm thành công');
+    }
+
+    /**
+     * Tiếp nhận dự án
+     */
+    public function takeProject(Request $request, $project_id) {
+        $project = Project::find($project_id);
+        if (!$project) return $this->error('Dự án không tồn tại');
+
+        ProjectStatus::create([
+            'status' => 1,
+            'content' => '',
+            'project_id' => $project_id
+        ]);
+
+        return $this->success('Tiếp nhận dự án thành công', []);
+    }
+
+
+    /**
+     * Hoàn thành dự án
+     */
+    public function finishProject(Request $request, $project_id) {
+        $project = Project::find($project_id);
+        if (!$project) return $this->error('Dự án không tồn tại');
+
+        $task = Task::where('project_id', $project_id)->get();
+        if ($task) {
+            foreach ($task as $_task) {
+                $department_task = DepartmentTask::where('task_id', $_task->id)->latest('id')->first();
+                if ($department_task) {
+                    $department_task_status = DepartmentTaskStatus::where('department_task_id', $department_task->id)
+                        ->latest('id')->first();
+                    
+                    if ($department_task_status && $department_task_status->status != 3) {
+                        return $this->error('Dự án còn công việc chưa hoàn thành');
+                    }
+                }
+            }
+        }
+
+        ProjectStatus::create([
+            'status' => 9, // Đã hoàn thành
+            'content' => '',
+            'project_id' => $project_id
+        ]);
+
+        return $this->success('Chọn hoàn thành dự án thành công', []);
     }
 }

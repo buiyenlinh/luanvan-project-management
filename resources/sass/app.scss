@@ -759,18 +759,23 @@ $side-bar-width-small: 65px;
 
 /* Project page */
 #project {
+    .list .btn-sm {
+        padding: 2px 5px;
+        font-size: 12px;
+    }
+
     .list ul {
         padding: 0;
         list-style: none;
-        li .info {
-            a {
-                display: block;
-                padding: 10px;
-                color: #333;
-            }
-            border: 1px solid #17a2b8;
-            cursor: pointer;
-        }
+        // li {
+            // a {
+            //     display: block;
+            //     padding: 10px;
+            //     color: #333;
+            // }
+            // border: 1px solid #17a2b8;
+            // cursor: pointer;
+        // }
         .block {
             background-color: #e4e4e4;
             position: relative;
@@ -853,6 +858,10 @@ $side-bar-width-small: 65px;
 
 /* Công việc */
 #task {
+    .list .btn-sm {
+        padding: 2px 5px;
+        font-size: 12px;
+    }
     ul {
         padding: 0px;
         list-style: none;
@@ -883,6 +892,10 @@ $side-bar-width-small: 65px;
 
 /* job */
 #job {
+    .list .btn-sm {
+        padding: 2px 5px;
+        font-size: 12px;
+    }
     ul {
         padding: 0px;
         list-style: none;

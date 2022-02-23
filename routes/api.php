@@ -28,6 +28,12 @@ Route::middleware('is-token')->group(function() {
     Route::post('update', 'ProjectController@updateProject');
     Route::delete('delete/{id}', 'ProjectController@deleteProject');
     Route::delete('delete-file/{id}', 'ProjectController@deleteFile');
+
+    Route::post('take-project/{id}', 'ProjectController@takeProject')
+      ->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
+
+    Route::post('finish-project/{id}', 'ProjectController@finishProject')
+    ->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
   });
 
   Route::prefix('department')->middleware('check-role:1|2')->group(function() {
