@@ -3440,8 +3440,6 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-var _methods;
-
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -3466,9 +3464,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }, _defineProperty(_ref, "search", {
       name: '',
       manager: -1
-    }), _defineProperty(_ref, "file_show", ''), _defineProperty(_ref, "file_updated", ''), _defineProperty(_ref, "loading_delete_file", false), _ref;
+    }), _defineProperty(_ref, "file_show", ''), _defineProperty(_ref, "file_updated", ''), _defineProperty(_ref, "loading_delete_file", false), _defineProperty(_ref, "loading_take_project", false), _defineProperty(_ref, "response_finish", ''), _defineProperty(_ref, "loading_finish_project", false), _ref;
   },
-  methods: (_methods = {
+  methods: {
     onSubmit: function onSubmit() {
       var _this = this;
 
@@ -3491,12 +3489,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (this.project.name && this.project.start_time && this.project.end_time && this.project.manager && this.project.active == 1 | this.project.active == 0) {
         this.loading_add = true;
         var formData = new FormData();
-        formData.append('name', this.project.name);
-        formData.append('start_time', this.project.start_time);
-        formData.append('end_time', this.project.end_time);
         formData.append('active', this.project.active);
-        formData.append('manager', this.project.manager);
         formData.append('file', this.project.file);
+        formData.append('describe', this.project.describe);
 
         if (this.project.id > 0) {
           // Cập nhật
@@ -3520,7 +3515,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           });
         } else {
           // Thêm mới
+          formData.append('name', this.project.name);
+          formData.append('start_time', this.project.start_time);
+          formData.append('end_time', this.project.end_time);
           formData.append('created_by', this.$root.auth.id);
+          formData.append('manager', this.project.manager);
           this.$root.api.post('project/add', formData).then(function (res) {
             _this.loading_add = false;
 
@@ -3540,9 +3539,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           });
         }
       }
-    },
-    handleSearch: function handleSearch() {
-      console.log("handleSearch");
     },
     handleCloseModal: function handleCloseModal() {
       var _this2 = this;
@@ -3612,8 +3608,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     getProjectUpdate: function getProjectUpdate(_project) {
       this.project = _.clone(_project);
-      this.project.manager = _project.manager.id;
-      this.project.created_by = _project.created_by.id;
       this.text_select = _project.manager.fullname || _project.manager.username;
       this.file_updated = _project.file;
     },
@@ -3683,36 +3677,83 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     },
     getUserSearch: function getUserSearch(_manager) {
       this.search.manager = _manager.id;
+    },
+    handleSearch: function handleSearch() {
+      this.last_page = 1;
+      this.changePage(1);
+    },
+    deleteFile: function deleteFile() {
+      var _this5 = this;
+
+      this.loading_delete_file = true;
+      this.$root.api["delete"]("project/delete-file/".concat(this.project.id)).then(function (res) {
+        _this5.loading_delete_file = false;
+
+        if (res.data.status == 'OK') {
+          _this5.$notify(res.data.message, 'success');
+
+          _this5.getList();
+
+          _this5.project.file = '';
+          _this5.file_updated = '';
+        } else {
+          _this5.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this5.loading_delete_file = false;
+
+        _this5.$root.showError(err);
+      });
+    },
+    removeFile: function removeFile() {
+      this.file_show = '';
+      this.project.file = '';
+    },
+    handleTakeProject: function handleTakeProject(_project) {
+      var _this6 = this;
+
+      this.loading_take_project = true;
+      this.$root.api.post("project/take-project/".concat(_project.id)).then(function (res) {
+        _this6.loading_take_project = false;
+
+        if (res.data.status == 'OK') {
+          _this6.$notify(res.data.message, 'success');
+
+          _this6.getList();
+        } else {
+          _this6.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this6.loading_take_project = false;
+
+        _this6.$root.showError(err);
+      });
+    },
+    handleFinishProject: function handleFinishProject() {
+      var _this7 = this;
+
+      this.loading_finish_project = true;
+      this.$root.api.post("project/finish-project/".concat(this.project.id), {
+        'content': this.response_finish
+      }).then(function (res) {
+        _this7.loading_finish_project = false;
+
+        if (res.data.status == 'OK') {
+          $('#project_modal_finish').modal('hide');
+
+          _this7.$notify(res.data.message, 'success');
+
+          _this7.getList();
+        } else {
+          _this7.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this7.loading_finish_project = false;
+
+        _this7.$root.showError(err);
+      });
     }
-  }, _defineProperty(_methods, "handleSearch", function handleSearch() {
-    this.last_page = 1;
-    this.changePage(1);
-  }), _defineProperty(_methods, "deleteFile", function deleteFile() {
-    var _this5 = this;
-
-    this.loading_delete_file = true;
-    this.$root.api["delete"]("project/delete-file/".concat(this.project.id)).then(function (res) {
-      _this5.loading_delete_file = false;
-
-      if (res.data.status == 'OK') {
-        _this5.$notify(res.data.message, 'success');
-
-        _this5.getList();
-
-        _this5.project.file = '';
-        _this5.file_updated = '';
-      } else {
-        _this5.$root.showError(res.data.error);
-      }
-    })["catch"](function (err) {
-      _this5.loading_delete_file = false;
-
-      _this5.$root.showError(err);
-    });
-  }), _defineProperty(_methods, "removeFile", function removeFile() {
-    this.file_show = '';
-    this.project.file = '';
-  }), _methods),
+  },
   created: function created() {
     this.handleCloseModal();
   },
@@ -3747,11 +3788,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   },
   mounted: function mounted() {
-    var _this6 = this;
+    var _this8 = this;
 
     this.current_page = parseInt(this.$route.query.page || 1);
-    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete', function () {
-      _this6.handleCloseModal();
+    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete, #project_modal_finish, #project_modal_details', function () {
+      _this8.handleCloseModal();
     });
     this.getList();
   }
@@ -24529,442 +24570,441 @@ var render = function () {
                     ]
                   ),
                   _vm._v(" "),
-                  _vm.loading_list
-                    ? _c(
+                  _c("div", { staticClass: "list" }, [
+                    _c("div", { staticClass: "card" }, [
+                      _c(
                         "div",
-                        { staticClass: "text-center" },
-                        [_c("m-spinner")],
-                        1
-                      )
-                    : _vm.list && _vm.list.length > 0
-                    ? _c("div", { staticClass: "list" }, [
-                        _vm._m(1),
-                        _vm._v(" "),
+                        { staticClass: "card-header bg-info text-white" },
+                        [_vm._v("Danh sách nhiệm vụ")]
+                      ),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "table-responsive" }, [
                         _c(
-                          "ul",
-                          { staticClass: "row" },
-                          _vm._l(_vm.list, function (item, index) {
-                            return _c(
-                              "li",
-                              {
-                                key: index,
-                                staticClass: "col-md-3 col-sm-4 col-12 mb-3",
-                              },
+                          "table",
+                          {
+                            staticClass:
+                              "table table-bordered table-stripped mb-0",
+                          },
+                          [
+                            _vm._m(1),
+                            _vm._v(" "),
+                            _c(
+                              "tbody",
                               [
-                                _c("div", { staticClass: "bg-fff info" }, [
-                                  _c("p", [
-                                    _c("i", { staticClass: "fas fa-folder" }),
-                                    _vm._v("  "),
-                                    _c("b", [_vm._v(_vm._s(item.name))]),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    {
-                                      staticStyle: {
-                                        "font-size": "12px",
-                                        "margin-bottom": "0px",
-                                      },
-                                    },
-                                    [
-                                      _c("b", [_vm._v("Phân cho: ")]),
-                                      _vm._v(
-                                        _vm._s(
-                                          item.user.fullname ||
-                                            item.user.username
-                                        ) + " "
+                                _vm.loading_list
+                                  ? _c("tr", [
+                                      _c(
+                                        "td",
+                                        {
+                                          attrs: {
+                                            colspan: "1000",
+                                            align: "center",
+                                          },
+                                        },
+                                        [_c("m-spinner")],
+                                        1
                                       ),
-                                      _c("br"),
-                                      _vm._v(" "),
-                                      _c("b", [_vm._v("Tạo lúc: ")]),
-                                      _vm._v(_vm._s(item.created_at) + " "),
-                                      _c("br"),
-                                      _vm._v(" "),
-                                      item.status != null
-                                        ? _c("b", [_vm._v("Trạng thái: ")])
-                                        : _vm._e(),
-                                      _vm._v(" "),
-                                      item.status.status == 4 ||
-                                      item.status.status == 5 ||
-                                      item.status.status == 6
-                                        ? _c(
-                                            "span",
-                                            {
-                                              staticClass: "badge badge-danger",
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                    " +
-                                                  _vm._s(
-                                                    _vm.$root.getStatusTaskName(
-                                                      item.status.status
-                                                    )
-                                                  ) +
-                                                  "\n                  "
-                                              ),
-                                            ]
-                                          )
-                                        : item.status.status == 2
-                                        ? _c(
-                                            "span",
-                                            { staticClass: "badge badge-info" },
-                                            [
-                                              _vm._v(
-                                                "\n                    " +
-                                                  _vm._s(
-                                                    _vm.$root.getStatusTaskName(
-                                                      item.status.status
-                                                    )
-                                                  ) +
-                                                  "\n                  "
-                                              ),
-                                            ]
-                                          )
-                                        : _c(
-                                            "span",
-                                            {
-                                              staticClass:
-                                                "badge badge-success",
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                    " +
-                                                  _vm._s(
-                                                    _vm.$root.getStatusTaskName(
-                                                      item.status.status
-                                                    )
-                                                  ) +
-                                                  "\n                  "
-                                              ),
-                                            ]
+                                    ])
+                                  : _vm.list && _vm.list.length > 0
+                                  ? _vm._l(_vm.list, function (item, index) {
+                                      return _c("tr", { key: index }, [
+                                        _c("td", [_vm._v(_vm._s(index + 1))]),
+                                        _vm._v(" "),
+                                        _c("td", [_vm._v(_vm._s(item.name))]),
+                                        _vm._v(" "),
+                                        _c("td", [
+                                          _vm._v(
+                                            _vm._s(
+                                              item.user.fullname ||
+                                                item.user.username
+                                            )
                                           ),
-                                      _vm._v(" "),
-                                      item.status.status == 3
-                                        ? _c("div", [
-                                            item.delay_time == 0
-                                              ? _c(
-                                                  "b",
-                                                  {
-                                                    staticClass:
-                                                      "badge badge-success",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      "Hoàn thành đúng hạn"
-                                                    ),
-                                                  ]
-                                                )
-                                              : _c(
-                                                  "b",
-                                                  {
-                                                    staticClass:
-                                                      "badge badge-danger",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      "Hoàn thành trễ " +
-                                                        _vm._s(
-                                                          item.delay_time
-                                                        ) +
-                                                        " ngày"
-                                                    ),
-                                                  ]
-                                                ),
-                                          ])
-                                        : _c("div", [
-                                            _vm.$root.checkDeadline(item) ==
-                                            "Chưa tới hạn"
-                                              ? _c(
-                                                  "b",
-                                                  {
-                                                    staticClass:
-                                                      "badge badge-info",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.$root.checkDeadline(
-                                                          item
-                                                        )
-                                                      )
-                                                    ),
-                                                  ]
-                                                )
-                                              : _c(
-                                                  "b",
-                                                  {
-                                                    staticClass:
-                                                      "badge badge-danger",
-                                                  },
-                                                  [
-                                                    _vm._v(
-                                                      _vm._s(
-                                                        _vm.$root.checkDeadline(
-                                                          item
-                                                        )
-                                                      )
-                                                    ),
-                                                  ]
-                                                ),
-                                          ]),
-                                    ]
-                                  ),
-                                  _vm._v(" "),
-                                  _c("div", { staticClass: "text-right" }, [
-                                    _c(
-                                      "span",
-                                      {
-                                        staticStyle: { cursor: "pointer" },
-                                        attrs: {
-                                          "data-toggle": "modal",
-                                          "data-target": "#job_modal_details",
-                                        },
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.getJobUpdate(item)
-                                          },
-                                        },
-                                      },
-                                      [_c("b", [_vm._v("Xem")])]
-                                    ),
-                                    _vm._v(" "),
-                                    item.status.status != 3 &&
-                                    (_vm.$root.isManager() ||
-                                      (_vm.info &&
-                                        _vm.$root.auth.id ==
-                                          _vm.info.task.department.leader.id))
-                                      ? _c(
-                                          "div",
-                                          {
-                                            staticStyle: {
-                                              display: "inline-block",
-                                            },
-                                          },
-                                          [
-                                            _c(
-                                              "span",
-                                              {
-                                                staticClass: "text-info",
-                                                staticStyle: {
-                                                  cursor: "pointer",
-                                                },
-                                                attrs: {
-                                                  "data-toggle": "modal",
-                                                  "data-target":
-                                                    "#job_modal_add_update",
-                                                },
-                                                on: {
-                                                  click: function ($event) {
-                                                    return _vm.getJobUpdate(
-                                                      item
-                                                    )
-                                                  },
-                                                },
-                                              },
-                                              [_c("b", [_vm._v("Sửa")])]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "span",
-                                              {
-                                                staticClass: "text-danger",
-                                                staticStyle: {
-                                                  cursor: "pointer",
-                                                },
-                                                attrs: {
-                                                  "data-toggle": "modal",
-                                                  "data-target":
-                                                    "#job_modal_delete",
-                                                },
-                                                on: {
-                                                  click: function ($event) {
-                                                    return _vm.getJobUpdate(
-                                                      item
-                                                    )
-                                                  },
-                                                },
-                                              },
-                                              [_c("b", [_vm._v("Xóa")])]
-                                            ),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.$root.auth.id ==
-                                      _vm.info.task.department.leader.id &&
-                                    item.status.status == 2
-                                      ? _c(
-                                          "div",
-                                          {
-                                            staticStyle: {
-                                              display: "inline-block",
-                                              "padding-left": "7px",
-                                            },
-                                          },
-                                          [
-                                            _c(
-                                              "span",
-                                              {
-                                                staticClass: "text-info",
-                                                staticStyle: {
-                                                  cursor: "pointer",
-                                                },
-                                                on: {
-                                                  click: function ($event) {
-                                                    return _vm.handleApprovalJob(
-                                                      item
-                                                    )
-                                                  },
-                                                },
-                                              },
-                                              [_c("b", [_vm._v("Duyệt")])]
-                                            ),
-                                            _vm._v(" "),
-                                            _c(
-                                              "span",
-                                              {
-                                                staticClass: "text-danger",
-                                                staticStyle: {
-                                                  cursor: "pointer",
-                                                },
-                                                attrs: {
-                                                  "data-toggle": "modal",
-                                                  "data-target":
-                                                    "#job_not_approval_modal",
-                                                },
-                                                on: {
-                                                  click: function ($event) {
-                                                    return _vm.getJobUpdate(
-                                                      item
-                                                    )
-                                                  },
-                                                },
-                                              },
-                                              [_c("b", [_vm._v("Không duyệt")])]
-                                            ),
-                                          ]
-                                        )
-                                      : _vm._e(),
-                                    _vm._v(" "),
-                                    _vm.$root.auth.id ==
-                                      _vm.info.task.department.leader.id &&
-                                    item.status.status == 5
-                                      ? _c("div", [
-                                          _c(
-                                            "span",
-                                            {
-                                              staticClass: "text-danger",
-                                              staticStyle: {
-                                                cursor: "pointer",
-                                              },
-                                              attrs: {
-                                                "data-toggle": "modal",
-                                                "data-target":
-                                                  "#job_not_approval_refuse_modal",
-                                              },
-                                              on: {
-                                                click: function ($event) {
-                                                  return _vm.getJobUpdate(item)
-                                                },
-                                              },
-                                            },
-                                            [
-                                              _c("b", [
-                                                _vm._v("Không duyệt từ chối"),
-                                              ]),
-                                            ]
-                                          ),
-                                        ])
-                                      : _vm._e(),
-                                  ]),
-                                  _vm._v(" "),
-                                  item && item.user.id == _vm.$root.auth.id
-                                    ? _c("div", { staticClass: "text-right" }, [
-                                        item.status.status == 0
-                                          ? _c("div", [
-                                              _c(
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("td", [_vm._v("SLHT / SLTH")]),
+                                        _vm._v(" "),
+                                        _c("td", [
+                                          item.status.status == 2 ||
+                                          item.status.status == 4 ||
+                                          item.status.status == 5 ||
+                                          item.status.status == 6
+                                            ? _c(
                                                 "span",
                                                 {
-                                                  staticClass: "text-info",
-                                                  staticStyle: {
-                                                    cursor: "pointer",
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.handleTakeJob(
-                                                        item
-                                                      )
-                                                    },
-                                                  },
-                                                },
-                                                [_c("b", [_vm._v("Tiếp nhận")])]
-                                              ),
-                                              _vm._v(" "),
-                                              _c(
-                                                "span",
-                                                {
-                                                  staticClass: "text-danger",
-                                                  staticStyle: {
-                                                    cursor: "pointer",
-                                                  },
-                                                  attrs: {
-                                                    "data-toggle": "modal",
-                                                    "data-target":
-                                                      "#job_refuse_modal",
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.getJobUpdate(
-                                                        item
-                                                      )
-                                                    },
-                                                  },
-                                                },
-                                                [_c("b", [_vm._v("Từ chối")])]
-                                              ),
-                                            ])
-                                          : item.status.status == 1 ||
-                                            item.status.status == 4 ||
-                                            item.status.status == 6
-                                          ? _c("div", [
-                                              _c(
-                                                "span",
-                                                {
-                                                  staticClass: "text-success",
-                                                  staticStyle: {
-                                                    cursor: "pointer",
-                                                  },
-                                                  attrs: {
-                                                    "data-toggle": "modal",
-                                                    "data-target":
-                                                      "#job_finish_modal",
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.getJobUpdate(
-                                                        item
-                                                      )
-                                                    },
-                                                  },
+                                                  staticClass:
+                                                    "badge badge-danger",
                                                 },
                                                 [
-                                                  _c("b", [
-                                                    _vm._v("Hoàn thành"),
-                                                  ]),
+                                                  _vm._v(
+                                                    "\n                          " +
+                                                      _vm._s(
+                                                        _vm.$root.getStatusTaskName(
+                                                          item.status.status
+                                                        )
+                                                      ) +
+                                                      "\n                        "
+                                                  ),
+                                                ]
+                                              )
+                                            : item.status.status == 3
+                                            ? _c("span", [
+                                                item.delay_time == 0
+                                                  ? _c(
+                                                      "b",
+                                                      {
+                                                        staticClass:
+                                                          "badge badge-success",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "Hoàn thành đúng hạn"
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _c(
+                                                      "b",
+                                                      {
+                                                        staticClass:
+                                                          "badge badge-danger",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "Hoàn thành trễ " +
+                                                            _vm._s(
+                                                              item.delay_time
+                                                            ) +
+                                                            " ngày"
+                                                        ),
+                                                      ]
+                                                    ),
+                                              ])
+                                            : _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-info",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    "\n                          " +
+                                                      _vm._s(
+                                                        _vm.$root.getStatusTaskName(
+                                                          item.status.status
+                                                        )
+                                                      ) +
+                                                      "\n                        "
+                                                  ),
                                                 ]
                                               ),
-                                            ])
-                                          : _vm._e(),
+                                          _vm._v(" "),
+                                          item.status.status != 3
+                                            ? _c("span", [
+                                                _vm.$root.checkDeadline(item) ==
+                                                "Chưa tới hạn"
+                                                  ? _c(
+                                                      "b",
+                                                      {
+                                                        staticClass:
+                                                          "badge badge-success",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.$root.checkDeadline(
+                                                              item
+                                                            )
+                                                          )
+                                                        ),
+                                                      ]
+                                                    )
+                                                  : _c(
+                                                      "b",
+                                                      {
+                                                        staticClass:
+                                                          "badge badge-danger",
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          _vm._s(
+                                                            _vm.$root.checkDeadline(
+                                                              item
+                                                            )
+                                                          )
+                                                        ),
+                                                      ]
+                                                    ),
+                                              ])
+                                            : _vm._e(),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("td", [
+                                          _vm._v(_vm._s(item.created_at)),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c(
+                                          "td",
+                                          [
+                                            _c(
+                                              "button",
+                                              {
+                                                staticClass:
+                                                  "btn btn-secondary btn-sm",
+                                                attrs: {
+                                                  "data-toggle": "modal",
+                                                  "data-target":
+                                                    "#job_modal_details",
+                                                },
+                                                on: {
+                                                  click: function ($event) {
+                                                    return _vm.getJobUpdate(
+                                                      item
+                                                    )
+                                                  },
+                                                },
+                                              },
+                                              [_vm._v("Xem")]
+                                            ),
+                                            _vm._v(" "),
+                                            _vm.info &&
+                                            _vm.$root.auth.id ==
+                                              _vm.info.task.department.leader.id
+                                              ? [
+                                                  item.status.status != 3
+                                                    ? [
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-info btn-sm",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#job_modal_add_update",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getJobUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Sửa")]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-danger btn-sm",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#job_modal_delete",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getJobUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Xóa")]
+                                                        ),
+                                                      ]
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  item.status.status == 2
+                                                    ? [
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-info btn-sm",
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.handleApprovalJob(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Duyệt ")]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-danger btn-sm",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#job_not_approval_modal",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getJobUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                              Không duyệt\n                            "
+                                                            ),
+                                                          ]
+                                                        ),
+                                                      ]
+                                                    : _vm._e(),
+                                                  _vm._v(" "),
+                                                  item.status.status == 5
+                                                    ? _c(
+                                                        "button",
+                                                        {
+                                                          staticClass:
+                                                            "btn btn-danger btn-sm",
+                                                          attrs: {
+                                                            "data-toggle":
+                                                              "modal",
+                                                            "data-target":
+                                                              "#job_not_approval_refuse_modal",
+                                                          },
+                                                          on: {
+                                                            click: function (
+                                                              $event
+                                                            ) {
+                                                              return _vm.getJobUpdate(
+                                                                item
+                                                              )
+                                                            },
+                                                          },
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            "Không duyệt từ chối"
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
+                                              : item &&
+                                                item.user.id ==
+                                                  _vm.$root.auth.id
+                                              ? [
+                                                  item.status.status == 0
+                                                    ? _c("span", [
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-info btn-sm",
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.handleTakeJob(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Tiếp nhận")]
+                                                        ),
+                                                        _vm._v(" "),
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-sm btn-dark",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#job_refuse_modal",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getJobUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Từ chối")]
+                                                        ),
+                                                      ])
+                                                    : item.status.status == 1 ||
+                                                      item.status.status == 4 ||
+                                                      item.status.status == 6
+                                                    ? _c("span", [
+                                                        _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "btn btn-sm btn-success",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#job_finish_modal",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getJobUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [_vm._v("Hoàn thành")]
+                                                        ),
+                                                      ])
+                                                    : _vm._e(),
+                                                ]
+                                              : _vm._e(),
+                                          ],
+                                          2
+                                        ),
                                       ])
-                                    : _vm._e(),
-                                ]),
-                              ]
-                            )
-                          }),
-                          0
+                                    })
+                                  : _c("tr", [
+                                      _c(
+                                        "td",
+                                        {
+                                          attrs: {
+                                            colspan: "1000",
+                                            align: "center",
+                                          },
+                                        },
+                                        [_vm._v("Không có nhiệm vụ")]
+                                      ),
+                                    ]),
+                              ],
+                              2
+                            ),
+                          ]
                         ),
-                      ])
-                    : _c("div", [_c("b", [_vm._v("Không có nhiệm vụ")])]),
+                      ]),
+                    ]),
+                  ]),
                 ]),
           ])
         : _c("m-spinner", { staticClass: "mb-2" }),
@@ -26093,8 +26133,22 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "mb-1" }, [
-      _c("b", [_vm._v("Danh sách nhiệm vụ")]),
+    return _c("thead", [
+      _c("tr", [
+        _c("td", [_c("b", [_vm._v("STT")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Tên")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Phân cho")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Thống kê")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
+        _vm._v(" "),
+        _c("td"),
+      ]),
     ])
   },
   function () {
@@ -27085,8 +27139,6 @@ var render = function () {
     "div",
     { attrs: { id: "project" } },
     [
-      _c("h3", [_vm._v("Danh sách dự án")]),
-      _vm._v(" "),
       _c(
         "form",
         {
@@ -27174,131 +27226,158 @@ var render = function () {
       ),
       _vm._v(" "),
       _c("div", { staticClass: "list" }, [
-        _vm.loading_list
-          ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
-          : _c(
-              "ul",
-              { staticClass: "row" },
+        _c("div", { staticClass: "card" }, [
+          _c("div", { staticClass: "card-header bg-info text-white" }, [
+            _vm._v("Danh sách dự án"),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "table-responsive" }, [
+            _c(
+              "table",
+              { staticClass: "table table-bordered table-stripped mb-0" },
               [
-                _vm.list && _vm.list.data.length > 0
-                  ? _vm._l(_vm.list.data, function (item, index) {
-                      return _c(
-                        "li",
-                        {
-                          key: index,
-                          staticClass: "col-md-3 col-sm-4 col-12 mb-2",
-                        },
-                        [
+                _vm._m(1),
+                _vm._v(" "),
+                _c(
+                  "tbody",
+                  [
+                    _vm.loading_list
+                      ? _c("tr", [
                           _c(
-                            "div",
-                            {
-                              class: [
-                                "info",
-                                !item.active ? "block" : "bg-fff",
-                              ],
-                            },
-                            [
+                            "td",
+                            { attrs: { colspan: "1000", align: "center" } },
+                            [_c("m-spinner")],
+                            1
+                          ),
+                        ])
+                      : _vm.list && _vm.list.data.length > 0
+                      ? _vm._l(_vm.list.data, function (item, index) {
+                          return _c("tr", { key: index }, [
+                            _c("td", [_vm._v(_vm._s(index + 1))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.name))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm._v(
+                                _vm._s(
+                                  item.manager.fullname || item.manager.username
+                                )
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v("SLHT / SLTH")]),
+                            _vm._v(" "),
+                            _c("td", [
+                              item.active == 0
+                                ? _c(
+                                    "span",
+                                    { staticClass: "badge badge-danger" },
+                                    [_vm._v("Khóa")]
+                                  )
+                                : _c(
+                                    "span",
+                                    { staticClass: "badge badge-success" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(
+                                          _vm.$root.getStatusTaskName(
+                                            item.status.status
+                                          )
+                                        )
+                                      ),
+                                    ]
+                                  ),
+                              _vm._v(" "),
                               _c(
-                                "router-link",
+                                "span",
                                 {
-                                  attrs: {
-                                    to: {
-                                      name: "task",
-                                      params: { id: item.id },
-                                    },
-                                  },
+                                  class: [
+                                    "badge",
+                                    _vm.$root.checkDeadline(item) ==
+                                    "Chưa tới hạn"
+                                      ? "badge-info"
+                                      : "badge-danger",
+                                  ],
                                 },
                                 [
-                                  !item.active
-                                    ? _c(
-                                        "span",
-                                        {
-                                          staticClass: "text-danger block-text",
-                                        },
-                                        [_vm._v("Khóa")]
-                                      )
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  _c("p", [
-                                    _c("i", { staticClass: "fas fa-folder" }),
-                                    _vm._v("  "),
-                                    _c("b", [_vm._v(_vm._s(item.name))]),
-                                  ]),
-                                  _vm._v(" "),
-                                  _c(
-                                    "p",
-                                    {
-                                      staticStyle: {
-                                        "font-size": "12px",
-                                        "margin-bottom": "0px",
-                                      },
-                                    },
-                                    [
-                                      _c("b", [_vm._v("Người tạo: ")]),
-                                      _vm._v(
-                                        _vm._s(
-                                          item.created_by.fullname ||
-                                            item.created_by.username
-                                        ) + " "
-                                      ),
-                                      _c("br"),
-                                      _vm._v(" "),
-                                      _c("b", [_vm._v("Quản lý: ")]),
-                                      _vm._v(
-                                        _vm._s(
-                                          item.manager.fullname ||
-                                            item.manager.username
-                                        ) + " "
-                                      ),
-                                      _c("br"),
-                                      _vm._v(" "),
-                                      _c("b", [_vm._v("Tạo lúc: ")]),
-                                      _vm._v(_vm._s(item.created_at) + " "),
-                                      _c("br"),
-                                      _vm._v(" "),
-                                      _vm.$root.checkDeadline(item) ==
-                                      "Chưa tới hạn"
-                                        ? _c(
-                                            "b",
-                                            { staticClass: "badge badge-info" },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.$root.checkDeadline(item)
-                                                )
-                                              ),
-                                            ]
-                                          )
-                                        : _c(
-                                            "b",
-                                            {
-                                              staticClass: "badge badge-danger",
-                                            },
-                                            [
-                                              _vm._v(
-                                                _vm._s(
-                                                  _vm.$root.checkDeadline(item)
-                                                )
-                                              ),
-                                            ]
-                                          ),
-                                    ]
+                                  _vm._v(
+                                    "\n                    " +
+                                      _vm._s(_vm.$root.checkDeadline(item)) +
+                                      "\n                  "
                                   ),
                                 ]
                               ),
-                              _vm._v(" "),
-                              _vm.$root.isManager()
-                                ? _c(
-                                    "div",
-                                    {
-                                      staticClass: "text-right",
-                                      staticStyle: { padding: "10px" },
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.created_at))]),
+                            _vm._v(" "),
+                            _c(
+                              "td",
+                              [
+                                _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-secondary btn-sm",
+                                    attrs: {
+                                      "data-toggle": "modal",
+                                      "data-target": "#project_modal_details",
                                     },
-                                    [
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.getProjectUpdate(item)
+                                      },
+                                    },
+                                  },
+                                  [_vm._v("Xem")]
+                                ),
+                                _vm._v(" "),
+                                item.status.status != 0
+                                  ? _c(
+                                      "router-link",
+                                      {
+                                        attrs: {
+                                          to: {
+                                            name: "task",
+                                            params: { id: item.id },
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass: "btn btn-sm btn-dark",
+                                          },
+                                          [_vm._v("Công việc")]
+                                        ),
+                                      ]
+                                    )
+                                  : _vm._e(),
+                                _vm._v(" "),
+                                _vm.$root.auth.id == item.manager.id ||
+                                _vm.$root.auth.id == item.created_by.id
+                                  ? [
                                       _c(
-                                        "span",
+                                        "button",
                                         {
-                                          staticClass: "text-danger",
+                                          staticClass: "btn btn-info btn-sm",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target": "#project_modal_add",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getProjectUpdate(item)
+                                            },
+                                          },
+                                        },
+                                        [_vm._v("Sửa")]
+                                      ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "button",
+                                        {
+                                          staticClass: "btn btn-danger btn-sm",
                                           attrs: {
                                             "data-toggle": "modal",
                                             "data-target":
@@ -27310,40 +27389,78 @@ var render = function () {
                                             },
                                           },
                                         },
-                                        [_c("b", [_vm._v("Xóa")])]
+                                        [_vm._v("Xóa")]
                                       ),
                                       _vm._v(" "),
-                                      _c(
-                                        "span",
-                                        {
-                                          staticClass: "text-info",
-                                          attrs: {
-                                            "data-toggle": "modal",
-                                            "data-target": "#project_modal_add",
-                                          },
-                                          on: {
-                                            click: function ($event) {
-                                              return _vm.getProjectUpdate(item)
-                                            },
-                                          },
-                                        },
-                                        [_c("b", [_vm._v("Sửa")])]
-                                      ),
+                                      item.active == 1 &&
+                                      _vm.$root.auth.id == item.manager.id
+                                        ? [
+                                            item.status &&
+                                            item.status.status == 0 &&
+                                            _vm.$root.auth.id == item.manager.id
+                                              ? _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "btn btn-outline-info btn-sm",
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.handleTakeProject(
+                                                          item
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [_vm._v("Tiếp nhận")]
+                                                )
+                                              : _vm._e(),
+                                            _vm._v(" "),
+                                            item.status &&
+                                            item.status.status == 1
+                                              ? _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "btn btn-success btn-sm",
+                                                    attrs: {
+                                                      "data-toggle": "modal",
+                                                      "data-target":
+                                                        "#project_modal_finish",
+                                                    },
+                                                    on: {
+                                                      click: function ($event) {
+                                                        return _vm.getProjectUpdate(
+                                                          item
+                                                        )
+                                                      },
+                                                    },
+                                                  },
+                                                  [_vm._v("Hoàn thành")]
+                                                )
+                                              : _vm._e(),
+                                          ]
+                                        : _vm._e(),
                                     ]
-                                  )
-                                : _vm._e(),
-                            ],
-                            1
+                                  : _vm._e(),
+                              ],
+                              2
+                            ),
+                          ])
+                        })
+                      : _c("tr", [
+                          _c(
+                            "td",
+                            { attrs: { colspan: "1000", align: "center" } },
+                            [_vm._v("Không có dự án")]
                           ),
-                        ]
-                      )
-                    })
-                  : _c("li", { staticClass: "col-md-12" }, [
-                      _vm._v("Bạn chưa có dự án"),
-                    ]),
-              ],
-              2
+                        ]),
+                  ],
+                  2
+                ),
+              ]
             ),
+          ]),
+        ]),
       ]),
       _vm._v(" "),
       _vm.last_page > 1
@@ -27364,34 +27481,54 @@ var render = function () {
         "div",
         { staticClass: "modal fade", attrs: { id: "project_modal_add" } },
         [
-          _c(
-            "div",
-            { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
-            [
-              _c("div", { staticClass: "modal-content" }, [
-                _vm._m(1),
-                _vm._v(" "),
-                _c("div", { staticClass: "modal-body" }, [
-                  _c(
-                    "form",
-                    {
-                      on: {
-                        submit: function ($event) {
-                          $event.preventDefault()
-                          return _vm.onSubmit.apply(null, arguments)
-                        },
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(2),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _c(
+                  "form",
+                  {
+                    on: {
+                      submit: function ($event) {
+                        $event.preventDefault()
+                        return _vm.onSubmit.apply(null, arguments)
                       },
                     },
-                    [
-                      _c("div", { staticClass: "row" }, [
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(2),
-                              _vm._v(" "),
-                              _c("input", {
+                  },
+                  [
+                    _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(3),
+                          _vm._v(" "),
+                          _vm.project.id
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.project.name,
+                                    expression: "project.name",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text", disabled: "" },
+                                domProps: { value: _vm.project.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.project,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              })
+                            : _c("input", {
                                 directives: [
                                   {
                                     name: "model",
@@ -27416,382 +27553,437 @@ var render = function () {
                                   },
                                 },
                               }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "text-danger font-italic error",
-                                },
-                                [_vm._v(_vm._s(_vm.error.name))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(3),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.project.start_time,
-                                    expression: "project.start_time",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                attrs: { type: "date" },
-                                domProps: { value: _vm.project.start_time },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.project,
-                                      "start_time",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "text-danger font-italic error",
-                                },
-                                [_vm._v(_vm._s(_vm.error.start_time))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(4),
-                              _vm._v(" "),
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.project.end_time,
-                                    expression: "project.end_time",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                attrs: { type: "date" },
-                                domProps: { value: _vm.project.end_time },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.project,
-                                      "end_time",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "text-danger font-italic error",
-                                },
-                                [_vm._v(_vm._s(_vm.error.end_time))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _vm.$root.isAdmin()
-                          ? _c(
-                              "div",
-                              { staticClass: "col-md-6 col-sm-12 col-12" },
-                              [
-                                _c(
-                                  "div",
-                                  { staticClass: "form-group" },
-                                  [
-                                    _vm._m(5),
-                                    _vm._v(" "),
-                                    _c("m-select", {
-                                      attrs: {
-                                        size: "sm",
-                                        text: _vm.text_select,
-                                        url: "user/search-manager",
-                                        statusReset: _vm.reset_select_comp,
-                                        variable: {
-                                          first: "fullname",
-                                          second: "username",
-                                        },
-                                      },
-                                      on: {
-                                        changeValue: _vm.getManager,
-                                        remove: _vm.removeManager,
-                                      },
-                                    }),
-                                    _vm._v(" "),
-                                    _c(
-                                      "div",
-                                      {
-                                        staticClass:
-                                          "text-danger font-italic error",
-                                      },
-                                      [_vm._v(_vm._s(_vm.error.manager))]
-                                    ),
-                                  ],
-                                  1
-                                ),
-                              ]
-                            )
-                          : _vm._e(),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(6),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model.number",
-                                          value: _vm.project.active,
-                                          expression: "project.active",
-                                          modifiers: { number: true },
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "1" },
-                                      domProps: {
-                                        checked: _vm._q(
-                                          _vm.project.active,
-                                          _vm._n("1")
-                                        ),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          _vm.$set(
-                                            _vm.project,
-                                            "active",
-                                            _vm._n("1")
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Kích hoạt\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c("div", { staticClass: "form-check-inline" }, [
-                                _c(
-                                  "label",
-                                  { staticClass: "form-check-label" },
-                                  [
-                                    _c("input", {
-                                      directives: [
-                                        {
-                                          name: "model",
-                                          rawName: "v-model.number",
-                                          value: _vm.project.active,
-                                          expression: "project.active",
-                                          modifiers: { number: true },
-                                        },
-                                      ],
-                                      staticClass: "form-check-input",
-                                      attrs: { type: "radio", value: "0" },
-                                      domProps: {
-                                        checked: _vm._q(
-                                          _vm.project.active,
-                                          _vm._n("0")
-                                        ),
-                                      },
-                                      on: {
-                                        change: function ($event) {
-                                          _vm.$set(
-                                            _vm.project,
-                                            "active",
-                                            _vm._n("0")
-                                          )
-                                        },
-                                      },
-                                    }),
-                                    _vm._v("Khóa\n                    "),
-                                  ]
-                                ),
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "error text-danger font-italic",
-                                },
-                                [_vm._v(_vm._s(_vm.error.active))]
-                              ),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-12 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(7),
-                              _c("br"),
-                              _vm._v(" "),
-                              _c("textarea", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.project.describe,
-                                    expression: "project.describe",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                attrs: { type: "text", rows: "5" },
-                                domProps: { value: _vm.project.describe },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.project,
-                                      "describe",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                            ]),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "div",
-                          { staticClass: "col-md-6 col-sm-12 col-12" },
-                          [
-                            _c("div", { staticClass: "form-group" }, [
-                              _vm._m(8),
-                              _vm._v(" "),
-                              _c(
-                                "button",
-                                {
-                                  staticClass: "btn btn-info btn-sm",
-                                  attrs: { type: "button" },
-                                  on: {
-                                    click: function ($event) {
-                                      return _vm.$refs.ref_file.click()
-                                    },
-                                  },
-                                },
-                                [_vm._v("Chọn tập tin")]
-                              ),
-                              _vm._v(" "),
-                              _c("input", {
-                                ref: "ref_file",
-                                staticStyle: { display: "none" },
-                                attrs: { type: "file" },
-                                on: { change: _vm.handleGetFile },
-                              }),
-                              _vm._v(" "),
-                              _vm.file_show
-                                ? _c("div", [
-                                    _c("span", [
-                                      _vm._v(
-                                        "File được chọn: " +
-                                          _vm._s(_vm.file_show)
-                                      ),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("i", {
-                                      staticClass: "fas fa-times text-danger",
-                                      staticStyle: { cursor: "pointer" },
-                                      on: { click: _vm.removeFile },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                              _vm._v(" "),
-                              _vm.file_updated
-                                ? _c("div", [
-                                    _c(
-                                      "a",
-                                      {
-                                        attrs: {
-                                          target: "_blank",
-                                          href: _vm.file_updated,
-                                        },
-                                      },
-                                      [_vm._v("Xem tệp đã chọn")]
-                                    ),
-                                    _vm._v("  \n                    "),
-                                    _c("i", {
-                                      staticClass: "fas fa-times text-danger",
-                                      staticStyle: { cursor: "pointer" },
-                                      on: { click: _vm.deleteFile },
-                                    }),
-                                  ])
-                                : _vm._e(),
-                            ]),
-                          ]
-                        ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [_vm._v(_vm._s(_vm.error.name))]
+                          ),
+                        ]),
                       ]),
                       _vm._v(" "),
-                      _c("div", { staticClass: "modal-footer" }, [
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-info btn-sm",
-                            attrs: { type: "submit" },
-                          },
-                          [
-                            _vm._v(
-                              "\n                " +
-                                _vm._s(_vm.project.id ? "Cập nhật" : "Thêm") +
-                                "\n              "
-                            ),
-                          ]
-                        ),
-                        _vm._v(" "),
-                        _c(
-                          "button",
-                          {
-                            staticClass: "btn btn-secondary btn-sm",
-                            attrs: { type: "button", "data-dismiss": "modal" },
-                          },
-                          [_vm._v("Đóng")]
+                      !_vm.project.id
+                        ? _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(4),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.project.start_time,
+                                      expression: "project.start_time",
+                                    },
+                                  ],
+                                  staticClass: "form-control form-control-sm",
+                                  attrs: { type: "date" },
+                                  domProps: { value: _vm.project.start_time },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.project,
+                                        "start_time",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "text-danger font-italic error",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.start_time))]
+                                ),
+                              ]),
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      !_vm.project.id
+                        ? _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c("div", { staticClass: "form-group" }, [
+                                _vm._m(5),
+                                _vm._v(" "),
+                                _c("input", {
+                                  directives: [
+                                    {
+                                      name: "model",
+                                      rawName: "v-model",
+                                      value: _vm.project.end_time,
+                                      expression: "project.end_time",
+                                    },
+                                  ],
+                                  staticClass: "form-control form-control-sm",
+                                  attrs: { type: "date" },
+                                  domProps: { value: _vm.project.end_time },
+                                  on: {
+                                    input: function ($event) {
+                                      if ($event.target.composing) {
+                                        return
+                                      }
+                                      _vm.$set(
+                                        _vm.project,
+                                        "end_time",
+                                        $event.target.value
+                                      )
+                                    },
+                                  },
+                                }),
+                                _vm._v(" "),
+                                _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "text-danger font-italic error",
+                                  },
+                                  [_vm._v(_vm._s(_vm.error.end_time))]
+                                ),
+                              ]),
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.$root.isAdmin() && !_vm.project.id
+                        ? _c(
+                            "div",
+                            { staticClass: "col-md-6 col-sm-12 col-12" },
+                            [
+                              _c(
+                                "div",
+                                { staticClass: "form-group" },
+                                [
+                                  _vm._m(6),
+                                  _vm._v(" "),
+                                  _c("m-select", {
+                                    attrs: {
+                                      size: "sm",
+                                      text: _vm.text_select,
+                                      url: "user/search-manager",
+                                      statusReset: _vm.reset_select_comp,
+                                      variable: {
+                                        first: "fullname",
+                                        second: "username",
+                                      },
+                                    },
+                                    on: {
+                                      changeValue: _vm.getManager,
+                                      remove: _vm.removeManager,
+                                    },
+                                  }),
+                                  _vm._v(" "),
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass:
+                                        "text-danger font-italic error",
+                                    },
+                                    [_vm._v(_vm._s(_vm.error.manager))]
+                                  ),
+                                ],
+                                1
+                              ),
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(7),
+                          _c("br"),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "form-check-inline" }, [
+                            _c("label", { staticClass: "form-check-label" }, [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model.number",
+                                    value: _vm.project.active,
+                                    expression: "project.active",
+                                    modifiers: { number: true },
+                                  },
+                                ],
+                                staticClass: "form-check-input",
+                                attrs: { type: "radio", value: "1" },
+                                domProps: {
+                                  checked: _vm._q(
+                                    _vm.project.active,
+                                    _vm._n("1")
+                                  ),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    _vm.$set(_vm.project, "active", _vm._n("1"))
+                                  },
+                                },
+                              }),
+                              _vm._v("Kích hoạt\n                    "),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "form-check-inline" }, [
+                            _c("label", { staticClass: "form-check-label" }, [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model.number",
+                                    value: _vm.project.active,
+                                    expression: "project.active",
+                                    modifiers: { number: true },
+                                  },
+                                ],
+                                staticClass: "form-check-input",
+                                attrs: { type: "radio", value: "0" },
+                                domProps: {
+                                  checked: _vm._q(
+                                    _vm.project.active,
+                                    _vm._n("0")
+                                  ),
+                                },
+                                on: {
+                                  change: function ($event) {
+                                    _vm.$set(_vm.project, "active", _vm._n("0"))
+                                  },
+                                },
+                              }),
+                              _vm._v("Khóa\n                    "),
+                            ]),
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "error text-danger font-italic" },
+                            [_vm._v(_vm._s(_vm.error.active))]
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(8),
+                          _c("br"),
+                          _vm._v(" "),
+                          _c("textarea", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.project.describe,
+                                expression: "project.describe",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text", rows: "5" },
+                            domProps: { value: _vm.project.describe },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  _vm.project,
+                                  "describe",
+                                  $event.target.value
+                                )
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(9),
+                          _vm._v(" "),
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-info btn-sm",
+                              attrs: { type: "button" },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.$refs.ref_file.click()
+                                },
+                              },
+                            },
+                            [_vm._v("Chọn tập tin")]
+                          ),
+                          _vm._v(" "),
+                          _c("input", {
+                            ref: "ref_file",
+                            staticStyle: { display: "none" },
+                            attrs: { type: "file" },
+                            on: { change: _vm.handleGetFile },
+                          }),
+                          _vm._v(" "),
+                          _vm.file_show
+                            ? _c("div", [
+                                _c("span", [
+                                  _vm._v(
+                                    "File được chọn: " + _vm._s(_vm.file_show)
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("i", {
+                                  staticClass: "fas fa-times text-danger",
+                                  staticStyle: { cursor: "pointer" },
+                                  on: { click: _vm.removeFile },
+                                }),
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _vm.file_updated
+                            ? _c("div", [
+                                _c(
+                                  "a",
+                                  {
+                                    attrs: {
+                                      target: "_blank",
+                                      href: _vm.file_updated,
+                                    },
+                                  },
+                                  [_vm._v("Xem tệp đã chọn")]
+                                ),
+                                _vm._v("  \n                    "),
+                                _c("i", {
+                                  staticClass: "fas fa-times text-danger",
+                                  staticStyle: { cursor: "pointer" },
+                                  on: { click: _vm.deleteFile },
+                                }),
+                              ])
+                            : _vm._e(),
+                        ]),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "modal-footer" }, [
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-info btn-sm",
+                          attrs: { type: "submit" },
+                        },
+                        [
+                          _vm._v(
+                            "\n                " +
+                              _vm._s(_vm.project.id ? "Cập nhật" : "Thêm") +
+                              "\n              "
+                          ),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-secondary btn-sm",
+                          attrs: { type: "button", "data-dismiss": "modal" },
+                        },
+                        [_vm._v("Đóng")]
+                      ),
+                    ]),
+                  ]
+                ),
+              ]),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "project_modal_details" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(10),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _c("div", { staticClass: "form-group" }, [
+                  _c("b", { staticClass: "text-info" }, [
+                    _vm._v("Tên: " + _vm._s(_vm.project.name)),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _vm.project.manager
+                  ? _c("div", { staticClass: "form-group" }, [
+                      _c("b", [_vm._v("Quản lý dự án: ")]),
+                      _vm._v(" "),
+                      _c("span", [
+                        _vm._v(
+                          _vm._s(
+                            _vm.project.manager.fullname ||
+                              _vm.project.manager.username
+                          )
                         ),
                       ]),
-                    ]
+                    ])
+                  : _vm._e(),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-group" }, [
+                  _c("b", [_vm._v("Thời gian bắt đầu: ")]),
+                  _vm._v(" "),
+                  _c("span", [_vm._v(_vm._s(_vm.project.start_time))]),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-group" }, [
+                  _c("b", [_vm._v("Hạn chót: ")]),
+                  _vm._v(" "),
+                  _c("span", [_vm._v(_vm._s(_vm.project.end_time))]),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "form-group" }, [
+                  _c("b", [_vm._v("Trạng thái: ")]),
+                  _vm._v(" "),
+                  _c(
+                    "span",
+                    {
+                      class: [
+                        "badge",
+                        _vm.project.active ? "badge-info" : "badge-danger",
+                      ],
+                    },
+                    [_vm._v(_vm._s(_vm.project.active ? "Kích hoạt" : "Khóa"))]
                   ),
                 ]),
+                _vm._v(" "),
+                _vm.project.describe
+                  ? _c("div", { staticClass: "form-group" }, [
+                      _c("b", [_vm._v("Mô tả: ")]),
+                      _vm._v(" "),
+                      _c("span", [_vm._v(_vm._s(_vm.project.describe))]),
+                    ])
+                  : _vm._e(),
+                _vm._v(" "),
+                _vm.file_updated
+                  ? _c("div", { staticClass: "form-group" }, [
+                      _c("b", [_vm._v("Tệp đính kèm: ")]),
+                      _vm._v(" "),
+                      _c(
+                        "a",
+                        { attrs: { target: "_blank", href: _vm.file_updated } },
+                        [_vm._v("Xem tệp")]
+                      ),
+                    ])
+                  : _vm._e(),
               ]),
-            ]
-          ),
+              _vm._v(" "),
+              _vm._m(11),
+            ]),
+          ]),
         ]
       ),
       _vm._v(" "),
@@ -27812,7 +28004,7 @@ var render = function () {
                   },
                 },
                 [
-                  _vm._m(9),
+                  _vm._m(12),
                   _vm._v(" "),
                   _vm.$root.isManager()
                     ? _c("div", { staticClass: "modal-body" }, [
@@ -27843,9 +28035,108 @@ var render = function () {
                       ])
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._m(10),
+                  _vm._m(13),
                 ]
               ),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "project_modal_finish" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(14),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _vm.project
+                  ? _c("div", { staticClass: "row" }, [
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(15),
+                          _vm._v(" "),
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.project.name,
+                                expression: "project.name",
+                              },
+                            ],
+                            staticClass: "form-control form-control-sm",
+                            attrs: { type: "text", disabled: "" },
+                            domProps: { value: _vm.project.name },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  _vm.project,
+                                  "name",
+                                  $event.target.value
+                                )
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._m(16),
+                          _vm._v(" "),
+                          _c("textarea", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.response_finish,
+                                expression: "response_finish",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { rows: "5" },
+                            domProps: { value: _vm.response_finish },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.response_finish = $event.target.value
+                              },
+                            },
+                          }),
+                        ]),
+                      ]),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-footer" }, [
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-success btn-sm",
+                    attrs: { type: "submit" },
+                    on: { click: _vm.handleFinishProject },
+                  },
+                  [_vm._v("Hoàn thành")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "button",
+                  {
+                    staticClass: "btn btn-secondary btn-sm",
+                    attrs: { type: "button", "data-dismiss": "modal" },
+                  },
+                  [_vm._v("Đóng")]
+                ),
+              ]),
             ]),
           ]),
         ]
@@ -27868,6 +28159,18 @@ var render = function () {
             attrs: { title: "Đang xóa tệp đính kèm của dự án", full: true },
           })
         : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_take_project
+        ? _c("m-loading", {
+            attrs: { title: "Đang tiếp nhận dự án", full: true },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_finish_project
+        ? _c("m-loading", {
+            attrs: { title: "Đang thực hiện hoàn thành dự án", full: true },
+          })
+        : _vm._e(),
     ],
     1
   )
@@ -27883,6 +28186,28 @@ var staticRenderFns = [
         { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
         [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n        ")]
       ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("thead", [
+      _c("tr", [
+        _c("td", [_c("b", [_vm._v("STT")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Tên")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Quản lý")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Thống kê")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
+        _vm._v(" "),
+        _c("td"),
+      ]),
     ])
   },
   function () {
@@ -27974,6 +28299,38 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Thông tin dự án")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary btn-sm",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Đóng")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
       _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa dự án")]),
       _vm._v(" "),
       _c(
@@ -28006,6 +28363,42 @@ var staticRenderFns = [
         [_vm._v("Hủy")]
       ),
     ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [
+        _vm._v("Hoàn thành công việc"),
+      ]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [
+        _vm._v("Tên dự án "),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Phản hồi ")])])
   },
 ]
 render._withStripped = true
@@ -28156,238 +28549,209 @@ var render = function () {
               ),
               _vm._v(" "),
               _c("div", { staticClass: "list" }, [
-                _vm.loading_list
-                  ? _c(
-                      "div",
-                      { staticClass: "text-center" },
-                      [_c("m-spinner")],
-                      1
-                    )
-                  : _vm.list && _vm.list.length > 0
-                  ? _c("div", [
-                      _vm._m(1),
-                      _vm._v(" "),
-                      _c(
-                        "ul",
-                        { staticClass: "row" },
-                        _vm._l(_vm.list, function (item, index) {
-                          return _c(
-                            "li",
-                            {
-                              key: index,
-                              staticClass: "col-md-3 col-sm-4 col-12 mb-3",
-                            },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "bg-fff info" },
-                                [
+                _c("div", { staticClass: "card" }, [
+                  _c("div", { staticClass: "card-header bg-info text-white" }, [
+                    _vm._v("Danh sách công việc"),
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "table-responsive" }, [
+                    _c(
+                      "table",
+                      {
+                        staticClass: "table table-bordered table-stripped mb-0",
+                      },
+                      [
+                        _vm._m(1),
+                        _vm._v(" "),
+                        _c(
+                          "tbody",
+                          [
+                            _vm.loading_list
+                              ? _c("tr", [
                                   _c(
-                                    "router-link",
+                                    "td",
                                     {
                                       attrs: {
-                                        to: {
-                                          name: "job",
-                                          params: {
-                                            project_id: _vm.project_id,
-                                            id: item.id,
-                                          },
-                                        },
+                                        colspan: "1000",
+                                        align: "center",
                                       },
                                     },
-                                    [
-                                      _c("p", [
-                                        _c("i", {
-                                          staticClass: "fas fa-folder",
-                                        }),
-                                        _vm._v("  "),
-                                        _c("b", [_vm._v(_vm._s(item.name))]),
-                                      ]),
-                                      _vm._v(" "),
-                                      _c(
-                                        "div",
-                                        {
-                                          staticStyle: {
-                                            "font-size": "12px",
-                                            "margin-bottom": "0px",
-                                          },
-                                        },
-                                        [
-                                          _c("b", [_vm._v("Phân cho: ")]),
-                                          _vm._v(
-                                            _vm._s(item.department.name) + " "
-                                          ),
-                                          _c("br"),
-                                          _vm._v(" "),
-                                          _c("b", [_vm._v("Tạo lúc: ")]),
-                                          _vm._v(_vm._s(item.created_at) + " "),
-                                          _c("br"),
-                                          _vm._v(" "),
-                                          item.status != null
-                                            ? _c("b", [_vm._v("Trạng thái: ")])
-                                            : _vm._e(),
-                                          _vm._v(" "),
-                                          item.status.status == 2 ||
-                                          item.status.status == 4 ||
-                                          item.status.status == 5
-                                            ? _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "badge badge-danger",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                    " +
-                                                      _vm._s(
-                                                        _vm.$root.getStatusTaskName(
-                                                          item.status.status
-                                                        )
-                                                      ) +
-                                                      "\n                  "
-                                                  ),
-                                                ]
-                                              )
-                                            : _c(
-                                                "span",
-                                                {
-                                                  staticClass:
-                                                    "badge badge-success",
-                                                },
-                                                [
-                                                  _vm._v(
-                                                    "\n                    " +
-                                                      _vm._s(
-                                                        _vm.$root.getStatusTaskName(
-                                                          item.status.status
-                                                        )
-                                                      ) +
-                                                      "\n                  "
-                                                  ),
-                                                ]
-                                              ),
-                                          _vm._v(" "),
-                                          _c("br"),
-                                          _vm._v(" "),
-                                          item.status.status == 3
-                                            ? _c("div", [
-                                                item.delay_time == 0
-                                                  ? _c(
-                                                      "b",
-                                                      {
-                                                        staticClass:
-                                                          "badge badge-success",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          "Hoàn thành đúng hạn"
-                                                        ),
-                                                      ]
-                                                    )
-                                                  : _c(
-                                                      "b",
-                                                      {
-                                                        staticClass:
-                                                          "badge badge-danger",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          "Hoàn thành trễ " +
-                                                            _vm._s(
-                                                              item.delay_time
-                                                            ) +
-                                                            " ngày"
-                                                        ),
-                                                      ]
-                                                    ),
-                                              ])
-                                            : _c("div", [
-                                                _vm.$root.checkDeadline(item) ==
-                                                "Chưa tới hạn"
-                                                  ? _c(
-                                                      "b",
-                                                      {
-                                                        staticClass:
-                                                          "badge badge-info",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.$root.checkDeadline(
-                                                              item
-                                                            )
-                                                          )
-                                                        ),
-                                                      ]
-                                                    )
-                                                  : _c(
-                                                      "b",
-                                                      {
-                                                        staticClass:
-                                                          "badge badge-danger",
-                                                      },
-                                                      [
-                                                        _vm._v(
-                                                          _vm._s(
-                                                            _vm.$root.checkDeadline(
-                                                              item
-                                                            )
-                                                          )
-                                                        ),
-                                                      ]
-                                                    ),
-                                              ]),
-                                        ]
-                                      ),
-                                    ]
+                                    [_c("m-spinner")],
+                                    1
                                   ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "div",
-                                    {
-                                      staticClass: "text-right",
-                                      staticStyle: {
-                                        padding: "0px 10px 10px 0px",
-                                      },
-                                    },
-                                    [
-                                      _c(
-                                        "span",
-                                        {
-                                          staticStyle: { cursor: "pointer" },
-                                          attrs: {
-                                            "data-toggle": "modal",
-                                            "data-target":
-                                              "#task_modal_details",
-                                          },
-                                          on: {
-                                            click: function ($event) {
-                                              return _vm.getTaskUpdate(item)
-                                            },
-                                          },
-                                        },
-                                        [_c("b", [_vm._v("Xem")])]
-                                      ),
-                                      _vm._v(" "),
-                                      item.status.status != 3 &&
-                                      _vm.project &&
-                                      _vm.project.manager.id ==
-                                        _vm.$root.auth.id
+                                ])
+                              : _vm.list && _vm.list.length > 0
+                              ? _vm._l(_vm.list, function (item, index) {
+                                  return _c("tr", { key: index }, [
+                                    _c("td", [_vm._v(_vm._s(index + 1))]),
+                                    _vm._v(" "),
+                                    _c("td", [_vm._v(_vm._s(item.name))]),
+                                    _vm._v(" "),
+                                    _c("td", [
+                                      _vm._v(_vm._s(item.department.name)),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("td", [_vm._v("SLHT / SLTH")]),
+                                    _vm._v(" "),
+                                    _c("td", [
+                                      item.status.status == 2 ||
+                                      item.status.status == 4 ||
+                                      item.status.status == 5
                                         ? _c(
-                                            "div",
+                                            "span",
                                             {
-                                              staticStyle: {
-                                                display: "inline-block",
-                                              },
+                                              staticClass: "badge badge-danger",
                                             },
                                             [
-                                              _c(
-                                                "span",
-                                                {
-                                                  staticClass: "text-info",
-                                                  staticStyle: {
-                                                    cursor: "pointer",
+                                              _vm._v(
+                                                "\n                      " +
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  ) +
+                                                  "\n                    "
+                                              ),
+                                            ]
+                                          )
+                                        : item.status.status == 3
+                                        ? _c("span", [
+                                            item.delay_time == 0
+                                              ? _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-success",
                                                   },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành đúng hạn"
+                                                    ),
+                                                  ]
+                                                )
+                                              : _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-danger",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành trễ " +
+                                                        _vm._s(
+                                                          item.delay_time
+                                                        ) +
+                                                        " ngày"
+                                                    ),
+                                                  ]
+                                                ),
+                                          ])
+                                        : _c(
+                                            "span",
+                                            { staticClass: "badge badge-info" },
+                                            [
+                                              _vm._v(
+                                                "\n                      " +
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  ) +
+                                                  "\n                    "
+                                              ),
+                                            ]
+                                          ),
+                                      _vm._v(" "),
+                                      item.status.status != 3
+                                        ? _c(
+                                            "span",
+                                            {
+                                              class: [
+                                                "badge",
+                                                _vm.$root.checkDeadline(item) ==
+                                                "Chưa tới hạn"
+                                                  ? "badge-success"
+                                                  : "badge-danger",
+                                              ],
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                      " +
+                                                  _vm._s(
+                                                    _vm.$root.checkDeadline(
+                                                      item
+                                                    )
+                                                  ) +
+                                                  "\n                    "
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("td", [_vm._v(_vm._s(item.created_at))]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "td",
+                                      [
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "btn btn-sm btn-secondary",
+                                            attrs: {
+                                              "data-toggle": "modal",
+                                              "data-target":
+                                                "#task_modal_details",
+                                            },
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.getTaskUpdate(item)
+                                              },
+                                            },
+                                          },
+                                          [_vm._v("Xem")]
+                                        ),
+                                        _vm._v(" "),
+                                        _c(
+                                          "router-link",
+                                          {
+                                            attrs: {
+                                              to: {
+                                                name: "job",
+                                                params: {
+                                                  project_id: _vm.project_id,
+                                                  id: item.id,
+                                                },
+                                              },
+                                            },
+                                          },
+                                          [
+                                            item &&
+                                            item.status.status != 3 &&
+                                            item.status.status != 0
+                                              ? _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "btn btn-dark btn-sm",
+                                                  },
+                                                  [_vm._v("Nhiệm vụ")]
+                                                )
+                                              : _vm._e(),
+                                          ]
+                                        ),
+                                        _vm._v(" "),
+                                        item.status.status != 3 &&
+                                        _vm.project &&
+                                        _vm.project.manager.id ==
+                                          _vm.$root.auth.id
+                                          ? [
+                                              _c(
+                                                "button",
+                                                {
+                                                  staticClass:
+                                                    "btn btn-sm btn-info",
                                                   attrs: {
                                                     "data-toggle": "modal",
                                                     "data-target":
@@ -28401,16 +28765,14 @@ var render = function () {
                                                     },
                                                   },
                                                 },
-                                                [_c("b", [_vm._v("Sửa")])]
+                                                [_vm._v("Sửa")]
                                               ),
                                               _vm._v(" "),
                                               _c(
-                                                "span",
+                                                "button",
                                                 {
-                                                  staticClass: "text-danger",
-                                                  staticStyle: {
-                                                    cursor: "pointer",
-                                                  },
+                                                  staticClass:
+                                                    "btn btn-sm btn-danger",
                                                   attrs: {
                                                     "data-toggle": "modal",
                                                     "data-target":
@@ -28424,101 +28786,71 @@ var render = function () {
                                                     },
                                                   },
                                                 },
-                                                [_c("b", [_vm._v("Xóa")])]
+                                                [_vm._v("Xóa")]
                                               ),
                                               _vm._v(" "),
                                               item.status.status == 2
-                                                ? _c(
-                                                    "div",
-                                                    {
-                                                      staticClass: "pl-2",
-                                                      staticStyle: {
-                                                        display: "inline-block",
+                                                ? [
+                                                    _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "btn btn-sm btn-info",
+                                                        on: {
+                                                          click: function (
+                                                            $event
+                                                          ) {
+                                                            return _vm.handleApprovalTask(
+                                                              item
+                                                            )
+                                                          },
+                                                        },
                                                       },
-                                                    },
-                                                    [
-                                                      _c(
-                                                        "span",
-                                                        {
-                                                          staticClass:
-                                                            "text-info",
-                                                          staticStyle: {
-                                                            cursor: "pointer",
-                                                          },
-                                                          on: {
-                                                            click: function (
-                                                              $event
-                                                            ) {
-                                                              return _vm.handleApprovalTask(
-                                                                item
-                                                              )
-                                                            },
+                                                      [_vm._v("Duyệt")]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "btn btn-sm btn-danger",
+                                                        attrs: {
+                                                          "data-toggle":
+                                                            "modal",
+                                                          "data-target":
+                                                            "#task_modal_not_approval_finish",
+                                                        },
+                                                        on: {
+                                                          click: function (
+                                                            $event
+                                                          ) {
+                                                            return _vm.getTaskUpdate(
+                                                              item
+                                                            )
                                                           },
                                                         },
-                                                        [
-                                                          _c("b", [
-                                                            _vm._v("Duyệt"),
-                                                          ]),
-                                                        ]
-                                                      ),
-                                                      _vm._v(" "),
-                                                      _c(
-                                                        "span",
-                                                        {
-                                                          staticClass:
-                                                            "text-danger",
-                                                          staticStyle: {
-                                                            cursor: "pointer",
-                                                          },
-                                                          attrs: {
-                                                            "data-toggle":
-                                                              "modal",
-                                                            "data-target":
-                                                              "#task_modal_not_approval_finish",
-                                                          },
-                                                          on: {
-                                                            click: function (
-                                                              $event
-                                                            ) {
-                                                              return _vm.getTaskUpdate(
-                                                                item
-                                                              )
-                                                            },
-                                                          },
-                                                        },
-                                                        [
-                                                          _c("b", [
-                                                            _vm._v(
-                                                              "Không duyệt"
-                                                            ),
-                                                          ]),
-                                                        ]
-                                                      ),
-                                                    ]
-                                                  )
+                                                      },
+                                                      [
+                                                        _vm._v(
+                                                          "\n                          Không duyệt\n                        "
+                                                        ),
+                                                      ]
+                                                    ),
+                                                  ]
                                                 : _vm._e(),
                                             ]
-                                          )
-                                        : item.status.status != 3 &&
-                                          item &&
-                                          item.department.leader.id ==
-                                            _vm.$root.auth.id
-                                        ? _c(
-                                            "div",
-                                            {
-                                              staticStyle: {
-                                                display: "inline-block",
-                                              },
-                                            },
-                                            [
+                                          : _vm._e(),
+                                        _vm._v(" "),
+                                        item &&
+                                        item.department.leader.id ==
+                                          _vm.$root.auth.id
+                                          ? [
                                               item.status.status == 0
                                                 ? _c(
-                                                    "span",
+                                                    "button",
                                                     {
-                                                      staticClass: "text-info",
-                                                      staticStyle: {
-                                                        cursor: "pointer",
-                                                      },
+                                                      staticClass:
+                                                        "btn btn-sm btn-info",
                                                       on: {
                                                         click: function (
                                                           $event
@@ -28530,9 +28862,9 @@ var render = function () {
                                                       },
                                                     },
                                                     [
-                                                      _c("b", [
-                                                        _vm._v("Tiếp nhận"),
-                                                      ]),
+                                                      _vm._v(
+                                                        "\n                        Tiếp nhận\n                      "
+                                                      ),
                                                     ]
                                                   )
                                                 : _vm._e(),
@@ -28540,13 +28872,10 @@ var render = function () {
                                               item.status.status == 1 ||
                                               item.status.status == 4
                                                 ? _c(
-                                                    "span",
+                                                    "button",
                                                     {
                                                       staticClass:
-                                                        "text-success",
-                                                      staticStyle: {
-                                                        cursor: "pointer",
-                                                      },
+                                                        "btn btn-sm btn-success",
                                                       attrs: {
                                                         "data-toggle": "modal",
                                                         "data-target":
@@ -28563,29 +28892,38 @@ var render = function () {
                                                       },
                                                     },
                                                     [
-                                                      _c("b", [
-                                                        _vm._v("Hoàn thành"),
-                                                      ]),
+                                                      _vm._v(
+                                                        "\n                        Hoàn thành\n                      "
+                                                      ),
                                                     ]
                                                   )
                                                 : _vm._e(),
                                             ]
-                                          )
-                                        : _vm._e(),
-                                    ]
+                                          : _vm._e(),
+                                      ],
+                                      2
+                                    ),
+                                  ])
+                                })
+                              : _c("tr", [
+                                  _c(
+                                    "td",
+                                    {
+                                      attrs: {
+                                        colspan: "1000",
+                                        align: "center",
+                                      },
+                                    },
+                                    [_vm._v("Không có công việc")]
                                   ),
-                                ],
-                                1
-                              ),
-                            ]
-                          )
-                        }),
-                        0
-                      ),
-                    ])
-                  : _c("div", [
-                      _vm._v("\n        Không có công việc nào\n      "),
-                    ]),
+                                ]),
+                          ],
+                          2
+                        ),
+                      ]
+                    ),
+                  ]),
+                ]),
               ]),
               _vm._v(" "),
               _c(
@@ -29497,11 +29835,11 @@ var render = function () {
                           _c(
                             "button",
                             {
-                              staticClass: "btn btn-danger btn-sm",
+                              staticClass: "btn btn-success btn-sm",
                               attrs: { type: "submit" },
                               on: { click: _vm.handleFinishTask },
                             },
-                            [_vm._v("Gửi")]
+                            [_vm._v("Hoàn thành")]
                           ),
                           _vm._v(" "),
                           _c(
@@ -29741,8 +30079,22 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "mb-3" }, [
-      _c("b", [_vm._v("Danh sách công việc")]),
+    return _c("thead", [
+      _c("tr", [
+        _c("td", [_c("b", [_vm._v("STT")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Tên")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Phòng ban")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Thống kê")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
+        _vm._v(" "),
+        _c("td"),
+      ]),
     ])
   },
   function () {
@@ -47051,13 +47403,14 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
     getStatusTaskName: function getStatusTaskName($num_status) {
       if ($num_status == 0) return 'Đã giao';
       if ($num_status == 1) return 'Đã tiếp nhận';
-      if ($num_status == 2) return 'Chờ duyệt';
+      if ($num_status == 2) return 'Chờ duyệt hoàn thành';
       if ($num_status == 3) return 'Đã duyệt';
       if ($num_status == 4) return 'Từ chối duyệt';
       if ($num_status == 5) return 'Từ chối nhận';
       if ($num_status == 6) return 'Không duyệt từ chối nhận';
       if ($num_status == 7) return 'Đổi thành viên';
       if ($num_status == 8) return 'Đổi phòng ban';
+      if ($num_status == 9) return 'Đã hoàn thành';
     },
     checkDeadline: function checkDeadline(_param) {
       var today = new Date();

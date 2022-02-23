@@ -851,20 +851,14 @@ a:hover {
 
 /* Project page */
 
+#project .list .btn-sm {
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
 #project .list ul {
   padding: 0;
   list-style: none;
-}
-
-#project .list ul li .info {
-  border: 1px solid #17a2b8;
-  cursor: pointer;
-}
-
-#project .list ul li .info a {
-  display: block;
-  padding: 10px;
-  color: #333;
 }
 
 #project .list ul .block {
@@ -957,6 +951,11 @@ a:hover {
 
 /* Công việc */
 
+#task .list .btn-sm {
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
 #task ul {
   padding: 0px;
   list-style: none;
@@ -985,6 +984,11 @@ a:hover {
 }
 
 /* job */
+
+#job .list .btn-sm {
+  padding: 2px 5px;
+  font-size: 12px;
+}
 
 #job ul {
   padding: 0px;

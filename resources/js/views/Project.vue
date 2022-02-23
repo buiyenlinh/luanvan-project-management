@@ -22,7 +22,10 @@ export default {
       },
       file_show: '',
       file_updated: '',
-      loading_delete_file: false
+      loading_delete_file: false,
+      loading_take_project: false,
+      response_finish: '',
+      loading_finish_project: false
     }
   },
   methods: {
@@ -43,12 +46,9 @@ export default {
       if (this.project.name && this.project.start_time && this.project.end_time && this.project.manager && (this.project.active == 1 | this.project.active == 0)) {
         this.loading_add = true;
         let formData = new FormData();
-        formData.append('name', this.project.name);
-        formData.append('start_time', this.project.start_time);
-        formData.append('end_time', this.project.end_time);
         formData.append('active', this.project.active);
-        formData.append('manager', this.project.manager);
         formData.append('file', this.project.file);
+        formData.append('describe', this.project.describe);
 
         if (this.project.id > 0) { // Cập nhật
           formData.append('id', this.project.id);
@@ -66,7 +66,11 @@ export default {
             this.$root.showError(err);
           })
         } else { // Thêm mới
+          formData.append('name', this.project.name);
+          formData.append('start_time', this.project.start_time);
+          formData.append('end_time', this.project.end_time);
           formData.append('created_by', this.$root.auth.id);
+          formData.append('manager', this.project.manager);
           this.$root.api.post('project/add', formData).then(res => {
             this.loading_add = false;
             if (res.data.status == "OK") {
@@ -83,9 +87,6 @@ export default {
         }
         
       }
-    },
-    handleSearch() {
-      console.log("handleSearch")
     },
     handleCloseModal() {
       this.validate_form = false;
@@ -154,12 +155,8 @@ export default {
     },
     getProjectUpdate(_project) {
       this.project = _.clone(_project);
-      this.project.manager = _project.manager.id;
-      this.project.created_by = _project.created_by.id;
       this.text_select = _project.manager.fullname || _project.manager.username;
-
       this.file_updated = _project.file;
-
     },
     getList() {
       this.loading_list = true;
@@ -240,6 +237,39 @@ export default {
     removeFile() {
       this.file_show = '';
       this.project.file = '';
+    },
+    handleTakeProject(_project) {
+      this.loading_take_project = true;
+      this.$root.api.post(`project/take-project/${_project.id}`).then(res => {
+        this.loading_take_project = false;
+        if (res.data.status == 'OK') {
+          this.$notify(res.data.message, 'success');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.loading_take_project = false;
+        this.$root.showError(err);
+      }) 
+    },
+    handleFinishProject() {
+      this.loading_finish_project = true;
+      this.$root.api.post(`project/finish-project/${this.project.id}`, {
+        'content': this.response_finish
+      }).then(res => {
+        this.loading_finish_project = false;
+        if (res.data.status == 'OK') {
+          $('#project_modal_finish').modal('hide');
+          this.$notify(res.data.message, 'success');
+          this.getList();
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch (err => {
+        this.loading_finish_project = false;
+        this.$root.showError(err);
+      }) 
     }
   },
   created() {
@@ -273,7 +303,7 @@ export default {
   },
   mounted() {
     this.current_page = parseInt(this.$route.query.page || 1);
-    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete', () => {
+    $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete, #project_modal_finish, #project_modal_details', () => {
       this.handleCloseModal();
     });
 
@@ -284,7 +314,6 @@ export default {
 
 <template>
   <div id="project">
-    <h3>Danh sách dự án</h3>
     <form @submit.prevent="handleSearch">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
@@ -311,57 +340,90 @@ export default {
       </div>
     </form>
     <div class="list">
-        <div class="text-center" v-if="loading_list">
-          <m-spinner/>
+      <div class="card">
+        <div class="card-header bg-info text-white">Danh sách dự án</div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-stripped mb-0">
+            <thead>
+              <tr>
+                <td><b>STT</b></td>
+                <td><b>Tên</b></td>
+                <td><b>Quản lý</b></td>
+                <td><b>Thống kê</b></td>
+                <td><b>Trạng thái</b></td>
+                <td><b>Ngày tạo</b></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading_list">
+                <td colspan="1000" align="center">
+                  <m-spinner />
+                </td>
+              </tr>
+              <template v-else-if="list && list.data.length > 0">
+                <tr v-for="(item, index) in list.data" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.manager.fullname || item.manager.username }}</td>
+                  <td>SLHT / SLTH</td>
+                  <td>
+                    <span v-if="item.active == 0" class="badge badge-danger">Khóa</span>
+                    <span v-else class="badge badge-success">{{ $root.getStatusTaskName(item.status.status) }}</span>
+                    <span :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
+                      {{ $root.checkDeadline(item) }}
+                    </span>
+                  </td>
+                  <td>{{ item.created_at }}</td>
+                  <td>
+                    <button class="btn btn-secondary btn-sm"
+                      @click="getProjectUpdate(item)"
+                      data-toggle="modal"
+                      data-target="#project_modal_details"
+                    >Xem</button>
+                    <router-link :to="{name: 'task', params: { 'id': item.id }}" v-if="item.status.status != 0">
+                      <button class="btn btn-sm btn-dark">Công việc</button>
+                    </router-link>
+                    <template v-if="$root.auth.id == item.manager.id || $root.auth.id == item.created_by.id">
+                      <button class="btn btn-info btn-sm"
+                        @click="getProjectUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#project_modal_add"
+                      >Sửa</button>
+                      <button class="btn btn-danger btn-sm"
+                        @click="getProjectUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#project_modal_delete"
+                      >Xóa</button>
+                      
+                      <template v-if="item.active == 1 && $root.auth.id == item.manager.id">
+                        <button class="btn btn-outline-info btn-sm"
+                          v-if="item.status && item.status.status == 0 && $root.auth.id == item.manager.id"
+                          @click="handleTakeProject(item)"
+                        >Tiếp nhận</button>
+                        <button class="btn btn-success btn-sm" 
+                          v-if="item.status && item.status.status == 1"
+                          @click="getProjectUpdate(item)"
+                          data-toggle="modal"
+                          data-target="#project_modal_finish"
+                        >Hoàn thành</button>
+                      </template>
+                    </template>
+                  </td>
+                </tr>
+              </template>
+              <tr v-else ><td colspan="1000" align="center">Không có dự án</td></tr>
+            </tbody>
+          </table>
         </div>
-        <ul v-else class="row">
-          <template v-if="list && list.data.length > 0">
-            <li
-              v-for="(item, index) in list.data"
-              :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
-              <div :class="['info', !item.active ? 'block': 'bg-fff']">
-                <router-link :to="{name: 'task', params: { 'id': item.id }}">
-                  <span v-if="!item.active" class="text-danger block-text">Khóa</span>
-                  <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
-                  <p style="font-size: 12px; margin-bottom: 0px">
-                    <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
-                    <b>Quản lý: </b>{{item.manager.fullname || item.manager.username}} <br>
-                    <b>Tạo lúc: </b>{{item.created_at}} <br>
-
-                     <b v-if="$root.checkDeadline(item) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(item) }}</b>
-                    <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
-                  </p>
-                </router-link>
-                <div class="text-right" style="padding: 10px" v-if="$root.isManager()">
-                  <span
-                    class="text-danger"
-                    @click="getProjectUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#project_modal_delete"
-                  >
-                    <b>Xóa</b>
-                  </span>
-                  <span
-                    class="text-info"
-                    @click="getProjectUpdate(item)"
-                    data-toggle="modal"
-                    data-target="#project_modal_add"
-                  >
-                    <b>Sửa</b>
-                  </span>
-                </div>
-              </div>
-            </li>
-          </template>
-          <li class="col-md-12" v-else>Bạn chưa có dự án</li>
-        </ul>
+      </div>
     </div>
     <div class="text-center mt-3" v-if="last_page > 1">
       <m-pagination :page="current_page" :last-page="last_page" @change="changePage" />
     </div>
 
     <div class="modal fade" id="project_modal_add">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h4 class="modal-title">Dự án</h4>
@@ -373,25 +435,26 @@ export default {
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Tên dự án <span class="text-danger">*</span></b></label>
-                    <input type="text" class="form-control form-control-sm" v-model="project.name">
+                    <input v-if="project.id" type="text" class="form-control form-control-sm" v-model="project.name" disabled>
+                    <input v-else type="text" class="form-control form-control-sm" v-model="project.name">
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="!project.id">
                   <div class="form-group">
                     <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="project.start_time">
                     <div class="text-danger font-italic error">{{error.start_time}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-6 col-sm-12 col-12" v-if="!project.id">
                   <div class="form-group">
                     <label><b>Thời gian kết thức <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="project.end_time">
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12" v-if="$root.isAdmin()">
+                <div class="col-md-6 col-sm-12 col-12" v-if="$root.isAdmin() && !project.id">
                   <div class="form-group">
                     <label><b>Quản lý <span class="text-danger">*</span></b></label>
                     <m-select
@@ -462,6 +525,53 @@ export default {
       </div>
     </div>
 
+    <div class="modal fade" id="project_modal_details">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Thông tin dự án</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <b class="text-info">Tên: {{ project.name }}</b>
+            </div>
+
+            <div class="form-group" v-if="project.manager">
+              <b>Quản lý dự án: </b> <span>{{ project.manager.fullname || project.manager.username }}</span>
+            </div>
+
+            <div class="form-group">
+              <b>Thời gian bắt đầu: </b> <span>{{ project.start_time }}</span>
+            </div>
+
+            <div class="form-group">
+              <b>Hạn chót: </b> <span>{{ project.end_time }}</span>
+            </div>
+
+            <div class="form-group">
+              <b>Trạng thái: </b> 
+              <span :class="['badge', project.active ? 'badge-info' : 'badge-danger']">{{ project.active ? 'Kích hoạt' : 'Khóa'}}</span>
+            </div>
+
+            <div class="form-group" v-if="project.describe">
+              <b>Mô tả: </b> <span>{{ project.describe }}</span>
+            </div>
+
+            <div class="form-group" v-if="file_updated">
+              <b>Tệp đính kèm: </b>
+              <a target="_blank" :href="file_updated">Xem tệp</a>
+            </div>
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="project_modal_delete">
       <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
@@ -488,7 +598,42 @@ export default {
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="project_modal_finish">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Hoàn thành công việc</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="project" class="row">
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Tên dự án <span class="text-danger">*</span></b></label>
+                  <input type="text" class="form-control form-control-sm" disabled v-model="project.name">
+                </div>
+              </div>
+
+              <div class="col-md-12 col-sm-12 col-12">
+                <div class="form-group">
+                  <label><b>Phản hồi </b></label>
+                  <textarea class="form-control" rows="5" v-model="response_finish"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-sm" @click="handleFinishProject">Hoàn thành</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add" :title="this.project.id != null ? 'Đang cập nhật dự án' : 'Đang thêm dự án'" :full="true" />
     <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm của dự án" :full="true" />
+    <m-loading v-if="loading_take_project" title="Đang tiếp nhận dự án" :full="true" />
+    <m-loading v-if="loading_finish_project" title="Đang thực hiện hoàn thành dự án" :full="true" />
   </div>
 </template>
