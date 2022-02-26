@@ -25,7 +25,7 @@ class DepartmentResource extends JsonResource
         }
 
         $department_leader = DepartmentUser::where('department_id', $this->id)
-            ->where('leader', 1)->first();
+            ->where('leader', 1)->where('active', 1)->first();
         $leader = User::find($department_leader->user_id);
 
         return [

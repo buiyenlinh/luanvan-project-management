@@ -222,7 +222,7 @@ class UserController extends Controller
 
         $count_department_user = DepartmentUser::where('user_id', $user->id)->count();
         if ($count_department_user > 0) {
-            return $this->error('Người dùng đã thuộc một nhóm nào đó. Không thể xóa');
+            return $this->error('Người dùng đã thuộc một phòng ban nào đó. Không thể xóa');
         }
         Storage::delete($user->avatar);
         $user->delete();
@@ -277,8 +277,9 @@ class UserController extends Controller
 
         $data = array();
         foreach($list->get() as $_list) {
-            $department_user = DepartmentUser::where('user_id', $_list->id)->count();
-            if ($department_user == 0) {
+            $department_user_old_leader = DepartmentUser::where('user_id', $_list->id)->where('active', 1)->count();
+            $department_user = DepartmentUser::where('user_id', $_list->id)->where('leader', 0)->count();
+            if ($department_user == 0 && $department_user_old_leader == 0) {
                 $data[] = $_list;
             }
         }

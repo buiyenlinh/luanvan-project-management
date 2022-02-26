@@ -68,6 +68,31 @@ class JobController extends Controller
         $check_error = $this->check($id, $task_id);
         if ($check_error != '')
             return $this->error($check_error);
+
+        /**
+         * Check user login có thuộc công việc???
+         */
+        if ($this->auth->role->level == 3) {
+            if ($this->auth->id != $project->create_by && $this->auth->id != $project->manager)
+                return $this->error('Bạn không thuộc dự án này');
+        }
+
+        if ($this->auth->role->level == 4) { // trưởng phòng hoặc thành viên
+            $checkUserBelongTask = false;
+            $department_task = DepartmentTask::where('task_id', $task_id)->latest('id')->first();
+            if ($department_task) {
+                $department_users = DepartmentUser::where('department_id', $department_task->department_id)->get();
+                if ($department_users) {
+                    foreach ($department_users as $_department_user) {
+                        if ($_department_user && $_department_user->user_id == $this->auth->id)
+                            $checkUserBelongTask = true;
+                    }
+                }
+            }
+            if (!$checkUserBelongTask)
+                return $this->error('Bạn không thuộc công việc này');
+        }
+        
         $data = [
             'project' => new ProjectResource($project),
             'task' => new TaskResource($task)
@@ -346,10 +371,10 @@ class JobController extends Controller
 
         if ($this->isUser()) {
             if (!$this->isLeader()) {
-                $deparment_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+                $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
                 $job_ids = array();
-                if ($deparment_user) {
-                    $department_user_job = DepartmentUserJob::where('department_user_id', $deparment_user->id)->get();
+                if ($department_user) {
+                    $department_user_job = DepartmentUserJob::where('department_user_id', $department_user->id)->get();
                     if ($department_user_job) {
                         foreach ($department_user_job as $_department_user_job) {
                             $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->latest('id')->first();
@@ -410,7 +435,7 @@ class JobController extends Controller
                 DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->delete();
             }
         }
-        // Xóa deparment_user_job
+        // Xóa department_user_job
         $department_user_job->delete();
 
         if ($job->file) {

@@ -69,6 +69,15 @@ const router = new VueRouter({
           },
         },
         {
+          path: 'phong-ban/:department_id',
+          name: 'department-detail',
+          component: require('../views/DepartmentDetail.vue').default,
+          meta: {
+            auth: true,
+            title: 'Chi tiết phòng ban'
+          },
+        },
+        {
           path: 'ca-nhan',
           name: 'profile',
           component: require('../views/Profile.vue').default,
@@ -76,6 +85,15 @@ const router = new VueRouter({
             auth: true,
             title: 'Trang cá nhân'
           }
+        },
+        {
+          path: 'nhan',
+          name: 'label',
+          component: require('../views/Label.vue').default,
+          meta: {
+            auth: true,
+            title: 'Nhãn'
+          },
         },
       ]
     },

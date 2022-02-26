@@ -8,6 +8,8 @@ use App\Http\Functions;
 use App\Model\Department;
 use App\Model\DepartmentUser;
 use App\Model\DepartmentTask;
+use App\Model\User;
+use App\Http\Resources\UserResource;
 use App\Http\Resources\DepartmentResource;
 
 class DepartmentController extends Controller
@@ -35,13 +37,13 @@ class DepartmentController extends Controller
         $department = $request->department;
         $db = Department::select('*');
         
-        if (!empty($department)) {
+        if (!empty($department)) { // Tìm theo tên phòng ban
             $db->whereRaw('name LIKE "%' . $department . '%"');
         }
 
-        if ($leader_id > 0) {
+        if ($leader_id > 0) { // Danh sách tìm theo leader
             $department_user = DepartmentUser::where('user_id', $leader_id)
-                ->where('leader', 1)->get();
+                ->where('leader', 1)->where('active', 1)->get();
             $arr = [];
             foreach($department_user as $_de_user) {
                 $arr[] = $_de_user['department_id'];
@@ -50,7 +52,7 @@ class DepartmentController extends Controller
         }
 
         if ($this->isUser() || $this->isManager()) {
-            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->latest('id')->first();
             if ($department_user) {
                 $db->where('id', $department_user->department_id);
             } else {
@@ -75,8 +77,6 @@ class DepartmentController extends Controller
             return $this->error('Tên phòng ban là bắt buộc');
         } else if ($created_by <= 0) {
             return $this->error('Vui lòng thử lại');
-        } else if (empty($members)) {
-            return $this->error('Vui lòng chọn thành viên nhóm');
         }
 
         $department = Department::create([
@@ -88,19 +88,23 @@ class DepartmentController extends Controller
         DepartmentUser::create([
             'user_id' => $leader,
             'department_id' => $department->id,
-            'leader' => 1
+            'leader' => 1,
+            'active' => 1
         ]);
 
-        foreach($members as $_member) {
-            $department_user_count = DepartmentUser::where('user_id', $_member)->count();
-            if ($department_user_count > 0) {
-                return $this->error('Thành viên đã có phòng ban');
+        if ($members) {
+            foreach($members as $_member) {
+                $department_user_count = DepartmentUser::where('user_id', $_member)->count();
+                if ($department_user_count > 0) {
+                    return $this->error('Thành viên đã có phòng ban');
+                }
+                DepartmentUser::create([
+                    'user_id' => $_member,
+                    'department_id' => $department->id,
+                    'leader' => 0,
+                    'active' => 0
+                ]);
             }
-            DepartmentUser::create([
-                'user_id' => $_member,
-                'department_id' => $department->id,
-                'leader' => 0
-            ]);
         }
 
         return $this->success('Tạo phòng ban thành công', $request);
@@ -110,59 +114,73 @@ class DepartmentController extends Controller
      * Cập nhật phòng ban
      */
     public function update(Request $request) {
-        $name = $request->name;
-        $created_by = $request->created_by;
         $leader = $request->leader;
-        $members = $request->members;
         $id = $request->id;
+        $new_members = $request->members;
 
         $department_update = Department::find($id);
-        $members_update = DepartmentUser::where('department_id', $id)
-            ->where('leader', 0)->get();
-
-        if (!$department_update) return $this->error('Phòng ban này không tồn tại. Vui lòng thử lại');
-
-        if (!$name) return $this->error('Tên phòng ban là bắt buộc');
+        if (!$department_update) return $this->error('Phòng ban không tồn tại.');
 
         if (!$leader) return $this->error('Trưởng phòng ban là bắt buộc');
 
-        if (count($members) == 0) return $this->error('Thành viên là bắt buộc');
-
         /* Trưởng phòng */
         $old_leader = DepartmentUser::where('department_id', $id)
-            ->where('leader', 1)->first();
-        $old_leader->update([
-            'user_id' => $leader
-        ]);
+            ->where('leader', 1)->where('active', 1)->first();
 
-        // Xóa thành viên bị xóa ra khỏi phòng ban
-        foreach($members_update as $_mem) {
-            if (!in_array($_mem->user_id, $members)) {
-                DepartmentUser::find($_mem->id)->delete();
+        if ($old_leader->user_id != $leader) {
+            $old_leader->update([
+                'active' => 0
+            ]); 
+
+            // Tạo department_user cho trưởng phòng mới
+            DepartmentUser::create([
+                'user_id' => $leader,
+                'active' => 1,
+                'department_id' => $id,
+                'leader' => 1   
+            ]);
+        }
+
+        if ($new_members) {
+            foreach ($new_members as $_member) {
+                $user_check = User::find($_member);
+                if ($user_check) {
+                    DepartmentUser::create([
+                        'user_id' => $_member,
+                        'active' => 0,
+                        'department_id' => $id
+                    ]);
+                }
             }
         }
 
-        $members_update = DepartmentUser::where('department_id', $id)
-            ->where('leader', 0)->get();
+        return $this->success('Cập nhật phòng ban thành công');
+    }
 
-        $members_user_id = array();
-        foreach($members_update as $_mem) { 
-            $members_user_id[] = $_mem->user_id;
-        }
 
-        foreach($members as $_mem) {
-            if (!in_array($_mem, $members_user_id)) {
+    /**
+     * Thêm thành viên mới
+     */
+    public function addNewMember(Request $request, $department_id) {
+        $department = Department::find($department_id);
+        if (!$department) return $this->error('Phòng ban không tồn tại');
+
+        $new_members = $request->new_members;
+        if (!$new_members)
+            return $this->error('Thành viên mới là bắt buộc');
+
+        foreach ($new_members as $_new_member) {
+            $user_check = User::find($_new_member);
+            if ($user_check) {
                 DepartmentUser::create([
-                    'user_id' => $_mem,
-                    'department_id' => $id,
-                    'leader' => 0
+                    'user_id' => $_new_member,  
+                    'active' => 0,
+                    'department_id' => $department_id
                 ]);
             }
         }
 
-        Department::find($id)->update(['name' => $name]);
-
-        return $this->success('Cập nhật phòng ban thành công');
+        return $this->success('Thêm thành viên mới thành công', []);
     }
 
 
@@ -176,7 +194,7 @@ class DepartmentController extends Controller
         }
         $department_task = DepartmentTask::where('department_id', $request->id)->count();
         if ($department_task > 0) {
-            return $this->error('Phòng ban đã có dữ liệu không được xóa');
+            return $this->error('Phòng ban đã được phân công công việc. Không được xóa');
         }
 
         // Xóa các thành viên trong phòng ban
@@ -198,5 +216,54 @@ class DepartmentController extends Controller
 
         $department = Department::where('name', 'LIKE', '%' . $keyword . '%')->get();
         return $this->success('Danh sách tìm kiếm phòng ban', $department);
+    }
+
+    /**
+     * Danh sách thành viên
+     */
+    public function members(Request $request, $department_id) {
+        $department = Department::find($department_id);
+        if (!$department) return $this->error('Phòng ban không tồn tại');
+
+        $department_user = DepartmentUser::where('department_id', $department_id);
+        $ids = [];
+        $data = [
+            'list' => [],
+            'leader' => 0
+        ];
+
+        if ($department_user->count()) {
+            foreach ($department_user->get() as $_department_user) {
+                if (($_department_user->leader = 1 && $_department_user->active == 1) || $_department_user->leader == 0) {
+                    $ids[] = $_department_user->user_id;
+                    if ($_department_user->leader) {
+                        $data['leader'] = $_department_user->user_id;
+                    }
+                }
+            }
+        }
+
+        $users = User::select('*');
+        $users->whereIn('id', $ids);
+        if ($request->keyword) {
+            $users->whereRaw('(username LIKE "%' . $request->keyword . '%" OR fullname LIKE "%' . $request->keyword . '%")');
+        }
+
+        $list = UserResource::collection($users->orderby('id', 'desc')->get())->response()->getData();
+        $data['list'] = $list;
+        
+        return $this->success('Danh sách thành viên phòng ban', $data);
+    }
+
+    /**
+     * Lấy thông tin phòng ban
+     */
+    public function getInfoDepartment(Request $request, $department_id) {
+        $department = Department::find($department_id);
+
+        if (!$department)
+            return $this->error('Phòng ban không tồn tại');
+        
+        return $this->success('Thông tin phòng ban', $department);
     }
 }

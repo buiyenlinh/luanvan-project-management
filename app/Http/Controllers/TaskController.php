@@ -56,7 +56,7 @@ class TaskController extends Controller
             }
         }
 
-        if ($this->isUser()) {
+        if ($this->isUser()) { // Là user thì trả về task mà user có job thuộc
             $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
             if ($department_user) {
                 $task_ids = array();
@@ -410,7 +410,7 @@ class TaskController extends Controller
                 if ($department_user_job) {
                     $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $department_user_job->id)->latest('id')->first();
                     if ($department_user_job_status && $department_user_job_status->status != 3) {
-                        return $this->error('Nhiệm vụ "' . $_job->name . '" của công việc này chưa được duyệt hoàn thành');
+                        return $this->error('Công việc này còn nhiệm vụ chưa được duyệt hoàn thành');
                     }
                 }
             }

@@ -41,13 +41,17 @@ Route::middleware('is-token')->group(function() {
     Route::post('add', 'DepartmentController@create');
     Route::post('update', 'DepartmentController@update');
     Route::delete('delete/{id}', 'DepartmentController@delete');
-    Route::post('search', 'DepartmentController@searchDepartment');
+    Route::post('search', 'DepartmentController@searchDepartment')->withoutMiddleware('check-role:1|2');
+
+    Route::post('detail/{department_id}', 'DepartmentController@members')->withoutMiddleware('check-role:1|2');
+    Route::get('info/{department_id}', 'DepartmentController@getInfoDepartment')->withoutMiddleware('check-role:1|2');
+    Route::post('add-member/{department_id}', 'DepartmentController@addNewMember')->withoutMiddleware('check-role:1|2');
   });
 
   Route::prefix('project/{id}')->group(function(){
     Route::prefix('task')->middleware('check-role:1|2|3')->group(function() {
       Route::get('list', 'TaskController@taskInProject')->withoutMiddleware('check-role:1|2|3');
-      Route::post('search', 'TaskController@searchTaskName');
+      Route::post('search', 'TaskController@searchTaskName')->withoutMiddleware('check-role:1|2|3');
       Route::post('add', 'TaskController@add');
       Route::post('update', 'TaskController@update');
       Route::delete('delete/{id_task}', 'TaskController@delete');
@@ -77,7 +81,10 @@ Route::middleware('is-token')->group(function() {
   });
 
   Route::prefix('label')->middleware('check-role:1|2')->group(function() {
-    Route::post('search', 'LabelController@searchLabel');
+    Route::post('search', 'LabelController@searchLabel')->withoutMiddleware('check-role:1|2');
+    Route::get('list', 'LabelController@getList');
+    Route::post('add', 'LabelController@add');
+    Route::post('update/{id}', 'LabelController@update');
   });
 
   Route::prefix('/role')->group(function() {

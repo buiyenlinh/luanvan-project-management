@@ -2288,7 +2288,15 @@ __webpack_require__.r(__webpack_exports__);
       error: null,
       reset_select_comp: false,
       members_show: [],
-      text_select_leader: '-- Tìm họ tên hoặc tên đăng nhập --',
+      members_id: [],
+      select_leader: {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: false
+      },
+      select_members: {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: false
+      },
       loading_update_add: false,
       loading_delete: false,
       _leader: null
@@ -2335,28 +2343,21 @@ __webpack_require__.r(__webpack_exports__);
     getDepartment: function getDepartment(_department) {
       this.department = _.clone(_department);
       this.department.leader = _department.leader.id;
-      this.text_select_leader = _department.leader.fullname || _department.leader.username;
-      this.members_show = _.clone(_department.members);
+      this.select_leader.text = _department.leader.fullname || _department.leader.username;
       this._leader = _.clone(_department.leader);
     },
     onSubmit: function onSubmit() {
       var _this2 = this;
 
       this.checkName();
-      this.checkMember();
       this.checkLeader();
 
-      if (this.department.name != '' && this.error.members == '' && this.error.leader == '') {
+      if (this.department.name != '' && this.error.leader == '') {
         this.loading_update_add = true;
-        var arr = [];
-
-        for (var i in this.members_show) {
-          arr.push(this.members_show[i]['id']);
-        }
-
-        this.department.members = arr;
 
         if (this.department.id != null) {
+          // Cập nhật
+          this.department.members = this.members_id;
           this.$root.api.post('department/update', this.department).then(function (res) {
             if (res.data.status == 'OK') {
               _this2.$notify(res.data.message, 'success');
@@ -2375,6 +2376,8 @@ __webpack_require__.r(__webpack_exports__);
             _this2.loading_update_add = false;
           });
         } else {
+          // Thêm
+          this.department.members = this.members_id;
           this.department.created_by = this.$root.auth.id;
           this.$root.api.post('department/add', this.department).then(function (res) {
             if (res.data.status == 'OK') {
@@ -2409,14 +2412,21 @@ __webpack_require__.r(__webpack_exports__);
       };
       this.error = {
         name: '',
-        members: '',
         created_by: '',
-        leader: ''
+        leader: '',
+        members: ''
+      };
+      this.select_members = {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: !this.select_members.status
+      };
+      this.select_leader = {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: !this.select_leader.status
       };
       this.text_select = '-- Tìm người tạo --';
-      this.reset_select_comp = !this.reset_select_comp;
       this.members_show = [];
-      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.members_id = [];
       setTimeout(function () {
         _this3.validate_form = true;
       }, 300);
@@ -2426,13 +2436,6 @@ __webpack_require__.r(__webpack_exports__);
         this.error.name = 'Tên dự án là bắt buộc';
       } else {
         this.error.name = '';
-      }
-    },
-    checkMember: function checkMember() {
-      if (this.members_show.length == 0) {
-        this.error.members = 'Thành viên là bắt buộc';
-      } else {
-        this.error.members = '';
       }
     },
     checkLeader: function checkLeader() {
@@ -2447,33 +2450,40 @@ __webpack_require__.r(__webpack_exports__);
     getMember: function getMember(_member) {
       if (this.department.leader == _member.id) {
         this.error.members = 'Thành viên này đã được chọn làm trưởng phòng ban';
-      } else if (!this.members_show.includes(_member.id)) {
-        this.error.members = '';
+        this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+        this.select_members.status = !this.select_members.status;
+      } else if (!this.members_id.includes(_member.id)) {
+        this.members_id.push(_member.id);
         this.members_show.push(_member);
+        this.error.members = '';
       }
     },
     getLeader: function getLeader(_leader) {
       this._leader = _.clone(_leader);
-      var check = false;
 
-      for (var i in this.members_show) {
-        if (_leader.id == this.members_show[i]['id']) {
-          this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
-          check = true;
-        }
-      }
-
-      if (!check) {
+      if (!this.members_id.includes(_leader.id)) {
         this.department.leader = _leader.id;
         this.error.leader = '';
+      } else {
+        this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
+        this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+        this.select_leader.status = !this.select_leader.status;
       }
     },
     removeLeader: function removeLeader() {
+      if (this.error.members == 'Thành viên này đã được chọn làm trưởng phòng ban') {
+        this.error.members = '';
+      }
+
       this.department.leader = null;
-      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_leader.status = !this.select_leader.status;
     },
-    removeMember: function removeMember(_index) {
+    removeNewMember: function removeNewMember(_index) {
       this.members_show.splice(_index, 1);
+      this.members_id.splice(_index, 1);
+      this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_members.status = !this.select_members.status;
       this.getLeader(this._leader);
     },
     onSubmitDelete: function onSubmitDelete() {
@@ -2511,13 +2521,6 @@ __webpack_require__.r(__webpack_exports__);
 
       this.checkName();
     },
-    'members_show': function members_show() {
-      if (!this.validate_form) {
-        return;
-      }
-
-      this.checkMember();
-    },
     'department.leader': function departmentLeader() {
       if (!this.validate_form) {
         return;
@@ -2534,6 +2537,181 @@ __webpack_require__.r(__webpack_exports__);
       _this5.handleCloseModal();
     });
     this.getList();
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js&":
+/*!**********************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js& ***!
+  \**********************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      text_search: '',
+      loading_list: false,
+      list: null,
+      department: '',
+      user: null,
+      select_member: {
+        text: '--- Tìm họ tên hoặc tên đăng nhập',
+        status: false,
+        user_id: [],
+        error_user_id: '',
+        user_id_show: []
+      },
+      validate_form: false,
+      loading_add_new_member: false
+    };
+  },
+  methods: {
+    getList: function getList() {
+      var _this = this;
+
+      this.loading_list = true;
+      this.$root.api.post("department/detail/".concat(this.department_id), {
+        'keyword': this.text_search
+      }).then(function (res) {
+        _this.loading_list = false;
+
+        if (res.data.status == "OK") {
+          _this.list = res.data.data; // Kiểm tra user login có thuộc phòng ban này không
+
+          var ids = [];
+
+          for (var i in res.data.data.list.data) {
+            ids.push(res.data.data.list.data[i].id);
+          }
+
+          if (!ids.includes(_this.$root.auth.id) && !_this.$root.isAdmin()) {
+            _this.$router.replace({
+              name: 'department'
+            });
+
+            _this.$root.$notify('Bạn không thuộc phòng ban này', 'error');
+          }
+        } else {
+          _this.$root.$notify(res.data.error, 'error');
+        }
+      })["catch"](function (err) {
+        _this.$root.$notify(err, 'error');
+
+        _this.loading_list = false;
+      });
+    },
+    getDepartment: function getDepartment() {
+      var _this2 = this;
+
+      this.$root.api.get("department/info/".concat(this.department_id)).then(function (res) {
+        if (res.data.status == "OK") {
+          _this2.department = res.data.data;
+        } else {
+          _this2.$router.replace({
+            name: 'department'
+          });
+        }
+      })["catch"](function (err) {
+        _this2.$router.replace({
+          name: 'department'
+        });
+
+        _this2.$root.$notify(err, 'error');
+      });
+    },
+    handleCloseModal: function handleCloseModal() {
+      var _this3 = this;
+
+      this.validate_form = false;
+      this.user = {
+        fullname: '',
+        username: '',
+        avatar: '',
+        active: '',
+        birthday: ''
+      };
+      this.select_member.user_id = [];
+      this.select_member = {
+        text: '--- Tìm họ tên hoặc tên đăng nhập',
+        status: !this.select_member.status,
+        user_id: [],
+        error_user_id: '',
+        user_id_show: []
+      };
+      setTimeout(function () {
+        _this3.validate_form = true;
+      }, 300);
+    },
+    getInfoUser: function getInfoUser(_user) {
+      this.user = _user;
+    },
+    getNewMemberInDepartment: function getNewMemberInDepartment(_user) {
+      this.select_member.user_id.push(_user.id);
+      this.select_member.user_id_show.push(_user);
+    },
+    removeNewMember: function removeNewMember(_index) {
+      this.select_member.user_id.splice(_index, 1);
+      this.select_member.user_id_show.splice(_index, 1);
+    },
+    checkNewMember: function checkNewMember() {
+      if (this.select_member.user_id.length == 0) {
+        this.select_member.error_user_id = 'Thành viên là bắt buộc';
+      } else {
+        this.select_member.error_user_id = '';
+      }
+    },
+    handleAddMember: function handleAddMember() {
+      var _this4 = this;
+
+      this.checkNewMember();
+      this.loading_add_new_member = true;
+
+      if (this.select_member.error_user_id == '') {
+        this.$root.api.post("department/add-member/".concat(this.department_id), {
+          new_members: this.select_member.user_id
+        }).then(function (res) {
+          _this4.loading_add_new_member = false;
+
+          if (res.data.status == 'OK') {
+            _this4.$notify(res.data.message, 'success');
+
+            _this4.getList();
+
+            $('#department_detail_modal_add').modal('hide');
+          } else {
+            _this4.$alert(res.data.error, '', 'error');
+          }
+        })["catch"](function (err) {
+          _this4.$root.showError(err);
+
+          _this4.loading_add_new_member = false;
+        });
+      }
+    }
+  },
+  created: function created() {
+    this.handleCloseModal();
+  },
+  mounted: function mounted() {
+    var _this5 = this;
+
+    this.department_id = this.$route.params.department_id;
+    $(document).on('hidden.bs.modal', '#department_detail_info, #department_detail_modal_add', function () {
+      _this5.handleCloseModal();
+    });
+    this.getDepartment();
+    this.getList();
+  },
+  watch: {
+    'select_member.user_id': function select_memberUser_id() {
+      if (!this.validate_form) return;
+      this.checkNewMember();
+    }
   }
 });
 
@@ -2620,6 +2798,11 @@ __webpack_require__.r(__webpack_exports__);
           link: "user",
           icon: "fas fa-users"
         });
+        this.menu.push({
+          label: 'Nhãn',
+          link: "label",
+          icon: "fas fa-tags"
+        });
       }
 
       this.menu.push({
@@ -2656,9 +2839,13 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
-    return {
+    var _ref;
+
+    return _ref = {
       job: null,
       list: [],
       search: '',
@@ -2697,7 +2884,13 @@ __webpack_require__.r(__webpack_exports__);
       reason_not_approval_refuse: '',
       reason_not_approval_refuse_error: '',
       loading_not_approval_refuse_job: ''
-    };
+    }, _defineProperty(_ref, "select_user", {
+      text: '--- Tìm tên hoặc tên đăng nhập ---',
+      status: false
+    }), _defineProperty(_ref, "select_pre_job", {
+      text: '--- Tìm tên nhiệm vụ ---',
+      status: false
+    }), _ref;
   },
   methods: {
     getList: function getList() {
@@ -2730,7 +2923,12 @@ __webpack_require__.r(__webpack_exports__);
         if (res.data.status == "OK") {
           _this2.info = res.data.data;
         } else {
-          _this2.$root.showError(res.data.error);
+          _this2.$router.replace({
+            name: 'task',
+            params: {
+              'id': _this2.params.project_id
+            }
+          });
         }
       })["catch"](function (err) {
         _this2.loading_info = false;
@@ -2773,11 +2971,11 @@ __webpack_require__.r(__webpack_exports__);
       };
       this.select_user = {
         text: '--- Tìm tên hoặc tên đăng nhập ---',
-        status: false
+        status: !this.select_user.status
       };
       this.select_pre_job = {
         text: '--- Tìm tên nhiệm vụ ---',
-        status: false
+        status: !this.select_pre_job.status
       };
       this.reason = '';
       this.reason_not_approval = '';
@@ -2938,6 +3136,7 @@ __webpack_require__.r(__webpack_exports__);
       this.file.show = _file.target.files[0].name;
     },
     removeFile: function removeFile() {
+      $('#job_file').val('');
       this.file.show = '';
       this.job.file = '';
     },
@@ -3232,6 +3431,190 @@ __webpack_require__.r(__webpack_exports__);
     'reason_not_approval_refuse': function reason_not_approval_refuse() {
       if (!this.validate_form) return;
       this.checkReasonNotApprovalRefuse();
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Label.vue?vue&type=script&lang=js&":
+/*!***********************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Label.vue?vue&type=script&lang=js& ***!
+  \***********************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      search_name: '',
+      loading_get_list: false,
+      list: '',
+      current_page: 1,
+      last_page: 1,
+      label: null,
+      form_validate: false,
+      error_name: '',
+      loading_add_update: false,
+      file_show: {
+        name: '',
+        url: ''
+      }
+    };
+  },
+  methods: {
+    getList: function getList() {
+      var _this = this;
+
+      this.loading_get_list = true;
+      this.$root.api.get("label/list", {
+        params: {
+          page: this.current_page,
+          keyword: this.search_name
+        }
+      }).then(function (res) {
+        _this.loading_get_list = false;
+
+        if (res.data.status == "OK") {
+          _this.list = res.data.data;
+          _this.last_page = res.data.data.meta.last_page;
+
+          if (_this.current_page > 1 && !_this.list.data.length) {
+            _this.$router.replace({
+              name: 'label',
+              query: {
+                page: _this.current_page - 1
+              }
+            });
+
+            _this.changePage(_this.current_page - 1);
+          }
+        }
+      })["catch"](function (err) {
+        _this.$root.showError(err);
+
+        _this.loading_get_list = false;
+      });
+    },
+    changePage: function changePage(_page) {
+      this.current_page = _page;
+      this.getList();
+    },
+    handleCloseModal: function handleCloseModal() {
+      var _this2 = this;
+
+      this.form_validate = true;
+      this.label = {
+        name: '',
+        describe: '',
+        file: '',
+        active: 1
+      };
+      this.file_show = {
+        name: '',
+        url: ''
+      };
+      this.error_name = '';
+      setTimeout(function () {
+        _this2.form_validate = false;
+      }, 300);
+    },
+    getInfoLabel: function getInfoLabel(_label) {
+      this.label = _.clone(_label);
+      this.file_show.name = 'Xem tệp';
+      this.file_show.url = _label.file;
+    },
+    handleGetFile: function handleGetFile(_file) {
+      this.label.file = _file.target.files[0];
+      this.file_show.name = _file.target.files[0].name;
+      this.file_show.url = URL.createObjectURL(_file.target.files[0]);
+    },
+    onSubmit: function onSubmit() {
+      var _this3 = this;
+
+      this.checkName();
+
+      if (this.label.name != '') {
+        this.loading_add_update = true;
+        var formData = new FormData();
+        formData.append('name', this.label.name);
+        formData.append('describe', this.label.describe);
+        formData.append('file', this.label.file);
+        formData.append('active', this.label.active);
+
+        if (this.label.id > 0) {
+          // Cập nhật nhãn
+          this.$root.api.post("label/update/".concat(this.label.id), formData).then(function (res) {
+            _this3.loading_add_update = false;
+
+            if (res.data.status == "OK") {
+              _this3.$root.notify(res.data.message, 'success');
+
+              _this3.getList();
+
+              $('#label_add_update').modal('hide');
+            } else {
+              _this3.$root.showError(res.data.error);
+            }
+          })["catch"](function (err) {
+            _this3.$root.showError(err);
+
+            _this3.loading_add_update = false;
+          });
+        } else {
+          // Thêm nhãn
+          this.$root.api.post('label/add', formData).then(function (res) {
+            _this3.loading_add_update = false;
+
+            if (res.data.status == "OK") {
+              _this3.$root.notify(res.data.message, 'success');
+
+              _this3.getList();
+
+              $('#label_add_update').modal('hide');
+            } else {
+              _this3.$root.showError(res.data.error);
+            }
+          })["catch"](function (err) {
+            _this3.$root.showError(err);
+
+            _this3.loading_add_update = false;
+          });
+        }
+      }
+    },
+    checkName: function checkName() {
+      if (this.label.name == '') {
+        this.error_name = 'Tên nhãn là bắt buộc';
+      } else {
+        this.error_name = '';
+      }
+    }
+  },
+  created: function created() {
+    this.handleCloseModal();
+  },
+  mounted: function mounted() {
+    var _this4 = this;
+
+    if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
+      this.$router.replace({
+        name: 'dashboard'
+      });
+    }
+
+    this.current_page = 1;
+    $(document).on('hidden.bs.modal', '#label_details, #label_add_update', function () {
+      _this4.handleCloseModal();
+    });
+    this.getList();
+  },
+  watch: {
+    'label.name': function labelName() {
+      if (this.form_validate) return;
+      this.checkName();
     }
   }
 });
@@ -3580,15 +3963,21 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     checkStartTime: function checkStartTime() {
       if (this.project.start_time == '') {
         this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
+      } else if (this.project.end_time && this.project.start_time > this.project.end_time) {
+        this.error.start_time = 'Thời gian bắt đầu phải trước thời gian kết thúc';
       } else {
         this.error.start_time = '';
+        if (this.error.end_time == 'Thời gian kết thúc phải sau thời gian bắt đầu') this.error.end_time = '';
       }
     },
     checkEndTime: function checkEndTime() {
       if (this.project.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
+      } else if (this.project.start_time && this.project.start_time > this.project.end_time) {
+        this.error.end_time = 'Thời gian kết thúc phải sau thời gian bắt đầu';
       } else {
         this.error.end_time = '';
+        if (this.error.start_time == 'Thời gian bắt đầu phải trước thời gian kết thúc') this.error.start_time = '';
       }
     },
     checkManager: function checkManager() {
@@ -3706,6 +4095,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     },
     removeFile: function removeFile() {
+      $('#project_file').val('');
       this.file_show = '';
       this.project.file = '';
     },
@@ -3864,7 +4254,7 @@ __webpack_require__.r(__webpack_exports__);
         if (res.data.status == "OK") {
           _this.list = res.data.data.data;
         } else {
-          _this.$root.showError(res.data.error);
+          _this.$root.$notify(res.data.error, 'error');
         }
       })["catch"](function (err) {
         _this.$root.showError(err);
@@ -4072,6 +4462,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     },
     removeFile: function removeFile() {
+      $('#task_file').val('');
       this.file_show = '';
       this.task.file = '';
     },
@@ -4159,10 +4550,14 @@ __webpack_require__.r(__webpack_exports__);
         if (res.data.status == 'OK') {
           _this6.project = res.data.data;
         } else {
-          _this6.$root.showError(res.data.error);
+          _this6.$root.$notify(res.data.error, 'error');
+
+          _this6.$router.replace({
+            name: 'project'
+          });
         }
       })["catch"](function (err) {
-        _this6.$root.showError(err);
+        _this6.$root.$notify(res.data.error, 'error');
       });
     },
     getTaskUpdate: function getTaskUpdate(_task) {
@@ -4292,8 +4687,8 @@ __webpack_require__.r(__webpack_exports__);
     var _this11 = this;
 
     this.project_id = this.$route.params.id;
-    this.getList();
     this.getProject();
+    this.getList();
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete, #task_modal_details, #task_modal_finish, #task_modal_not_approval_finish', function () {
       _this11.closeModal();
     });
@@ -4624,6 +5019,12 @@ __webpack_require__.r(__webpack_exports__);
   },
   mounted: function mounted() {
     var _this6 = this;
+
+    if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
+      this.$router.replace({
+        name: 'dashboard'
+      });
+    }
 
     this.current_page = parseInt(this.$route.query.page || 1);
     this.getUserList();
@@ -23604,11 +24005,11 @@ var render = function () {
                         "li",
                         {
                           key: index,
-                          staticClass: "col-md-3 col-sm-4 col-12 mb-2",
+                          staticClass: "col-md-3 col-sm-6 col-12 mb-2",
                         },
                         [
                           _c("div", { staticClass: "info bg-fff" }, [
-                            _c("p", [
+                            _c("p", { staticClass: "text-info" }, [
                               _c("i", { staticClass: "fas fa-folder" }),
                               _vm._v("  "),
                               _c("b", [_vm._v(_vm._s(item.name))]),
@@ -23654,69 +24055,116 @@ var render = function () {
                               "ul",
                               {
                                 staticClass:
-                                  "avt-mem d-flex justify-content-start mt-1",
+                                  "avt-mem d-flex justify-content-start mt-1 mb-2",
                               },
-                              _vm._l(item.members, function (mem, _index) {
-                                return _c("li", { key: _index }, [
-                                  _index <= 6
-                                    ? _c("img", {
-                                        attrs: {
-                                          src: mem.avatar
-                                            ? mem.avatar
-                                            : _vm.$root.avatar_default,
-                                          alt: "",
-                                        },
-                                      })
-                                    : _vm._e(),
-                                  _vm._v(" "),
-                                  _index == 7
-                                    ? _c("span", [
-                                        _vm._v(_vm._s(item.members.length)),
-                                      ])
-                                    : _vm._e(),
-                                ])
-                              }),
-                              0
+                              [
+                                _c("li", [
+                                  _c("img", {
+                                    attrs: {
+                                      src: item.leader.avatar
+                                        ? item.leader.avatar
+                                        : _vm.$root.avatar_default,
+                                      alt: "",
+                                    },
+                                  }),
+                                ]),
+                                _vm._v(" "),
+                                _vm._l(item.members, function (mem, _index) {
+                                  return _c("li", { key: _index }, [
+                                    _index <= 6
+                                      ? _c("img", {
+                                          attrs: {
+                                            src: mem.avatar
+                                              ? mem.avatar
+                                              : _vm.$root.avatar_default,
+                                            alt: "",
+                                          },
+                                        })
+                                      : _vm._e(),
+                                    _vm._v(" "),
+                                    _index == 7
+                                      ? _c("span", [
+                                          _vm._v(_vm._s(item.members.length)),
+                                        ])
+                                      : _vm._e(),
+                                  ])
+                                }),
+                              ],
+                              2
                             ),
                             _vm._v(" "),
-                            _vm.$root.isManager()
-                              ? _c("div", { staticClass: "text-right" }, [
-                                  _c(
-                                    "span",
-                                    {
-                                      staticClass: "text-danger",
-                                      attrs: {
-                                        "data-toggle": "modal",
-                                        "data-target":
-                                          "#department_modal_delete",
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.getDepartment(item)
-                                        },
+                            _c(
+                              "div",
+                              { staticClass: "text-right" },
+                              [
+                                _c(
+                                  "router-link",
+                                  {
+                                    attrs: {
+                                      to: {
+                                        name: "department-detail",
+                                        params: { department_id: item.id },
                                       },
                                     },
-                                    [_c("b", [_vm._v("Xóa")])]
-                                  ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "span",
-                                    {
-                                      staticClass: "text-info",
-                                      attrs: {
-                                        "data-toggle": "modal",
-                                        "data-target": "#department_modal_add",
-                                      },
-                                      on: {
-                                        click: function ($event) {
-                                          return _vm.getDepartment(item)
+                                  },
+                                  [
+                                    _c(
+                                      "button",
+                                      {
+                                        staticClass: "btn btn-sm btn-dark",
+                                        attrs: {
+                                          "data-toggle": "modal",
+                                          "data-target":
+                                            "#department_modal_details",
                                         },
                                       },
-                                    },
-                                    [_c("b", [_vm._v("Sửa")])]
-                                  ),
-                                ])
-                              : _vm._e(),
+                                      [_vm._v("Xem")]
+                                    ),
+                                  ]
+                                ),
+                                _vm._v(" "),
+                                _vm.$root.isManager()
+                                  ? [
+                                      _c(
+                                        "button",
+                                        {
+                                          staticClass: "btn btn-info btn-sm",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target":
+                                              "#department_modal_add",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getDepartment(item)
+                                            },
+                                          },
+                                        },
+                                        [_vm._v("Sửa")]
+                                      ),
+                                      _vm._v(" "),
+                                      _c(
+                                        "button",
+                                        {
+                                          staticClass: "btn btn-sm btn-danger",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target":
+                                              "#department_modal_delete",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getDepartment(item)
+                                            },
+                                          },
+                                        },
+                                        [_vm._v("Xóa")]
+                                      ),
+                                    ]
+                                  : _vm._e(),
+                              ],
+                              2
+                            ),
                           ]),
                         ]
                       )
@@ -23766,31 +24214,57 @@ var render = function () {
                         _c("div", { staticClass: "form-group" }, [
                           _vm._m(2),
                           _vm._v(" "),
-                          _c("input", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.department.name,
-                                expression: "department.name",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "text" },
-                            domProps: { value: _vm.department.name },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.department,
-                                  "name",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
+                          _vm.department.id
+                            ? _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.department.name,
+                                    expression: "department.name",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text", disabled: "" },
+                                domProps: { value: _vm.department.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.department,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              })
+                            : _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.department.name,
+                                    expression: "department.name",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text" },
+                                domProps: { value: _vm.department.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.department,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
                           _vm._v(" "),
                           _c(
                             "div",
@@ -23810,9 +24284,9 @@ var render = function () {
                             _c("m-select", {
                               attrs: {
                                 size: "sm",
-                                text: _vm.text_select_leader,
+                                text: _vm.select_leader.text,
                                 url: "user/search-user-not-deparment",
-                                statusReset: _vm.reset_select_comp,
+                                statusReset: _vm.select_leader.status,
                                 variable: {
                                   first: "fullname",
                                   second: "username",
@@ -23844,10 +24318,10 @@ var render = function () {
                             _c("m-select", {
                               attrs: {
                                 size: "sm",
-                                text: "-- Tìm họ tên hoặc tên đăng nhập --",
+                                text: _vm.select_members.text,
                                 show_icon_x: false,
                                 url: "user/search-user-not-deparment",
-                                statusReset: _vm.reset_select_comp,
+                                statusReset: _vm.select_members.status,
                                 variable: {
                                   first: "fullname",
                                   second: "username",
@@ -23865,37 +24339,74 @@ var render = function () {
                             _c("div", { staticClass: "members" }, [
                               _c(
                                 "ul",
-                                _vm._l(
-                                  _vm.members_show,
-                                  function (item, index) {
-                                    return _c("li", { key: index }, [
-                                      _c("img", {
-                                        attrs: {
-                                          src: item.avatar
-                                            ? item.avatar
-                                            : _vm.$root.avatar_default,
-                                          alt: "",
-                                        },
-                                      }),
-                                      _vm._v(
-                                        "\n                        " +
-                                          _vm._s(
-                                            item.fullname || item.username
-                                          ) +
-                                          "\n                        "
-                                      ),
-                                      _c("i", {
-                                        staticClass: "fas fa-times icon-remove",
-                                        on: {
-                                          click: function ($event) {
-                                            return _vm.removeMember(index)
+                                { staticClass: "d-flex flex-wrap" },
+                                [
+                                  _vm._l(
+                                    _vm.department.members,
+                                    function (item, index) {
+                                      return _c("li", { key: index }, [
+                                        _c("img", {
+                                          attrs: {
+                                            src: item.avatar
+                                              ? item.avatar
+                                              : _vm.$root.avatar_default,
+                                            alt: "",
                                           },
+                                        }),
+                                        _vm._v(
+                                          "\n                        " +
+                                            _vm._s(
+                                              item.fullname || item.username
+                                            ) +
+                                            "\n                      "
+                                        ),
+                                      ])
+                                    }
+                                  ),
+                                  _vm._v(" "),
+                                  _vm._l(
+                                    _vm.members_show,
+                                    function (item, index) {
+                                      return _c(
+                                        "li",
+                                        {
+                                          key:
+                                            index +
+                                            _vm.department.members.length,
                                         },
-                                      }),
-                                    ])
-                                  }
-                                ),
-                                0
+                                        [
+                                          _c("img", {
+                                            attrs: {
+                                              src: item.avatar
+                                                ? item.avatar
+                                                : _vm.$root.avatar_default,
+                                              alt: "",
+                                            },
+                                          }),
+                                          _vm._v(
+                                            "\n                        " +
+                                              _vm._s(
+                                                item.fullname || item.username
+                                              ) +
+                                              "\n                        "
+                                          ),
+                                          _c("i", {
+                                            staticClass:
+                                              "fas fa-times icon-remove",
+                                            on: {
+                                              click: function ($event) {
+                                                return _vm.removeNewMember(
+                                                  index
+                                                )
+                                              },
+                                            },
+                                          }),
+                                        ]
+                                      )
+                                    }
+                                  ),
+                                ],
+                                2
                               ),
                             ]),
                           ],
@@ -24068,12 +24579,7 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [
-      _c("b", [
-        _vm._v("Thành viên "),
-        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
-      ]),
-    ])
+    return _c("label", [_c("b", [_vm._v("Thành viên")])])
   },
   function () {
     var _vm = this
@@ -24111,6 +24617,518 @@ var staticRenderFns = [
         },
         [_vm._v("Hủy")]
       ),
+    ])
+  },
+]
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c&":
+/*!**************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c& ***!
+  \**************************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "department-detail" } },
+    [
+      _vm.department
+        ? [
+            _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
+              _c("ol", { staticClass: "breadcrumb" }, [
+                _c(
+                  "li",
+                  { staticClass: "breadcrumb-item" },
+                  [
+                    _c(
+                      "router-link",
+                      { attrs: { to: { name: "department" } } },
+                      [_vm._v("Phòng ban")]
+                    ),
+                  ],
+                  1
+                ),
+                _vm._v(" "),
+                _c(
+                  "li",
+                  {
+                    staticClass: "breadcrumb-item active",
+                    attrs: { "aria-current": "page" },
+                  },
+                  [_vm._v(_vm._s(_vm.department.name))]
+                ),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c(
+              "form",
+              {
+                on: {
+                  submit: function ($event) {
+                    $event.preventDefault()
+                    return _vm.getList.apply(null, arguments)
+                  },
+                },
+              },
+              [
+                _c("div", { staticClass: "row" }, [
+                  _c("div", { staticClass: "col-md-5 col-sm-5 col-8 mb-2" }, [
+                    _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.text_search,
+                          expression: "text_search",
+                        },
+                      ],
+                      staticClass: "form-control form-control-sm",
+                      attrs: { type: "text", placeholder: "Tên thành viên..." },
+                      domProps: { value: _vm.text_search },
+                      on: {
+                        input: function ($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.text_search = $event.target.value
+                        },
+                      },
+                    }),
+                  ]),
+                  _vm._v(" "),
+                  _vm._m(0),
+                  _vm._v(" "),
+                  _vm.$root.isAdmin() ||
+                  (_vm.list && _vm.$root.auth.id == this.list.leader)
+                    ? _c(
+                        "div",
+                        {
+                          staticClass:
+                            "col-md-5 col-sm-12 col-12 text-right mb-2",
+                        },
+                        [
+                          _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-info btn-sm",
+                              attrs: {
+                                type: "button",
+                                "data-toggle": "modal",
+                                "data-target": "#department_detail_modal_add",
+                              },
+                            },
+                            [_vm._v("Thêm")]
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                ]),
+              ]
+            ),
+            _vm._v(" "),
+            _c("div", { staticClass: "list" }, [
+              _c("div", { staticClass: "card" }, [
+                _c("div", { staticClass: "card-header bg-info text-white" }, [
+                  _vm._v("Danh sách thành viên"),
+                ]),
+                _vm._v(" "),
+                _c("div", { staticClass: "table-responsive" }, [
+                  _c(
+                    "table",
+                    { staticClass: "table table-bordered table-stripped mb-0" },
+                    [
+                      _vm._m(1),
+                      _vm._v(" "),
+                      _c(
+                        "tbody",
+                        [
+                          _vm.loading_list
+                            ? _c("tr", [
+                                _c(
+                                  "td",
+                                  {
+                                    attrs: { colspan: "1000", align: "center" },
+                                  },
+                                  [_c("m-spinner")],
+                                  1
+                                ),
+                              ])
+                            : _vm.list && _vm.list.list.data.length > 0
+                            ? _vm._l(
+                                _vm.list.list.data,
+                                function (item, index) {
+                                  return _c("tr", { key: index }, [
+                                    _c("td", [_vm._v(_vm._s(index + 1))]),
+                                    _vm._v(" "),
+                                    _c("td", [
+                                      _vm._v(
+                                        _vm._s(item.fullname || item.username)
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("td", [
+                                      _vm.list && _vm.list.leader == item.id
+                                        ? _c(
+                                            "span",
+                                            {
+                                              staticClass:
+                                                "badge badge-success",
+                                            },
+                                            [_vm._v("Trưởng phòng")]
+                                          )
+                                        : _c(
+                                            "span",
+                                            { staticClass: "badge badge-info" },
+                                            [_vm._v("thành viên")]
+                                          ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c(
+                                      "td",
+                                      { staticStyle: { "font-size": "13px" } },
+                                      [_vm._v(_vm._s(item.created_at))]
+                                    ),
+                                    _vm._v(" "),
+                                    _c("td", [
+                                      _c(
+                                        "button",
+                                        {
+                                          staticClass: "btn btn-sm btn-dark",
+                                          attrs: {
+                                            "data-toggle": "modal",
+                                            "data-target":
+                                              "#department_detail_info",
+                                          },
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.getInfoUser(item)
+                                            },
+                                          },
+                                        },
+                                        [_vm._v("Thông tin")]
+                                      ),
+                                    ]),
+                                  ])
+                                }
+                              )
+                            : _c("tr", [
+                                _c(
+                                  "td",
+                                  {
+                                    attrs: { colspan: "1000", align: "center" },
+                                  },
+                                  [_vm._v("Không có thành viên")]
+                                ),
+                              ]),
+                        ],
+                        2
+                      ),
+                    ]
+                  ),
+                ]),
+              ]),
+            ]),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass: "modal fade",
+                attrs: { id: "department_detail_info" },
+              },
+              [
+                _c(
+                  "div",
+                  { staticClass: "modal-dialog modal-dialog-scrollable" },
+                  [
+                    _c("div", { staticClass: "modal-content" }, [
+                      _vm._m(2),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "modal-body text-center" }, [
+                        _c("div", [
+                          _vm.user.avatar
+                            ? _c("img", {
+                                staticStyle: {
+                                  width: "170px",
+                                  height: "170px",
+                                },
+                                attrs: { src: _vm.user.avatar, alt: "" },
+                              })
+                            : _c("img", {
+                                staticStyle: {
+                                  width: "170px",
+                                  height: "170px",
+                                },
+                                attrs: {
+                                  src: _vm.$root.avatar_default,
+                                  alt: "",
+                                },
+                              }),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "form-group" }, [
+                          _c("b", [
+                            _vm._v(
+                              _vm._s(_vm.user.fullname || _vm.user.username)
+                            ),
+                          ]),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "form-group" }, [
+                          _vm._v(_vm._s(_vm.user.birthday)),
+                        ]),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "form-group" }, [
+                          _c("b", [_vm._v("Trạng thái tài khoản")]),
+                          _c("br"),
+                          _vm._v(" "),
+                          _c(
+                            "span",
+                            {
+                              class: [
+                                "badge",
+                                _vm.user.active
+                                  ? "badge-success"
+                                  : "badge-danger",
+                              ],
+                            },
+                            [
+                              _vm._v(
+                                _vm._s(_vm.user.active ? "Kích hoạt" : "Khóa")
+                              ),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _vm._m(3),
+                    ]),
+                  ]
+                ),
+              ]
+            ),
+            _vm._v(" "),
+            _c(
+              "div",
+              {
+                staticClass: "modal fade",
+                attrs: { id: "department_detail_modal_add" },
+              },
+              [
+                _c("div", { staticClass: "modal-dialog" }, [
+                  _c("div", { staticClass: "modal-content" }, [
+                    _vm._m(4),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "modal-body mb-3" }, [
+                      _c(
+                        "div",
+                        { staticClass: "form-group" },
+                        [
+                          _vm._m(5),
+                          _vm._v(" "),
+                          _c("m-select", {
+                            attrs: {
+                              size: "sm",
+                              text: _vm.select_member.text,
+                              show_icon_x: false,
+                              url: "user/search-user-not-deparment",
+                              statusReset: _vm.select_member.status,
+                              variable: {
+                                first: "fullname",
+                                second: "username",
+                              },
+                            },
+                            on: { changeValue: _vm.getNewMemberInDepartment },
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "text-danger font-italic error" },
+                            [_vm._v(_vm._s(_vm.select_member.error_user_id))]
+                          ),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "new-members" }, [
+                            _vm.select_member
+                              ? _c(
+                                  "ul",
+                                  { staticClass: "d-flex flex-wrap" },
+                                  _vm._l(
+                                    _vm.select_member.user_id_show,
+                                    function (item, index) {
+                                      return _c("li", { key: index }, [
+                                        _c("img", {
+                                          attrs: {
+                                            src: item.avatar
+                                              ? item.avatar
+                                              : _vm.$root.avatar_default,
+                                            alt: "",
+                                          },
+                                        }),
+                                        _vm._v(
+                                          "\n                    " +
+                                            _vm._s(
+                                              item.fullname || item.username
+                                            ) +
+                                            "\n                    "
+                                        ),
+                                        _c("i", {
+                                          staticClass:
+                                            "fas fa-times icon-remove",
+                                          on: {
+                                            click: function ($event) {
+                                              return _vm.removeNewMember(index)
+                                            },
+                                          },
+                                        }),
+                                      ])
+                                    }
+                                  ),
+                                  0
+                                )
+                              : _vm._e(),
+                          ]),
+                        ],
+                        1
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "modal-footer" }, [
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-info btn-sm",
+                          attrs: { type: "button" },
+                          on: { click: _vm.handleAddMember },
+                        },
+                        [_vm._v("Thêm thành viên")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-secondary btn-sm",
+                          attrs: { type: "button", "data-dismiss": "modal" },
+                        },
+                        [_vm._v("Đóng")]
+                      ),
+                    ]),
+                  ]),
+                ]),
+              ]
+            ),
+          ]
+        : _c("m-spinner", { staticClass: "mb-2" }),
+      _vm._v(" "),
+      _vm.loading_add_new_member
+        ? _c("m-loading", {
+            attrs: { title: "Đang thêm thành viên", full: true },
+          })
+        : _vm._e(),
+    ],
+    2
+  )
+}
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "col-md-2 col-sm-3 col-4 mb-2" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
+        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n          ")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("thead", [
+      _c("tr", [
+        _c("td", [_c("b", [_vm._v("STT")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Tên")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Chức vụ")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
+        _vm._v(" "),
+        _c("td"),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [
+        _vm._v("Thông tin thành viên"),
+      ]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary btn-sm",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Đóng")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Thêm thành viên")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [_vm._v("Người dùng")]),
+      _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
     ])
   },
 ]
@@ -24474,29 +25492,17 @@ var render = function () {
             ]),
             _vm._v(" "),
             _vm.info.task.status.status <= 0
-              ? _c(
-                  "div",
-                  [
-                    _c("m-spinner", { staticClass: "mb-2" }),
-                    _vm._v(" "),
-                    _c("b", [
-                      _vm._v(
-                        "Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ"
-                      ),
-                    ]),
-                  ],
-                  1
-                )
+              ? _c("div", [
+                  _c("b", [
+                    _vm._v(
+                      "Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ"
+                    ),
+                  ]),
+                ])
               : _vm.info.task.status.status == 5
-              ? _c(
-                  "div",
-                  [
-                    _c("m-spinner", { staticClass: "mb-2" }),
-                    _vm._v(" "),
-                    _c("b", [_vm._v("Công việc đã gửi yêu cầu từ chối nhận")]),
-                  ],
-                  1
-                )
+              ? _c("div", [
+                  _c("b", [_vm._v("Công việc đã gửi yêu cầu từ chối nhận")]),
+                ])
               : _c("div", [
                   _c(
                     "form",
@@ -24543,7 +25549,6 @@ var render = function () {
                         _vm._v(" "),
                         _vm._m(0),
                         _vm._v(" "),
-                        _vm.$root.isManager() ||
                         _vm.$root.auth.id == _vm.info.task.department.leader.id
                           ? _c(
                               "div",
@@ -24620,8 +25625,6 @@ var render = function () {
                                             )
                                           ),
                                         ]),
-                                        _vm._v(" "),
-                                        _c("td", [_vm._v("SLHT / SLTH")]),
                                         _vm._v(" "),
                                         _c("td", [
                                           item.status.status == 2 ||
@@ -24738,6 +25741,10 @@ var render = function () {
                                         ]),
                                         _vm._v(" "),
                                         _c("td", [
+                                          _vm._v(_vm._s(item.start_time)),
+                                        ]),
+                                        _vm._v(" "),
+                                        _c("td", [
                                           _vm._v(_vm._s(item.created_at)),
                                         ]),
                                         _vm._v(" "),
@@ -24748,7 +25755,7 @@ var render = function () {
                                               "button",
                                               {
                                                 staticClass:
-                                                  "btn btn-secondary btn-sm",
+                                                  "mb-1 btn btn-secondary btn-sm",
                                                 attrs: {
                                                   "data-toggle": "modal",
                                                   "data-target":
@@ -24775,7 +25782,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-info btn-sm",
+                                                              "mb-1 btn btn-info btn-sm",
                                                             attrs: {
                                                               "data-toggle":
                                                                 "modal",
@@ -24799,7 +25806,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-danger btn-sm",
+                                                              "mb-1 btn btn-danger btn-sm",
                                                             attrs: {
                                                               "data-toggle":
                                                                 "modal",
@@ -24827,7 +25834,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-info btn-sm",
+                                                              "mb-1 btn btn-info btn-sm",
                                                             on: {
                                                               click: function (
                                                                 $event
@@ -24845,7 +25852,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-danger btn-sm",
+                                                              "mb-1 btn btn-danger btn-sm",
                                                             attrs: {
                                                               "data-toggle":
                                                                 "modal",
@@ -24876,7 +25883,7 @@ var render = function () {
                                                         "button",
                                                         {
                                                           staticClass:
-                                                            "btn btn-danger btn-sm",
+                                                            "mb-1 btn btn-danger btn-sm",
                                                           attrs: {
                                                             "data-toggle":
                                                               "modal",
@@ -24911,7 +25918,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-info btn-sm",
+                                                              "mb-1 btn btn-info btn-sm",
                                                             on: {
                                                               click: function (
                                                                 $event
@@ -24929,7 +25936,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-sm btn-dark",
+                                                              "mb-1 btn btn-sm btn-danger",
                                                             attrs: {
                                                               "data-toggle":
                                                                 "modal",
@@ -24957,7 +25964,7 @@ var render = function () {
                                                           "button",
                                                           {
                                                             staticClass:
-                                                              "btn btn-sm btn-success",
+                                                              "mb-1 btn btn-sm btn-success",
                                                             attrs: {
                                                               "data-toggle":
                                                                 "modal",
@@ -25015,7 +26022,12 @@ var render = function () {
         [
           _c(
             "div",
-            { staticClass: "modal-dialog modal-xl modal-dialog-scrollable" },
+            {
+              class: [
+                "modal-dialog modal-dialog-scrollable",
+                _vm.job.id ? "modal-lg" : "modal-xl",
+              ],
+            },
             [
               _c("div", { staticClass: "modal-content" }, [
                 _vm._m(2),
@@ -25377,7 +26389,7 @@ var render = function () {
                               _c("input", {
                                 ref: "ref_file",
                                 staticStyle: { display: "none" },
-                                attrs: { type: "file" },
+                                attrs: { id: "job_file", type: "file" },
                                 on: { change: _vm.handleGetFile },
                               }),
                               _vm._v(" "),
@@ -25561,17 +26573,14 @@ var render = function () {
                               )
                             ),
                           ]),
+                        ])
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.job.status && _vm.job.status.content
+                      ? _c("div", { staticClass: "form-group" }, [
+                          _c("b", [_vm._v("Nội dung phản hồi: ")]),
                           _vm._v(" "),
-                          _vm.job.status.content
-                            ? _c("div", { staticClass: "pl-2" }, [
-                                _c("b", [_vm._v("Nội dung phản hồi: ")]),
-                                _vm._v(" "),
-                                _c("br"),
-                                _c("span", [
-                                  _vm._v(_vm._s(_vm.job.status.content)),
-                                ]),
-                              ])
-                            : _vm._e(),
+                          _c("span", [_vm._v(_vm._s(_vm.job.status.content))]),
                         ])
                       : _vm._e(),
                     _vm._v(" "),
@@ -26141,9 +27150,9 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Phân cho")])]),
         _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Thống kê")])]),
-        _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Bắt đầu")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
         _vm._v(" "),
@@ -26427,6 +27436,579 @@ var staticRenderFns = [
         _vm._v("Lý do "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
+    ])
+  },
+]
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Label.vue?vue&type=template&id=55360b65&":
+/*!***************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Label.vue?vue&type=template&id=55360b65& ***!
+  \***************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "div",
+    { attrs: { id: "label" } },
+    [
+      _c(
+        "form",
+        {
+          on: {
+            submit: function ($event) {
+              $event.preventDefault()
+              return _vm.getList.apply(null, arguments)
+            },
+          },
+        },
+        [
+          _c("div", { staticClass: "row" }, [
+            _c("div", { staticClass: "col-md-5 col-sm-8 col-8 mb-2" }, [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.search_name,
+                    expression: "search_name",
+                  },
+                ],
+                staticClass: "form-control form-control-sm",
+                attrs: { type: "text", placeholder: "Tên nhãn..." },
+                domProps: { value: _vm.search_name },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.search_name = $event.target.value
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _vm._m(0),
+            _vm._v(" "),
+            _vm.$root.isManager()
+              ? _c(
+                  "div",
+                  { staticClass: "col-md-4 col-sm-12 col-12 text-right mb-2" },
+                  [
+                    _c(
+                      "button",
+                      {
+                        staticClass: "btn btn-info btn-sm",
+                        attrs: {
+                          "data-toggle": "modal",
+                          "data-target": "#label_add_update",
+                        },
+                      },
+                      [_vm._v("Thêm")]
+                    ),
+                  ]
+                )
+              : _vm._e(),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _vm.loading_get_list
+        ? _c("div", { staticClass: "text-center" }, [_c("m-spinner")], 1)
+        : _c("div", { staticClass: "list" }, [
+            _vm.list && _vm.list.data.length > 0
+              ? _c(
+                  "ul",
+                  { staticClass: "row" },
+                  _vm._l(_vm.list.data, function (item, index) {
+                    return _c(
+                      "li",
+                      {
+                        key: index,
+                        staticClass: "col-md-3 col-sm-6 col-xs-12",
+                      },
+                      [
+                        _c("div", { staticClass: "item" }, [
+                          _c("div", { staticClass: "mb-2" }, [
+                            _c("i", { staticClass: "fas fa-tag" }),
+                            _vm._v(" "),
+                            _c("b", [_vm._v(_vm._s(item.name))]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", [
+                            _vm._v(
+                              "\n            Tệp đính kèm: \n            "
+                            ),
+                            item.file
+                              ? _c(
+                                  "a",
+                                  {
+                                    attrs: {
+                                      target: "_blank",
+                                      href: item.file,
+                                    },
+                                  },
+                                  [_vm._v("Xem tệp")]
+                                )
+                              : _c("span", [_vm._v("Không có")]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", [
+                            _c("i", {
+                              staticClass: "far fa-clock",
+                              staticStyle: { "font-size": "12px" },
+                            }),
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(item.created_at) +
+                                "\n          "
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", { staticClass: "text-right mt-2" }, [
+                            _c(
+                              "button",
+                              {
+                                staticClass: "btn btn-sm btn-dark",
+                                attrs: {
+                                  "data-toggle": "modal",
+                                  "data-target": "#label_details",
+                                },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.getInfoLabel(item)
+                                  },
+                                },
+                              },
+                              [_vm._v("Xem")]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "button",
+                              {
+                                staticClass: "btn btn-sm btn-info",
+                                attrs: {
+                                  "data-toggle": "modal",
+                                  "data-target": "#label_add_update",
+                                },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.getInfoLabel(item)
+                                  },
+                                },
+                              },
+                              [_vm._v("Sửa")]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "button",
+                              { staticClass: "btn btn-sm btn-danger" },
+                              [_vm._v("Xóa")]
+                            ),
+                          ]),
+                        ]),
+                      ]
+                    )
+                  }),
+                  0
+                )
+              : _c("div", [_c("b", [_vm._v("Không có nhãn")])]),
+          ]),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "label_add_update" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(1),
+              _vm._v(" "),
+              _c("div", { staticClass: "modal-body" }, [
+                _c(
+                  "form",
+                  {
+                    on: {
+                      submit: function ($event) {
+                        $event.preventDefault()
+                        return _vm.onSubmit.apply(null, arguments)
+                      },
+                    },
+                  },
+                  [
+                    _c("div", { staticClass: "form-group" }, [
+                      _vm._m(2),
+                      _vm._v(" "),
+                      _c("input", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.label.name,
+                            expression: "label.name",
+                          },
+                        ],
+                        staticClass: "form-control form-control-sm",
+                        attrs: { type: "text" },
+                        domProps: { value: _vm.label.name },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(_vm.label, "name", $event.target.value)
+                          },
+                        },
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        { staticClass: "text-danger font-italic error" },
+                        [_vm._v(_vm._s(_vm.error_name))]
+                      ),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group" }, [
+                      _vm._m(3),
+                      _c("br"),
+                      _vm._v(" "),
+                      _c("textarea", {
+                        directives: [
+                          {
+                            name: "model",
+                            rawName: "v-model",
+                            value: _vm.label.describe,
+                            expression: "label.describe",
+                          },
+                        ],
+                        staticClass: "form-control",
+                        attrs: { type: "text", rows: "5" },
+                        domProps: { value: _vm.label.describe },
+                        on: {
+                          input: function ($event) {
+                            if ($event.target.composing) {
+                              return
+                            }
+                            _vm.$set(_vm.label, "describe", $event.target.value)
+                          },
+                        },
+                      }),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group" }, [
+                      _vm._m(4),
+                      _c("br"),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-info btn-sm",
+                          staticStyle: { padding: "2px 5px" },
+                          attrs: { type: "button" },
+                          on: {
+                            click: function ($event) {
+                              return _vm.$refs.ref_file.click()
+                            },
+                          },
+                        },
+                        [_vm._v("Chọn tập tin")]
+                      ),
+                      _vm._v(" "),
+                      _c("input", {
+                        ref: "ref_file",
+                        staticStyle: { display: "none" },
+                        attrs: { id: "label_file", type: "file" },
+                        on: { change: _vm.handleGetFile },
+                      }),
+                      _vm._v(" "),
+                      _vm.file_show && _vm.file_show.name
+                        ? _c("div", { staticClass: "show" }, [
+                            _c("b", [_vm._v("File đã chọn: ")]),
+                            _vm._v(" "),
+                            _vm.file_show.url
+                              ? _c(
+                                  "a",
+                                  {
+                                    attrs: {
+                                      target: "blank",
+                                      href: _vm.file_show.url,
+                                    },
+                                  },
+                                  [_vm._v(_vm._s(_vm.file_show.name))]
+                                )
+                              : _c("span", [_vm._v("Không có")]),
+                          ])
+                        : _vm._e(),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "form-group" }, [
+                      _vm._m(5),
+                      _vm._v(" "),
+                      _c("br"),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-check-inline" }, [
+                        _c("label", { staticClass: "form-check-label" }, [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model.number",
+                                value: _vm.label.active,
+                                expression: "label.active",
+                                modifiers: { number: true },
+                              },
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: { type: "radio", value: "1" },
+                            domProps: {
+                              checked: _vm._q(_vm.label.active, _vm._n("1")),
+                            },
+                            on: {
+                              change: function ($event) {
+                                _vm.$set(_vm.label, "active", _vm._n("1"))
+                              },
+                            },
+                          }),
+                          _vm._v("Kích hoạt\n                "),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "form-check-inline" }, [
+                        _c("label", { staticClass: "form-check-label" }, [
+                          _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model.number",
+                                value: _vm.label.active,
+                                expression: "label.active",
+                                modifiers: { number: true },
+                              },
+                            ],
+                            staticClass: "form-check-input",
+                            attrs: { type: "radio", value: "0" },
+                            domProps: {
+                              checked: _vm._q(_vm.label.active, _vm._n("0")),
+                            },
+                            on: {
+                              change: function ($event) {
+                                _vm.$set(_vm.label, "active", _vm._n("0"))
+                              },
+                            },
+                          }),
+                          _vm._v("Khóa\n                "),
+                        ]),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("div", { staticClass: "modal-footer" }, [
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-info btn-sm",
+                          attrs: { type: "submit" },
+                        },
+                        [
+                          _vm._v(
+                            "\n                    " +
+                              _vm._s(_vm.label.id ? "Cập nhật" : "Thêm nhãn") +
+                              "\n                  "
+                          ),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "button",
+                        {
+                          staticClass: "btn btn-secondary btn-sm",
+                          attrs: { type: "button", "data-dismiss": "modal" },
+                        },
+                        [_vm._v("Đóng")]
+                      ),
+                    ]),
+                  ]
+                ),
+              ]),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "modal fade", attrs: { id: "label_details" } }, [
+        _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+          _c("div", { staticClass: "modal-content" }, [
+            _vm._m(6),
+            _vm._v(" "),
+            _vm.label
+              ? _c("div", { staticClass: "modal-body" }, [
+                  _c("div", { staticClass: "form-group" }, [
+                    _c("b", { staticClass: "text-info" }, [
+                      _vm._v("Tên: " + _vm._s(_vm.label.name)),
+                    ]),
+                  ]),
+                  _vm._v(" "),
+                  _vm.label.describe
+                    ? _c("div", { staticClass: "form-group" }, [
+                        _c("b", [_vm._v("Mô tả: ")]),
+                        _vm._v(" "),
+                        _c("span", [_vm._v(_vm._s(_vm.label.describe))]),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.label.file
+                    ? _c("div", { staticClass: "form-group" }, [
+                        _c("b", [_vm._v("Tệp đính kèm: ")]),
+                        _vm._v(" "),
+                        _c(
+                          "a",
+                          { attrs: { target: "_blank", href: _vm.label.file } },
+                          [_vm._v("Xem tệp")]
+                        ),
+                      ])
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "form-group" }, [
+                    _c("b", [_vm._v("Trạng thái nhãn: ")]),
+                    _vm._v(" "),
+                    _c(
+                      "span",
+                      {
+                        class: [
+                          "badge",
+                          _vm.label.active ? "badge-success" : "badge-danger",
+                        ],
+                      },
+                      [
+                        _vm._v(
+                          "\n              " +
+                            _vm._s(_vm.label.active ? "Kích hoạt" : "Khóa") +
+                            "\n            "
+                        ),
+                      ]
+                    ),
+                  ]),
+                ])
+              : _vm._e(),
+            _vm._v(" "),
+            _vm._m(7),
+          ]),
+        ]),
+      ]),
+      _vm._v(" "),
+      _vm.loading_add_update
+        ? _c("m-loading", {
+            attrs: {
+              title:
+                _vm.label.id != null ? "Đang cập nhật nhãn" : "Đang thêm nhãn",
+              full: true,
+            },
+          })
+        : _vm._e(),
+    ],
+    1
+  )
+}
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "col-md-3 col-sm-4 col-4 mb-2" }, [
+      _c(
+        "button",
+        { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
+        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n        ")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Nhãn")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [_vm._v("Tên ")]),
+      _c("span", { staticClass: "text-danger" }, [_vm._v("* ")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Mô tả ")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [_c("b", [_vm._v("Tập đính kèm ")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("label", [
+      _c("b", [_vm._v("Trạng thái:")]),
+      _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Thông tin nhãn")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary btn-sm",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Đóng")]
+      ),
     ])
   },
 ]
@@ -27265,7 +28847,54 @@ var render = function () {
                               ),
                             ]),
                             _vm._v(" "),
-                            _c("td", [_vm._v("SLHT / SLTH")]),
+                            _c("td", [
+                              item.task_statistic
+                                ? _c(
+                                    "div",
+                                    { staticStyle: { "font-size": "11px" } },
+                                    [
+                                      _c("b", [
+                                        _vm._v(
+                                          _vm._s(item.task_statistic.finish) +
+                                            "/ " +
+                                            _vm._s(item.task_statistic.total)
+                                        ),
+                                      ]),
+                                      _vm._v(
+                                        " Hoàn thành \n                    "
+                                      ),
+                                      _c("b", [
+                                        _vm._v(
+                                          _vm._s(item.task_statistic.overdue)
+                                        ),
+                                      ]),
+                                      _vm._v(" quá hạn\n                  "),
+                                    ]
+                                  )
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "progress",
+                                  staticStyle: { height: "0.5em" },
+                                },
+                                [
+                                  _c("div", {
+                                    class: [
+                                      "progress-bar",
+                                      item.task_statistic.finish_percent >= 50
+                                        ? "bg-success"
+                                        : "bg-danger",
+                                    ],
+                                    style:
+                                      "width:" +
+                                      item.task_statistic.finish_percent +
+                                      "%",
+                                  }),
+                                ]
+                              ),
+                            ]),
                             _vm._v(" "),
                             _c("td", [
                               item.active == 0
@@ -27309,7 +28938,13 @@ var render = function () {
                               ),
                             ]),
                             _vm._v(" "),
-                            _c("td", [_vm._v(_vm._s(item.created_at))]),
+                            _c("td", { staticStyle: { "font-size": "13px" } }, [
+                              _vm._v(_vm._s(item.start_time)),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", { staticStyle: { "font-size": "13px" } }, [
+                              _vm._v(_vm._s(item.created_at)),
+                            ]),
                             _vm._v(" "),
                             _c(
                               "td",
@@ -27317,7 +28952,8 @@ var render = function () {
                                 _c(
                                   "button",
                                   {
-                                    staticClass: "btn btn-secondary btn-sm",
+                                    staticClass:
+                                      "mb-1 btn btn-secondary btn-sm",
                                     attrs: {
                                       "data-toggle": "modal",
                                       "data-target": "#project_modal_details",
@@ -27346,7 +28982,8 @@ var render = function () {
                                         _c(
                                           "button",
                                           {
-                                            staticClass: "btn btn-sm btn-dark",
+                                            staticClass:
+                                              "mb-1 btn btn-sm btn-dark",
                                           },
                                           [_vm._v("Công việc")]
                                         ),
@@ -27360,7 +28997,8 @@ var render = function () {
                                       _c(
                                         "button",
                                         {
-                                          staticClass: "btn btn-info btn-sm",
+                                          staticClass:
+                                            "mb-1 btn btn-info btn-sm",
                                           attrs: {
                                             "data-toggle": "modal",
                                             "data-target": "#project_modal_add",
@@ -27377,7 +29015,8 @@ var render = function () {
                                       _c(
                                         "button",
                                         {
-                                          staticClass: "btn btn-danger btn-sm",
+                                          staticClass:
+                                            "mb-1 btn btn-danger btn-sm",
                                           attrs: {
                                             "data-toggle": "modal",
                                             "data-target":
@@ -27402,7 +29041,7 @@ var render = function () {
                                                   "button",
                                                   {
                                                     staticClass:
-                                                      "btn btn-outline-info btn-sm",
+                                                      "mb-1 btn btn-outline-info btn-sm",
                                                     on: {
                                                       click: function ($event) {
                                                         return _vm.handleTakeProject(
@@ -27421,7 +29060,7 @@ var render = function () {
                                                   "button",
                                                   {
                                                     staticClass:
-                                                      "btn btn-success btn-sm",
+                                                      "mb-1 btn btn-success btn-sm",
                                                     attrs: {
                                                       "data-toggle": "modal",
                                                       "data-target":
@@ -27481,206 +29120,127 @@ var render = function () {
         "div",
         { staticClass: "modal fade", attrs: { id: "project_modal_add" } },
         [
-          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
-            _c("div", { staticClass: "modal-content" }, [
-              _vm._m(2),
-              _vm._v(" "),
-              _c("div", { staticClass: "modal-body" }, [
-                _c(
-                  "form",
-                  {
-                    on: {
-                      submit: function ($event) {
-                        $event.preventDefault()
-                        return _vm.onSubmit.apply(null, arguments)
+          _c(
+            "div",
+            { staticClass: "modal-dialog modal-lg modal-dialog-scrollable" },
+            [
+              _c("div", { staticClass: "modal-content" }, [
+                _vm._m(2),
+                _vm._v(" "),
+                _c("div", { staticClass: "modal-body" }, [
+                  _c(
+                    "form",
+                    {
+                      on: {
+                        submit: function ($event) {
+                          $event.preventDefault()
+                          return _vm.onSubmit.apply(null, arguments)
+                        },
                       },
                     },
-                  },
-                  [
-                    _c("div", { staticClass: "row" }, [
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(3),
-                          _vm._v(" "),
-                          _vm.project.id
-                            ? _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.project.name,
-                                    expression: "project.name",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                attrs: { type: "text", disabled: "" },
-                                domProps: { value: _vm.project.name },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.project,
-                                      "name",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              })
-                            : _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model",
-                                    value: _vm.project.name,
-                                    expression: "project.name",
-                                  },
-                                ],
-                                staticClass: "form-control form-control-sm",
-                                attrs: { type: "text" },
-                                domProps: { value: _vm.project.name },
-                                on: {
-                                  input: function ($event) {
-                                    if ($event.target.composing) {
-                                      return
-                                    }
-                                    _vm.$set(
-                                      _vm.project,
-                                      "name",
-                                      $event.target.value
-                                    )
-                                  },
-                                },
-                              }),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "text-danger font-italic error" },
-                            [_vm._v(_vm._s(_vm.error.name))]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      !_vm.project.id
-                        ? _c(
-                            "div",
-                            { staticClass: "col-md-6 col-sm-12 col-12" },
-                            [
-                              _c("div", { staticClass: "form-group" }, [
-                                _vm._m(4),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.project.start_time,
-                                      expression: "project.start_time",
-                                    },
-                                  ],
-                                  staticClass: "form-control form-control-sm",
-                                  attrs: { type: "date" },
-                                  domProps: { value: _vm.project.start_time },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.project,
-                                        "start_time",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  {
-                                    staticClass:
-                                      "text-danger font-italic error",
-                                  },
-                                  [_vm._v(_vm._s(_vm.error.start_time))]
-                                ),
-                              ]),
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      !_vm.project.id
-                        ? _c(
-                            "div",
-                            { staticClass: "col-md-6 col-sm-12 col-12" },
-                            [
-                              _c("div", { staticClass: "form-group" }, [
-                                _vm._m(5),
-                                _vm._v(" "),
-                                _c("input", {
-                                  directives: [
-                                    {
-                                      name: "model",
-                                      rawName: "v-model",
-                                      value: _vm.project.end_time,
-                                      expression: "project.end_time",
-                                    },
-                                  ],
-                                  staticClass: "form-control form-control-sm",
-                                  attrs: { type: "date" },
-                                  domProps: { value: _vm.project.end_time },
-                                  on: {
-                                    input: function ($event) {
-                                      if ($event.target.composing) {
-                                        return
-                                      }
-                                      _vm.$set(
-                                        _vm.project,
-                                        "end_time",
-                                        $event.target.value
-                                      )
-                                    },
-                                  },
-                                }),
-                                _vm._v(" "),
-                                _c(
-                                  "div",
-                                  {
-                                    staticClass:
-                                      "text-danger font-italic error",
-                                  },
-                                  [_vm._v(_vm._s(_vm.error.end_time))]
-                                ),
-                              ]),
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _vm.$root.isAdmin() && !_vm.project.id
-                        ? _c(
-                            "div",
-                            { staticClass: "col-md-6 col-sm-12 col-12" },
-                            [
-                              _c(
-                                "div",
-                                { staticClass: "form-group" },
-                                [
-                                  _vm._m(6),
-                                  _vm._v(" "),
-                                  _c("m-select", {
-                                    attrs: {
-                                      size: "sm",
-                                      text: _vm.text_select,
-                                      url: "user/search-manager",
-                                      statusReset: _vm.reset_select_comp,
-                                      variable: {
-                                        first: "fullname",
-                                        second: "username",
+                    [
+                      _c("div", { staticClass: "row" }, [
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(3),
+                              _vm._v(" "),
+                              _vm.project.id
+                                ? _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.project.name,
+                                        expression: "project.name",
+                                      },
+                                    ],
+                                    staticClass: "form-control form-control-sm",
+                                    attrs: { type: "text", disabled: "" },
+                                    domProps: { value: _vm.project.name },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.project,
+                                          "name",
+                                          $event.target.value
+                                        )
                                       },
                                     },
+                                  })
+                                : _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.project.name,
+                                        expression: "project.name",
+                                      },
+                                    ],
+                                    staticClass: "form-control form-control-sm",
+                                    attrs: { type: "text" },
+                                    domProps: { value: _vm.project.name },
                                     on: {
-                                      changeValue: _vm.getManager,
-                                      remove: _vm.removeManager,
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.project,
+                                          "name",
+                                          $event.target.value
+                                        )
+                                      },
+                                    },
+                                  }),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "text-danger font-italic error",
+                                },
+                                [_vm._v(_vm._s(_vm.error.name))]
+                              ),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        !_vm.project.id
+                          ? _c(
+                              "div",
+                              { staticClass: "col-md-12 col-sm-12 col-12" },
+                              [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _vm._m(4),
+                                  _vm._v(" "),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.project.start_time,
+                                        expression: "project.start_time",
+                                      },
+                                    ],
+                                    staticClass: "form-control form-control-sm",
+                                    attrs: { type: "date" },
+                                    domProps: { value: _vm.project.start_time },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.project,
+                                          "start_time",
+                                          $event.target.value
+                                        )
+                                      },
                                     },
                                   }),
                                   _vm._v(" "),
@@ -27690,216 +29250,336 @@ var render = function () {
                                       staticClass:
                                         "text-danger font-italic error",
                                     },
-                                    [_vm._v(_vm._s(_vm.error.manager))]
-                                  ),
-                                ],
-                                1
-                              ),
-                            ]
-                          )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(7),
-                          _c("br"),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "form-check-inline" }, [
-                            _c("label", { staticClass: "form-check-label" }, [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model.number",
-                                    value: _vm.project.active,
-                                    expression: "project.active",
-                                    modifiers: { number: true },
-                                  },
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: { type: "radio", value: "1" },
-                                domProps: {
-                                  checked: _vm._q(
-                                    _vm.project.active,
-                                    _vm._n("1")
-                                  ),
-                                },
-                                on: {
-                                  change: function ($event) {
-                                    _vm.$set(_vm.project, "active", _vm._n("1"))
-                                  },
-                                },
-                              }),
-                              _vm._v("Kích hoạt\n                    "),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c("div", { staticClass: "form-check-inline" }, [
-                            _c("label", { staticClass: "form-check-label" }, [
-                              _c("input", {
-                                directives: [
-                                  {
-                                    name: "model",
-                                    rawName: "v-model.number",
-                                    value: _vm.project.active,
-                                    expression: "project.active",
-                                    modifiers: { number: true },
-                                  },
-                                ],
-                                staticClass: "form-check-input",
-                                attrs: { type: "radio", value: "0" },
-                                domProps: {
-                                  checked: _vm._q(
-                                    _vm.project.active,
-                                    _vm._n("0")
-                                  ),
-                                },
-                                on: {
-                                  change: function ($event) {
-                                    _vm.$set(_vm.project, "active", _vm._n("0"))
-                                  },
-                                },
-                              }),
-                              _vm._v("Khóa\n                    "),
-                            ]),
-                          ]),
-                          _vm._v(" "),
-                          _c(
-                            "div",
-                            { staticClass: "error text-danger font-italic" },
-                            [_vm._v(_vm._s(_vm.error.active))]
-                          ),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-12 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(8),
-                          _c("br"),
-                          _vm._v(" "),
-                          _c("textarea", {
-                            directives: [
-                              {
-                                name: "model",
-                                rawName: "v-model",
-                                value: _vm.project.describe,
-                                expression: "project.describe",
-                              },
-                            ],
-                            staticClass: "form-control form-control-sm",
-                            attrs: { type: "text", rows: "5" },
-                            domProps: { value: _vm.project.describe },
-                            on: {
-                              input: function ($event) {
-                                if ($event.target.composing) {
-                                  return
-                                }
-                                _vm.$set(
-                                  _vm.project,
-                                  "describe",
-                                  $event.target.value
-                                )
-                              },
-                            },
-                          }),
-                        ]),
-                      ]),
-                      _vm._v(" "),
-                      _c("div", { staticClass: "col-md-6 col-sm-12 col-12" }, [
-                        _c("div", { staticClass: "form-group" }, [
-                          _vm._m(9),
-                          _vm._v(" "),
-                          _c(
-                            "button",
-                            {
-                              staticClass: "btn btn-info btn-sm",
-                              attrs: { type: "button" },
-                              on: {
-                                click: function ($event) {
-                                  return _vm.$refs.ref_file.click()
-                                },
-                              },
-                            },
-                            [_vm._v("Chọn tập tin")]
-                          ),
-                          _vm._v(" "),
-                          _c("input", {
-                            ref: "ref_file",
-                            staticStyle: { display: "none" },
-                            attrs: { type: "file" },
-                            on: { change: _vm.handleGetFile },
-                          }),
-                          _vm._v(" "),
-                          _vm.file_show
-                            ? _c("div", [
-                                _c("span", [
-                                  _vm._v(
-                                    "File được chọn: " + _vm._s(_vm.file_show)
+                                    [_vm._v(_vm._s(_vm.error.start_time))]
                                   ),
                                 ]),
-                                _vm._v(" "),
-                                _c("i", {
-                                  staticClass: "fas fa-times text-danger",
-                                  staticStyle: { cursor: "pointer" },
-                                  on: { click: _vm.removeFile },
-                                }),
-                              ])
-                            : _vm._e(),
-                          _vm._v(" "),
-                          _vm.file_updated
-                            ? _c("div", [
+                              ]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        !_vm.project.id
+                          ? _c(
+                              "div",
+                              { staticClass: "col-md-12 col-sm-12 col-12" },
+                              [
+                                _c("div", { staticClass: "form-group" }, [
+                                  _vm._m(5),
+                                  _vm._v(" "),
+                                  _c("input", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.project.end_time,
+                                        expression: "project.end_time",
+                                      },
+                                    ],
+                                    staticClass: "form-control form-control-sm",
+                                    attrs: { type: "date" },
+                                    domProps: { value: _vm.project.end_time },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.project,
+                                          "end_time",
+                                          $event.target.value
+                                        )
+                                      },
+                                    },
+                                  }),
+                                  _vm._v(" "),
+                                  _c(
+                                    "div",
+                                    {
+                                      staticClass:
+                                        "text-danger font-italic error",
+                                    },
+                                    [_vm._v(_vm._s(_vm.error.end_time))]
+                                  ),
+                                ]),
+                              ]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.$root.isAdmin() && !_vm.project.id
+                          ? _c(
+                              "div",
+                              { staticClass: "col-md-12 col-sm-12 col-12" },
+                              [
                                 _c(
-                                  "a",
+                                  "div",
+                                  { staticClass: "form-group" },
+                                  [
+                                    _vm._m(6),
+                                    _vm._v(" "),
+                                    _c("m-select", {
+                                      attrs: {
+                                        size: "sm",
+                                        text: _vm.text_select,
+                                        url: "user/search-manager",
+                                        statusReset: _vm.reset_select_comp,
+                                        variable: {
+                                          first: "fullname",
+                                          second: "username",
+                                        },
+                                      },
+                                      on: {
+                                        changeValue: _vm.getManager,
+                                        remove: _vm.removeManager,
+                                      },
+                                    }),
+                                    _vm._v(" "),
+                                    _c(
+                                      "div",
+                                      {
+                                        staticClass:
+                                          "text-danger font-italic error",
+                                      },
+                                      [_vm._v(_vm._s(_vm.error.manager))]
+                                    ),
+                                  ],
+                                  1
+                                ),
+                              ]
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(7),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "form-check-inline" }, [
+                                _c(
+                                  "label",
+                                  { staticClass: "form-check-label" },
+                                  [
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model.number",
+                                          value: _vm.project.active,
+                                          expression: "project.active",
+                                          modifiers: { number: true },
+                                        },
+                                      ],
+                                      staticClass: "form-check-input",
+                                      attrs: { type: "radio", value: "1" },
+                                      domProps: {
+                                        checked: _vm._q(
+                                          _vm.project.active,
+                                          _vm._n("1")
+                                        ),
+                                      },
+                                      on: {
+                                        change: function ($event) {
+                                          _vm.$set(
+                                            _vm.project,
+                                            "active",
+                                            _vm._n("1")
+                                          )
+                                        },
+                                      },
+                                    }),
+                                    _vm._v("Kích hoạt\n                    "),
+                                  ]
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c("div", { staticClass: "form-check-inline" }, [
+                                _c(
+                                  "label",
+                                  { staticClass: "form-check-label" },
+                                  [
+                                    _c("input", {
+                                      directives: [
+                                        {
+                                          name: "model",
+                                          rawName: "v-model.number",
+                                          value: _vm.project.active,
+                                          expression: "project.active",
+                                          modifiers: { number: true },
+                                        },
+                                      ],
+                                      staticClass: "form-check-input",
+                                      attrs: { type: "radio", value: "0" },
+                                      domProps: {
+                                        checked: _vm._q(
+                                          _vm.project.active,
+                                          _vm._n("0")
+                                        ),
+                                      },
+                                      on: {
+                                        change: function ($event) {
+                                          _vm.$set(
+                                            _vm.project,
+                                            "active",
+                                            _vm._n("0")
+                                          )
+                                        },
+                                      },
+                                    }),
+                                    _vm._v("Khóa\n                    "),
+                                  ]
+                                ),
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "error text-danger font-italic",
+                                },
+                                [_vm._v(_vm._s(_vm.error.active))]
+                              ),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(8),
+                              _c("br"),
+                              _vm._v(" "),
+                              _c("textarea", {
+                                directives: [
                                   {
-                                    attrs: {
-                                      target: "_blank",
-                                      href: _vm.file_updated,
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.project.describe,
+                                    expression: "project.describe",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: { type: "text", rows: "5" },
+                                domProps: { value: _vm.project.describe },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.project,
+                                      "describe",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                            ]),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "div",
+                          { staticClass: "col-md-12 col-sm-12 col-12" },
+                          [
+                            _c("div", { staticClass: "form-group" }, [
+                              _vm._m(9),
+                              _vm._v(" "),
+                              _c(
+                                "button",
+                                {
+                                  staticClass: "btn btn-info btn-sm",
+                                  attrs: { type: "button" },
+                                  on: {
+                                    click: function ($event) {
+                                      return _vm.$refs.ref_file.click()
                                     },
                                   },
-                                  [_vm._v("Xem tệp đã chọn")]
-                                ),
-                                _vm._v("  \n                    "),
-                                _c("i", {
-                                  staticClass: "fas fa-times text-danger",
-                                  staticStyle: { cursor: "pointer" },
-                                  on: { click: _vm.deleteFile },
-                                }),
-                              ])
-                            : _vm._e(),
-                        ]),
+                                },
+                                [_vm._v("Chọn tập tin")]
+                              ),
+                              _vm._v(" "),
+                              _c("input", {
+                                ref: "ref_file",
+                                staticStyle: { display: "none" },
+                                attrs: { id: "project_file", type: "file" },
+                                on: { change: _vm.handleGetFile },
+                              }),
+                              _vm._v(" "),
+                              _vm.file_show
+                                ? _c("div", [
+                                    _c("span", [
+                                      _vm._v(
+                                        "File được chọn: " +
+                                          _vm._s(_vm.file_show)
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.removeFile },
+                                    }),
+                                  ])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _vm.file_updated
+                                ? _c("div", [
+                                    _c(
+                                      "a",
+                                      {
+                                        attrs: {
+                                          target: "_blank",
+                                          href: _vm.file_updated,
+                                        },
+                                      },
+                                      [_vm._v("Xem tệp đã chọn")]
+                                    ),
+                                    _vm._v("  \n                    "),
+                                    _c("i", {
+                                      staticClass: "fas fa-times text-danger",
+                                      staticStyle: { cursor: "pointer" },
+                                      on: { click: _vm.deleteFile },
+                                    }),
+                                  ])
+                                : _vm._e(),
+                            ]),
+                          ]
+                        ),
                       ]),
-                    ]),
-                    _vm._v(" "),
-                    _c("div", { staticClass: "modal-footer" }, [
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-info btn-sm",
-                          attrs: { type: "submit" },
-                        },
-                        [
-                          _vm._v(
-                            "\n                " +
-                              _vm._s(_vm.project.id ? "Cập nhật" : "Thêm") +
-                              "\n              "
-                          ),
-                        ]
-                      ),
                       _vm._v(" "),
-                      _c(
-                        "button",
-                        {
-                          staticClass: "btn btn-secondary btn-sm",
-                          attrs: { type: "button", "data-dismiss": "modal" },
-                        },
-                        [_vm._v("Đóng")]
-                      ),
-                    ]),
-                  ]
-                ),
+                      _c("div", { staticClass: "modal-footer" }, [
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-info btn-sm",
+                            attrs: { type: "submit" },
+                          },
+                          [
+                            _vm._v(
+                              "\n                " +
+                                _vm._s(_vm.project.id ? "Cập nhật" : "Thêm") +
+                                "\n              "
+                            ),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "button",
+                          {
+                            staticClass: "btn btn-secondary btn-sm",
+                            attrs: { type: "button", "data-dismiss": "modal" },
+                          },
+                          [_vm._v("Đóng")]
+                        ),
+                      ]),
+                    ]
+                  ),
+                ]),
               ]),
-            ]),
-          ]),
+            ]
+          ),
         ]
       ),
       _vm._v(" "),
@@ -28022,7 +29702,7 @@ var render = function () {
                                   _vm._v("\n                Xóa dự án "),
                                   _c("b", [_vm._v(_vm._s(_vm.project.name))]),
                                   _vm._v(
-                                    " thì tất cả các công việc liên quan sẽ bị xóa.\n                "
+                                    " thì tất cả trạng thái của dự án sẽ bị xóa.\n                "
                                   ),
                                   _c("br"),
                                   _vm._v(
@@ -28203,6 +29883,8 @@ var staticRenderFns = [
         _c("td", [_c("b", [_vm._v("Thống kê")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Bắt đầu")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
         _vm._v(" "),
@@ -28456,306 +30138,350 @@ var render = function () {
                 ]),
               ]),
               _vm._v(" "),
-              _c(
-                "form",
-                {
-                  on: {
-                    submit: function ($event) {
-                      $event.preventDefault()
-                      return _vm.getList.apply(null, arguments)
-                    },
-                  },
-                },
-                [
-                  _c("div", { staticClass: "row" }, [
+              _vm.project.active == 0
+                ? _c("div", [_c("b", [_vm._v("Dự án đã bị khóa")])])
+                : _vm.project.status.status <= 0
+                ? _c("div", [
+                    _c("b", [
+                      _vm._v(
+                        "Hãy chọn tiếp nhận dự án trước khi thêm công việc"
+                      ),
+                    ]),
+                  ])
+                : _c("div", [
                     _c(
-                      "div",
-                      { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                      "form",
+                      {
+                        on: {
+                          submit: function ($event) {
+                            $event.preventDefault()
+                            return _vm.getList.apply(null, arguments)
+                          },
+                        },
+                      },
                       [
-                        _c("input", {
-                          directives: [
-                            {
-                              name: "model",
-                              rawName: "v-model",
-                              value: _vm.search.name,
-                              expression: "search.name",
-                            },
-                          ],
-                          staticClass: "form-control form-control-sm",
-                          attrs: {
-                            type: "text",
-                            placeholder: "Tên công việc...",
-                          },
-                          domProps: { value: _vm.search.name },
-                          on: {
-                            input: function ($event) {
-                              if ($event.target.composing) {
-                                return
-                              }
-                              _vm.$set(_vm.search, "name", $event.target.value)
-                            },
-                          },
-                        }),
+                        _c("div", { staticClass: "row" }, [
+                          _c(
+                            "div",
+                            { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                            [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.search.name,
+                                    expression: "search.name",
+                                  },
+                                ],
+                                staticClass: "form-control form-control-sm",
+                                attrs: {
+                                  type: "text",
+                                  placeholder: "Tên công việc...",
+                                },
+                                domProps: { value: _vm.search.name },
+                                on: {
+                                  input: function ($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.search,
+                                      "name",
+                                      $event.target.value
+                                    )
+                                  },
+                                },
+                              }),
+                            ]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                            [
+                              _c("m-select", {
+                                attrs: {
+                                  size: "sm",
+                                  text: "--Tìm theo phòng ban--",
+                                  url: "department/search",
+                                  statusReset: false,
+                                  variable: { first: "name" },
+                                },
+                                on: {
+                                  changeValue: _vm.getDepartmentSearch,
+                                  remove: _vm.removeDepartmentSearch,
+                                },
+                              }),
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _vm._m(0),
+                          _vm._v(" "),
+                          _vm.project.manager.id == _vm.$root.auth.id
+                            ? _c(
+                                "div",
+                                {
+                                  staticClass:
+                                    "col-md-4 col-sm-12 col-6 text-right mb-2",
+                                },
+                                [
+                                  _c(
+                                    "button",
+                                    {
+                                      staticClass: "btn btn-info btn-sm",
+                                      attrs: {
+                                        "data-toggle": "modal",
+                                        "data-target": "#task_modal_add_update",
+                                      },
+                                    },
+                                    [_vm._v("Thêm")]
+                                  ),
+                                ]
+                              )
+                            : _vm._e(),
+                        ]),
                       ]
                     ),
                     _vm._v(" "),
-                    _c(
-                      "div",
-                      { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
-                      [
-                        _c("m-select", {
-                          attrs: {
-                            size: "sm",
-                            text: "--Tìm theo phòng ban--",
-                            url: "department/search",
-                            statusReset: false,
-                            variable: { first: "name" },
-                          },
-                          on: {
-                            changeValue: _vm.getDepartmentSearch,
-                            remove: _vm.removeDepartmentSearch,
-                          },
-                        }),
-                      ],
-                      1
-                    ),
-                    _vm._v(" "),
-                    _vm._m(0),
-                    _vm._v(" "),
-                    _vm.$root.isManager()
-                      ? _c(
-                          "div",
-                          {
-                            staticClass:
-                              "col-md-4 col-sm-12 col-6 text-right mb-2",
-                          },
-                          [
-                            _c(
-                              "button",
-                              {
-                                staticClass: "btn btn-info btn-sm",
-                                attrs: {
-                                  "data-toggle": "modal",
-                                  "data-target": "#task_modal_add_update",
-                                },
-                              },
-                              [_vm._v("Thêm")]
-                            ),
-                          ]
-                        )
-                      : _vm._e(),
-                  ]),
-                ]
-              ),
-              _vm._v(" "),
-              _c("div", { staticClass: "list" }, [
-                _c("div", { staticClass: "card" }, [
-                  _c("div", { staticClass: "card-header bg-info text-white" }, [
-                    _vm._v("Danh sách công việc"),
-                  ]),
-                  _vm._v(" "),
-                  _c("div", { staticClass: "table-responsive" }, [
-                    _c(
-                      "table",
-                      {
-                        staticClass: "table table-bordered table-stripped mb-0",
-                      },
-                      [
-                        _vm._m(1),
-                        _vm._v(" "),
+                    _c("div", { staticClass: "list" }, [
+                      _c("div", { staticClass: "card" }, [
                         _c(
-                          "tbody",
-                          [
-                            _vm.loading_list
-                              ? _c("tr", [
-                                  _c(
-                                    "td",
-                                    {
-                                      attrs: {
-                                        colspan: "1000",
-                                        align: "center",
-                                      },
-                                    },
-                                    [_c("m-spinner")],
-                                    1
-                                  ),
-                                ])
-                              : _vm.list && _vm.list.length > 0
-                              ? _vm._l(_vm.list, function (item, index) {
-                                  return _c("tr", { key: index }, [
-                                    _c("td", [_vm._v(_vm._s(index + 1))]),
-                                    _vm._v(" "),
-                                    _c("td", [_vm._v(_vm._s(item.name))]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      _vm._v(_vm._s(item.department.name)),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("td", [_vm._v("SLHT / SLTH")]),
-                                    _vm._v(" "),
-                                    _c("td", [
-                                      item.status.status == 2 ||
-                                      item.status.status == 4 ||
-                                      item.status.status == 5
-                                        ? _c(
-                                            "span",
-                                            {
-                                              staticClass: "badge badge-danger",
+                          "div",
+                          { staticClass: "card-header bg-info text-white" },
+                          [_vm._v("Danh sách công việc")]
+                        ),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "table-responsive" }, [
+                          _c(
+                            "table",
+                            {
+                              staticClass:
+                                "table table-bordered table-stripped mb-0",
+                            },
+                            [
+                              _vm._m(1),
+                              _vm._v(" "),
+                              _c(
+                                "tbody",
+                                [
+                                  _vm.loading_list
+                                    ? _c("tr", [
+                                        _c(
+                                          "td",
+                                          {
+                                            attrs: {
+                                              colspan: "1000",
+                                              align: "center",
                                             },
-                                            [
-                                              _vm._v(
-                                                "\n                      " +
-                                                  _vm._s(
-                                                    _vm.$root.getStatusTaskName(
-                                                      item.status.status
-                                                    )
-                                                  ) +
-                                                  "\n                    "
-                                              ),
-                                            ]
-                                          )
-                                        : item.status.status == 3
-                                        ? _c("span", [
-                                            item.delay_time == 0
+                                          },
+                                          [_c("m-spinner")],
+                                          1
+                                        ),
+                                      ])
+                                    : _vm.list && _vm.list.length > 0
+                                    ? _vm._l(_vm.list, function (item, index) {
+                                        return _c("tr", { key: index }, [
+                                          _c("td", [_vm._v(_vm._s(index + 1))]),
+                                          _vm._v(" "),
+                                          _c("td", [_vm._v(_vm._s(item.name))]),
+                                          _vm._v(" "),
+                                          _c("td", [
+                                            _vm._v(
+                                              _vm._s(item.department.name)
+                                            ),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("td", [
+                                            item.job_statistic
                                               ? _c(
-                                                  "b",
+                                                  "div",
                                                   {
-                                                    staticClass:
-                                                      "badge badge-success",
+                                                    staticStyle: {
+                                                      "font-size": "11px",
+                                                    },
                                                   },
                                                   [
+                                                    _c("b", [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          item.job_statistic
+                                                            .finish
+                                                        ) +
+                                                          "/ " +
+                                                          _vm._s(
+                                                            item.job_statistic
+                                                              .total
+                                                          )
+                                                      ),
+                                                    ]),
                                                     _vm._v(
-                                                      "Hoàn thành đúng hạn"
+                                                      " Hoàn thành \n                        "
+                                                    ),
+                                                    _c("b", [
+                                                      _vm._v(
+                                                        _vm._s(
+                                                          item.job_statistic
+                                                            .overdue
+                                                        )
+                                                      ),
+                                                    ]),
+                                                    _vm._v(
+                                                      " quá hạn\n                      "
                                                     ),
                                                   ]
                                                 )
-                                              : _c(
-                                                  "b",
+                                              : _vm._e(),
+                                            _vm._v(" "),
+                                            _c(
+                                              "div",
+                                              {
+                                                staticClass: "progress",
+                                                staticStyle: {
+                                                  height: "0.5em",
+                                                },
+                                              },
+                                              [
+                                                _c("div", {
+                                                  class: [
+                                                    "progress-bar",
+                                                    item.job_statistic
+                                                      .finish_percent >= 50
+                                                      ? "bg-success"
+                                                      : "bg-danger",
+                                                  ],
+                                                  style:
+                                                    "width:" +
+                                                    item.job_statistic
+                                                      .finish_percent +
+                                                    "%",
+                                                }),
+                                              ]
+                                            ),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("td", [
+                                            item.status.status == 2 ||
+                                            item.status.status == 4 ||
+                                            item.status.status == 5
+                                              ? _c(
+                                                  "span",
                                                   {
                                                     staticClass:
                                                       "badge badge-danger",
                                                   },
                                                   [
                                                     _vm._v(
-                                                      "Hoàn thành trễ " +
+                                                      "\n                        " +
                                                         _vm._s(
-                                                          item.delay_time
+                                                          _vm.$root.getStatusTaskName(
+                                                            item.status.status
+                                                          )
                                                         ) +
-                                                        " ngày"
+                                                        "\n                      "
+                                                    ),
+                                                  ]
+                                                )
+                                              : item.status.status == 3
+                                              ? _c("span", [
+                                                  item.delay_time == 0
+                                                    ? _c(
+                                                        "b",
+                                                        {
+                                                          staticClass:
+                                                            "badge badge-success",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            "Hoàn thành đúng hạn"
+                                                          ),
+                                                        ]
+                                                      )
+                                                    : _c(
+                                                        "b",
+                                                        {
+                                                          staticClass:
+                                                            "badge badge-danger",
+                                                        },
+                                                        [
+                                                          _vm._v(
+                                                            "Hoàn thành trễ " +
+                                                              _vm._s(
+                                                                item.delay_time
+                                                              ) +
+                                                              " ngày"
+                                                          ),
+                                                        ]
+                                                      ),
+                                                ])
+                                              : _c(
+                                                  "span",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-info",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "\n                        " +
+                                                        _vm._s(
+                                                          _vm.$root.getStatusTaskName(
+                                                            item.status.status
+                                                          )
+                                                        ) +
+                                                        "\n                      "
                                                     ),
                                                   ]
                                                 ),
-                                          ])
-                                        : _c(
-                                            "span",
-                                            { staticClass: "badge badge-info" },
-                                            [
-                                              _vm._v(
-                                                "\n                      " +
-                                                  _vm._s(
-                                                    _vm.$root.getStatusTaskName(
-                                                      item.status.status
-                                                    )
-                                                  ) +
-                                                  "\n                    "
-                                              ),
-                                            ]
-                                          ),
-                                      _vm._v(" "),
-                                      item.status.status != 3
-                                        ? _c(
-                                            "span",
-                                            {
-                                              class: [
-                                                "badge",
-                                                _vm.$root.checkDeadline(item) ==
-                                                "Chưa tới hạn"
-                                                  ? "badge-success"
-                                                  : "badge-danger",
-                                              ],
-                                            },
-                                            [
-                                              _vm._v(
-                                                "\n                      " +
-                                                  _vm._s(
-                                                    _vm.$root.checkDeadline(
-                                                      item
-                                                    )
-                                                  ) +
-                                                  "\n                    "
-                                              ),
-                                            ]
-                                          )
-                                        : _vm._e(),
-                                    ]),
-                                    _vm._v(" "),
-                                    _c("td", [_vm._v(_vm._s(item.created_at))]),
-                                    _vm._v(" "),
-                                    _c(
-                                      "td",
-                                      [
-                                        _c(
-                                          "button",
-                                          {
-                                            staticClass:
-                                              "btn btn-sm btn-secondary",
-                                            attrs: {
-                                              "data-toggle": "modal",
-                                              "data-target":
-                                                "#task_modal_details",
-                                            },
-                                            on: {
-                                              click: function ($event) {
-                                                return _vm.getTaskUpdate(item)
-                                              },
-                                            },
-                                          },
-                                          [_vm._v("Xem")]
-                                        ),
-                                        _vm._v(" "),
-                                        _c(
-                                          "router-link",
-                                          {
-                                            attrs: {
-                                              to: {
-                                                name: "job",
-                                                params: {
-                                                  project_id: _vm.project_id,
-                                                  id: item.id,
-                                                },
-                                              },
-                                            },
-                                          },
-                                          [
-                                            item &&
-                                            item.status.status != 3 &&
-                                            item.status.status != 0
+                                            _vm._v(" "),
+                                            item.status.status != 3
                                               ? _c(
-                                                  "button",
+                                                  "span",
                                                   {
-                                                    staticClass:
-                                                      "btn btn-dark btn-sm",
+                                                    class: [
+                                                      "badge",
+                                                      _vm.$root.checkDeadline(
+                                                        item
+                                                      ) == "Chưa tới hạn"
+                                                        ? "badge-success"
+                                                        : "badge-danger",
+                                                    ],
                                                   },
-                                                  [_vm._v("Nhiệm vụ")]
+                                                  [
+                                                    _vm._v(
+                                                      "\n                        " +
+                                                        _vm._s(
+                                                          _vm.$root.checkDeadline(
+                                                            item
+                                                          )
+                                                        ) +
+                                                        "\n                      "
+                                                    ),
+                                                  ]
                                                 )
                                               : _vm._e(),
-                                          ]
-                                        ),
-                                        _vm._v(" "),
-                                        item.status.status != 3 &&
-                                        _vm.project &&
-                                        _vm.project.manager.id ==
-                                          _vm.$root.auth.id
-                                          ? [
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("td", [
+                                            _vm._v(_vm._s(item.start_time)),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c("td", [
+                                            _vm._v(_vm._s(item.created_at)),
+                                          ]),
+                                          _vm._v(" "),
+                                          _c(
+                                            "td",
+                                            [
                                               _c(
                                                 "button",
                                                 {
                                                   staticClass:
-                                                    "btn btn-sm btn-info",
+                                                    "mb-1 btn btn-sm btn-secondary",
                                                   attrs: {
                                                     "data-toggle": "modal",
                                                     "data-target":
-                                                      "#task_modal_add_update",
+                                                      "#task_modal_details",
                                                   },
                                                   on: {
                                                     click: function ($event) {
@@ -28765,60 +30491,53 @@ var render = function () {
                                                     },
                                                   },
                                                 },
-                                                [_vm._v("Sửa")]
+                                                [_vm._v("Xem")]
                                               ),
                                               _vm._v(" "),
                                               _c(
-                                                "button",
+                                                "router-link",
                                                 {
-                                                  staticClass:
-                                                    "btn btn-sm btn-danger",
                                                   attrs: {
-                                                    "data-toggle": "modal",
-                                                    "data-target":
-                                                      "#task_modal_delete",
-                                                  },
-                                                  on: {
-                                                    click: function ($event) {
-                                                      return _vm.getTaskUpdate(
-                                                        item
-                                                      )
+                                                    to: {
+                                                      name: "job",
+                                                      params: {
+                                                        project_id:
+                                                          _vm.project_id,
+                                                        id: item.id,
+                                                      },
                                                     },
                                                   },
                                                 },
-                                                [_vm._v("Xóa")]
+                                                [
+                                                  item &&
+                                                  item.status.status != 0
+                                                    ? _c(
+                                                        "button",
+                                                        {
+                                                          staticClass:
+                                                            "mb-1 btn btn-dark btn-sm",
+                                                        },
+                                                        [_vm._v("Nhiệm vụ")]
+                                                      )
+                                                    : _vm._e(),
+                                                ]
                                               ),
                                               _vm._v(" "),
-                                              item.status.status == 2
+                                              item.status.status != 3 &&
+                                              _vm.project &&
+                                              _vm.project.manager.id ==
+                                                _vm.$root.auth.id
                                                 ? [
                                                     _c(
                                                       "button",
                                                       {
                                                         staticClass:
-                                                          "btn btn-sm btn-info",
-                                                        on: {
-                                                          click: function (
-                                                            $event
-                                                          ) {
-                                                            return _vm.handleApprovalTask(
-                                                              item
-                                                            )
-                                                          },
-                                                        },
-                                                      },
-                                                      [_vm._v("Duyệt")]
-                                                    ),
-                                                    _vm._v(" "),
-                                                    _c(
-                                                      "button",
-                                                      {
-                                                        staticClass:
-                                                          "btn btn-sm btn-danger",
+                                                          "mb-1 btn btn-sm btn-info",
                                                         attrs: {
                                                           "data-toggle":
                                                             "modal",
                                                           "data-target":
-                                                            "#task_modal_not_approval_finish",
+                                                            "#task_modal_add_update",
                                                         },
                                                         on: {
                                                           click: function (
@@ -28830,101 +30549,173 @@ var render = function () {
                                                           },
                                                         },
                                                       },
-                                                      [
-                                                        _vm._v(
-                                                          "\n                          Không duyệt\n                        "
-                                                        ),
-                                                      ]
+                                                      [_vm._v("Sửa")]
                                                     ),
+                                                    _vm._v(" "),
+                                                    _c(
+                                                      "button",
+                                                      {
+                                                        staticClass:
+                                                          "mb-1 btn btn-sm btn-danger",
+                                                        attrs: {
+                                                          "data-toggle":
+                                                            "modal",
+                                                          "data-target":
+                                                            "#task_modal_delete",
+                                                        },
+                                                        on: {
+                                                          click: function (
+                                                            $event
+                                                          ) {
+                                                            return _vm.getTaskUpdate(
+                                                              item
+                                                            )
+                                                          },
+                                                        },
+                                                      },
+                                                      [_vm._v("Xóa")]
+                                                    ),
+                                                    _vm._v(" "),
+                                                    item.status.status == 2
+                                                      ? [
+                                                          _c(
+                                                            "button",
+                                                            {
+                                                              staticClass:
+                                                                "mb-1 btn btn-sm btn-info",
+                                                              on: {
+                                                                click:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    return _vm.handleApprovalTask(
+                                                                      item
+                                                                    )
+                                                                  },
+                                                              },
+                                                            },
+                                                            [_vm._v("Duyệt")]
+                                                          ),
+                                                          _vm._v(" "),
+                                                          _c(
+                                                            "button",
+                                                            {
+                                                              staticClass:
+                                                                "mb-1 btn btn-sm btn-danger",
+                                                              attrs: {
+                                                                "data-toggle":
+                                                                  "modal",
+                                                                "data-target":
+                                                                  "#task_modal_not_approval_finish",
+                                                              },
+                                                              on: {
+                                                                click:
+                                                                  function (
+                                                                    $event
+                                                                  ) {
+                                                                    return _vm.getTaskUpdate(
+                                                                      item
+                                                                    )
+                                                                  },
+                                                              },
+                                                            },
+                                                            [
+                                                              _vm._v(
+                                                                "\n                            Không duyệt\n                          "
+                                                              ),
+                                                            ]
+                                                          ),
+                                                        ]
+                                                      : _vm._e(),
                                                   ]
                                                 : _vm._e(),
-                                            ]
-                                          : _vm._e(),
-                                        _vm._v(" "),
-                                        item &&
-                                        item.department.leader.id ==
-                                          _vm.$root.auth.id
-                                          ? [
-                                              item.status.status == 0
-                                                ? _c(
-                                                    "button",
-                                                    {
-                                                      staticClass:
-                                                        "btn btn-sm btn-info",
-                                                      on: {
-                                                        click: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.handleTakeTask(
-                                                            item
-                                                          )
-                                                        },
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                        Tiếp nhận\n                      "
-                                                      ),
-                                                    ]
-                                                  )
-                                                : _vm._e(),
                                               _vm._v(" "),
-                                              item.status.status == 1 ||
-                                              item.status.status == 4
-                                                ? _c(
-                                                    "button",
-                                                    {
-                                                      staticClass:
-                                                        "btn btn-sm btn-success",
-                                                      attrs: {
-                                                        "data-toggle": "modal",
-                                                        "data-target":
-                                                          "#task_modal_finish",
-                                                      },
-                                                      on: {
-                                                        click: function (
-                                                          $event
-                                                        ) {
-                                                          return _vm.getTaskUpdate(
-                                                            item
-                                                          )
-                                                        },
-                                                      },
-                                                    },
-                                                    [
-                                                      _vm._v(
-                                                        "\n                        Hoàn thành\n                      "
-                                                      ),
-                                                    ]
-                                                  )
+                                              item &&
+                                              item.department.leader.id ==
+                                                _vm.$root.auth.id
+                                                ? [
+                                                    item.status.status == 0
+                                                      ? _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "mb-1 btn btn-sm btn-info",
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.handleTakeTask(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                          Tiếp nhận\n                        "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                    _vm._v(" "),
+                                                    item.status.status == 1 ||
+                                                    item.status.status == 4
+                                                      ? _c(
+                                                          "button",
+                                                          {
+                                                            staticClass:
+                                                              "mb-1 btn btn-sm btn-success",
+                                                            attrs: {
+                                                              "data-toggle":
+                                                                "modal",
+                                                              "data-target":
+                                                                "#task_modal_finish",
+                                                            },
+                                                            on: {
+                                                              click: function (
+                                                                $event
+                                                              ) {
+                                                                return _vm.getTaskUpdate(
+                                                                  item
+                                                                )
+                                                              },
+                                                            },
+                                                          },
+                                                          [
+                                                            _vm._v(
+                                                              "\n                          Hoàn thành\n                        "
+                                                            ),
+                                                          ]
+                                                        )
+                                                      : _vm._e(),
+                                                  ]
                                                 : _vm._e(),
-                                            ]
-                                          : _vm._e(),
-                                      ],
-                                      2
-                                    ),
-                                  ])
-                                })
-                              : _c("tr", [
-                                  _c(
-                                    "td",
-                                    {
-                                      attrs: {
-                                        colspan: "1000",
-                                        align: "center",
-                                      },
-                                    },
-                                    [_vm._v("Không có công việc")]
-                                  ),
-                                ]),
-                          ],
-                          2
-                        ),
-                      ]
-                    ),
+                                            ],
+                                            2
+                                          ),
+                                        ])
+                                      })
+                                    : _c("tr", [
+                                        _c(
+                                          "td",
+                                          {
+                                            attrs: {
+                                              colspan: "1000",
+                                              align: "center",
+                                            },
+                                          },
+                                          [_vm._v("Không có công việc")]
+                                        ),
+                                      ]),
+                                ],
+                                2
+                              ),
+                            ]
+                          ),
+                        ]),
+                      ]),
+                    ]),
                   ]),
-                ]),
-              ]),
               _vm._v(" "),
               _c(
                 "div",
@@ -28936,8 +30727,10 @@ var render = function () {
                   _c(
                     "div",
                     {
-                      staticClass:
-                        "modal-dialog modal-xl modal-dialog-scrollable",
+                      class: [
+                        "modal-dialog modal-dialog-scrollable",
+                        _vm.task.id ? "modal-lg" : "modal-xl",
+                      ],
                     },
                     [
                       _c("div", { staticClass: "modal-content" }, [
@@ -29410,7 +31203,10 @@ var render = function () {
                                       _c("input", {
                                         ref: "ref_file",
                                         staticStyle: { display: "none" },
-                                        attrs: { type: "file" },
+                                        attrs: {
+                                          id: "task_file",
+                                          type: "file",
+                                        },
                                         on: { change: _vm.handleGetFile },
                                       }),
                                       _vm._v(" "),
@@ -30071,7 +31867,10 @@ var staticRenderFns = [
       _c(
         "button",
         { staticClass: "btn btn-info btn-sm", attrs: { type: "submit" } },
-        [_c("i", { staticClass: "fas fa-search" }), _vm._v(" Tìm\n          ")]
+        [
+          _c("i", { staticClass: "fas fa-search" }),
+          _vm._v(" Tìm\n            "),
+        ]
       ),
     ])
   },
@@ -30090,6 +31889,8 @@ var staticRenderFns = [
         _c("td", [_c("b", [_vm._v("Thống kê")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Bắt đầu")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
         _vm._v(" "),
@@ -30452,105 +32253,115 @@ var render = function () {
         ]
       ),
       _vm._v(" "),
-      _c("div", { staticClass: "card" }, [
-        _c("div", { staticClass: "card-header bg-info text-white" }, [
-          _vm._v("Danh sách người dùng"),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "table-responsive" }, [
-          _c(
-            "table",
-            { staticClass: "table table-bordered table-stripped mb-0" },
-            [
-              _vm._m(1),
-              _vm._v(" "),
-              _c(
-                "tbody",
-                [
-                  _vm.loading_get_user
-                    ? _c("tr", [
-                        _c(
-                          "td",
-                          { attrs: { colspan: "1000", align: "center" } },
-                          [_c("m-spinner")],
-                          1
-                        ),
-                      ])
-                    : _vm.list
-                    ? _vm._l(_vm.list.data, function (item, index) {
-                        return _c("tr", { key: index }, [
-                          _c("td", [_vm._v(_vm._s(index + 1))]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(item.username))]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(item.fullname))]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(item.email))]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(item.role.name))]),
-                          _vm._v(" "),
-                          _c("td", [
-                            _c(
-                              "span",
-                              {
-                                staticClass: "badge",
-                                class: {
-                                  "badge-secondary": !item.active,
-                                  "badge-success": item.active,
-                                },
-                              },
-                              [
-                                _vm._v(
-                                  _vm._s(item.active ? "Kích hoạt" : "Khóa")
-                                ),
-                              ]
-                            ),
-                          ]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(item.created_at))]),
-                          _vm._v(" "),
-                          _c("td", [
-                            _vm.$root.auth.role.level < item.role.level &&
-                            _vm.$root.isAdmin()
-                              ? _c("div", { staticClass: "icon" }, [
-                                  _c("i", {
-                                    staticClass: "fas fa-edit text-info",
-                                    attrs: {
-                                      title: "Cập nhật",
-                                      "data-toggle": "modal",
-                                      "data-target": "#user_modal",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.getInfoUpdate(item)
-                                      },
-                                    },
-                                  }),
-                                  _vm._v(" "),
-                                  _c("i", {
-                                    staticClass: "fas fa-trash-alt text-danger",
-                                    attrs: {
-                                      title: "Xóa",
-                                      "data-toggle": "modal",
-                                      "data-target": "#delete_user_modal",
-                                    },
-                                    on: {
-                                      click: function ($event) {
-                                        return _vm.getInfoUpdate(item)
-                                      },
-                                    },
-                                  }),
-                                ])
-                              : _vm._e(),
-                          ]),
+      _c("div", { staticClass: "list" }, [
+        _c("div", { staticClass: "card" }, [
+          _c("div", { staticClass: "card-header bg-info text-white" }, [
+            _vm._v("Danh sách người dùng"),
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "table-responsive" }, [
+            _c(
+              "table",
+              { staticClass: "table table-bordered table-stripped mb-0" },
+              [
+                _vm._m(1),
+                _vm._v(" "),
+                _c(
+                  "tbody",
+                  [
+                    _vm.loading_get_user
+                      ? _c("tr", [
+                          _c(
+                            "td",
+                            { attrs: { colspan: "1000", align: "center" } },
+                            [_c("m-spinner")],
+                            1
+                          ),
                         ])
-                      })
-                    : _vm._e(),
-                ],
-                2
-              ),
-            ]
-          ),
+                      : _vm.list
+                      ? _vm._l(_vm.list.data, function (item, index) {
+                          return _c("tr", { key: index }, [
+                            _c("td", [_vm._v(_vm._s(index + 1))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.username))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.fullname))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.email))]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.role.name))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _c(
+                                "span",
+                                {
+                                  staticClass: "badge",
+                                  class: {
+                                    "badge-secondary": !item.active,
+                                    "badge-success": item.active,
+                                  },
+                                },
+                                [
+                                  _vm._v(
+                                    _vm._s(item.active ? "Kích hoạt" : "Khóa")
+                                  ),
+                                ]
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("td", [_vm._v(_vm._s(item.created_at))]),
+                            _vm._v(" "),
+                            _c("td", [
+                              _vm.$root.auth.role.level < item.role.level &&
+                              _vm.$root.isAdmin()
+                                ? _c("div", { staticClass: "icon" }, [
+                                    _c(
+                                      "button",
+                                      {
+                                        staticClass: "btn btn-sm btn-info",
+                                        attrs: {
+                                          title: "Cập nhật",
+                                          "data-toggle": "modal",
+                                          "data-target": "#user_modal",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.getInfoUpdate(item)
+                                          },
+                                        },
+                                      },
+                                      [_vm._v("Sửa")]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "button",
+                                      {
+                                        staticClass: "btn btn-sm btn-danger",
+                                        attrs: {
+                                          title: "Xóa",
+                                          "data-toggle": "modal",
+                                          "data-target": "#delete_user_modal",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.getInfoUpdate(item)
+                                          },
+                                        },
+                                      },
+                                      [_vm._v("Xóa")]
+                                    ),
+                                  ])
+                                : _vm._e(),
+                            ]),
+                          ])
+                        })
+                      : _vm._e(),
+                  ],
+                  2
+                ),
+              ]
+            ),
+          ]),
         ]),
       ]),
       _vm._v(" "),
@@ -47849,12 +49660,28 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
         title: 'Phòng ban'
       }
     }, {
+      path: 'phong-ban/:department_id',
+      name: 'department-detail',
+      component: __webpack_require__(/*! ../views/DepartmentDetail.vue */ "./resources/js/views/DepartmentDetail.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Chi tiết phòng ban'
+      }
+    }, {
       path: 'ca-nhan',
       name: 'profile',
       component: __webpack_require__(/*! ../views/Profile.vue */ "./resources/js/views/Profile.vue")["default"],
       meta: {
         auth: true,
         title: 'Trang cá nhân'
+      }
+    }, {
+      path: 'nhan',
+      name: 'label',
+      component: __webpack_require__(/*! ../views/Label.vue */ "./resources/js/views/Label.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Nhãn'
       }
     }]
   }, {
@@ -48038,6 +49865,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Department_vue_vue_type_template_id_166a08b1___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Department_vue_vue_type_template_id_166a08b1___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/views/DepartmentDetail.vue":
+/*!*************************************************!*\
+  !*** ./resources/js/views/DepartmentDetail.vue ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DepartmentDetail.vue?vue&type=template&id=f11a943c& */ "./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c&");
+/* harmony import */ var _DepartmentDetail_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DepartmentDetail.vue?vue&type=script&lang=js& */ "./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _DepartmentDetail_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/DepartmentDetail.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js&":
+/*!**************************************************************************!*\
+  !*** ./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js& ***!
+  \**************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_DepartmentDetail_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./DepartmentDetail.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/DepartmentDetail.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_DepartmentDetail_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c&":
+/*!********************************************************************************!*\
+  !*** ./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c& ***!
+  \********************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./DepartmentDetail.vue?vue&type=template&id=f11a943c& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/DepartmentDetail.vue?vue&type=template&id=f11a943c&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_DepartmentDetail_vue_vue_type_template_id_f11a943c___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 
@@ -48245,6 +50141,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Job_vue_vue_type_template_id_de708424___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Job_vue_vue_type_template_id_de708424___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Label.vue":
+/*!**************************************!*\
+  !*** ./resources/js/views/Label.vue ***!
+  \**************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Label.vue?vue&type=template&id=55360b65& */ "./resources/js/views/Label.vue?vue&type=template&id=55360b65&");
+/* harmony import */ var _Label_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Label.vue?vue&type=script&lang=js& */ "./resources/js/views/Label.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Label_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/Label.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/views/Label.vue?vue&type=script&lang=js&":
+/*!***************************************************************!*\
+  !*** ./resources/js/views/Label.vue?vue&type=script&lang=js& ***!
+  \***************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Label_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Label.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Label.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Label_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/views/Label.vue?vue&type=template&id=55360b65&":
+/*!*********************************************************************!*\
+  !*** ./resources/js/views/Label.vue?vue&type=template&id=55360b65& ***!
+  \*********************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./Label.vue?vue&type=template&id=55360b65& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Label.vue?vue&type=template&id=55360b65&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Label_vue_vue_type_template_id_55360b65___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 

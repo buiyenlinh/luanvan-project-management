@@ -15,7 +15,15 @@ export default {
       error: null,
       reset_select_comp: false,
       members_show: [],
-      text_select_leader: '-- Tìm họ tên hoặc tên đăng nhập --',
+      members_id: [],
+      select_leader: {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: false
+      },
+      select_members: {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: false
+      },
       loading_update_add: false,
       loading_delete: false,
       _leader: null
@@ -60,22 +68,17 @@ export default {
     getDepartment(_department) {
       this.department = _.clone(_department);
       this.department.leader = _department.leader.id;
-      this.text_select_leader = _department.leader.fullname || _department.leader.username;
-      this.members_show = _.clone(_department.members);
+      this.select_leader.text = _department.leader.fullname || _department.leader.username;
       this._leader = _.clone(_department.leader);
     },
     onSubmit() {
       this.checkName();
-      this.checkMember();
       this.checkLeader();
-      if (this.department.name != '' && this.error.members == '' && this.error.leader == '') {
+      if (this.department.name != '' && this.error.leader == '') {
         this.loading_update_add = true;
-        let arr = [];
-        for (let i in this.members_show) {
-          arr.push(this.members_show[i]['id']);
-        }
-        this.department.members = arr;
-        if (this.department.id != null) {
+
+        if (this.department.id != null) { // Cập nhật
+          this.department.members = this.members_id;
           this.$root.api.post('department/update', this.department).then(res => {
             if (res.data.status == 'OK') {
               this.$notify(res.data.message, 'success');
@@ -90,7 +93,8 @@ export default {
             this.loading_update_add = false;
           })
 
-        } else {
+        } else { // Thêm
+          this.department.members = this.members_id;
           this.department.created_by = this.$root.auth.id;
           this.$root.api.post('department/add', this.department).then(res => {
             if (res.data.status == 'OK') {
@@ -116,18 +120,27 @@ export default {
         name: '',
         members: [],
         created_by: null,
-        leader: null
+        leader: null,
       }
       this.error = {
         name: '',
-        members: '',
         created_by: '',
-        leader: ''
+        leader: '',
+        members: ''
       }
+      this.select_members = {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: !this.select_members.status
+      }
+
+      this.select_leader = {
+        text: '-- Tìm họ tên hoặc tên đăng nhập --',
+        status: !this.select_leader.status
+      }
+
       this.text_select = '-- Tìm người tạo --';
-      this.reset_select_comp = !this.reset_select_comp;
       this.members_show = [];
-      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.members_id = [];
 
       setTimeout(() => {
         this.validate_form = true;
@@ -138,13 +151,6 @@ export default {
         this.error.name = 'Tên dự án là bắt buộc';
       } else {
         this.error.name = '';
-      }
-    },
-    checkMember() {
-      if (this.members_show.length == 0) {
-        this.error.members = 'Thành viên là bắt buộc'
-      } else {
-        this.error.members = '';
       }
     },
     checkLeader() {
@@ -159,31 +165,40 @@ export default {
     getMember(_member) {
       if (this.department.leader == _member.id) { 
         this.error.members = 'Thành viên này đã được chọn làm trưởng phòng ban';
-      } else if (!this.members_show.includes(_member.id)) {
-        this.error.members = '';
+        this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+        this.select_members.status = !this.select_members.status;
+      } else if (!this.members_id.includes(_member.id)) {
+        this.members_id.push(_member.id);
         this.members_show.push(_member);
+        this.error.members = '';
       }
     },
     getLeader(_leader) {
       this._leader = _.clone(_leader);
-      let check = false;
-      for (let i in this.members_show) {
-        if (_leader.id == this.members_show[i]['id']) {
-          this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
-          check = true;
-        }
-      }
-      if (!check) {
+    
+      if (!this.members_id.includes(_leader.id)) {
         this.department.leader = _leader.id;
         this.error.leader = '';
+      } else {
+        this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
+        this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+        this.select_leader.status = !this.select_leader.status;
       }
     },
     removeLeader() {
+      if (this.error.members == 'Thành viên này đã được chọn làm trưởng phòng ban') {
+        this.error.members = '';
+      }
       this.department.leader = null;
-      this.text_select_leader = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_leader.status = !this.select_leader.status;
     },
-    removeMember(_index) {
+    removeNewMember(_index) {
       this.members_show.splice(_index, 1);
+      this.members_id.splice(_index, 1);
+      this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
+      this.select_members.status = !this.select_members.status;
+
       this.getLeader(this._leader);
     },
     onSubmitDelete() {
@@ -213,12 +228,6 @@ export default {
         return;
       }
       this.checkName();
-    },
-    'members_show' () {
-      if (!this.validate_form) {
-        return;
-      }
-      this.checkMember();
     },
     'department.leader'() {
       if (!this.validate_form) {
@@ -273,38 +282,36 @@ export default {
       </div>
       <ul v-else class="row">
         <template v-if="list && list.data.length > 0">
-          <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-4 col-12 mb-2">
+          <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-6 col-12 mb-2">
             <div class="info bg-fff">
-              <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+              <p class="text-info"><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
               <p style="font-size: 12px; margin-bottom: 0px">
                 <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
                 <b>Trưởng phòng: </b>{{item.leader.fullname || item.leader.username}} <br>
                 <b>Tạo lúc: </b>{{item.created_at}} <br>
                 <b>Thành viên:</b> <br>
               </p>
-              <ul class="avt-mem d-flex justify-content-start mt-1">
+              <ul class="avt-mem d-flex justify-content-start mt-1 mb-2">
+                <li><img :src="item.leader.avatar ? item.leader.avatar : $root.avatar_default" alt=""></li>
                 <li v-for="(mem, _index) in item.members" :key="_index">
                   <img :src="mem.avatar ? mem.avatar : $root.avatar_default" alt="" v-if="_index <= 6">
                   <span v-if="_index == 7">{{item.members.length}}</span>
                 </li>
               </ul>
-              <div class="text-right" v-if="$root.isManager()">
-                <span
-                  class="text-danger"
-                  @click="getDepartment(item)"
-                  data-toggle="modal"
-                  data-target="#department_modal_delete"
-                >
-                  <b>Xóa</b>
-                </span>
-                <span
-                  class="text-info"
-                  @click="getDepartment(item)"
-                  data-toggle="modal"
-                  data-target="#department_modal_add"
-                >
-                  <b>Sửa</b>
-                </span>
+              <div class="text-right" >
+                <router-link :to="{ name: 'department-detail', params: { 'department_id': item.id } }">
+                  <button class="btn btn-sm btn-dark" data-toggle="modal" data-target="#department_modal_details">Xem</button>
+                </router-link>
+                
+                <template v-if="$root.isManager()">
+                  <button class="btn btn-info btn-sm" @click="getDepartment(item)"
+                    data-toggle="modal"
+                    data-target="#department_modal_add">Sửa</button>
+
+                  <button
+                  class="btn btn-sm btn-danger" @click="getDepartment(item)"
+                  data-toggle="modal" data-target="#department_modal_delete">Xóa</button>
+                </template>
               </div>
             </div>
           </li>
@@ -330,7 +337,8 @@ export default {
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Tên phòng ban <span class="text-danger">*</span></b></label>
-                    <input type="text" class="form-control form-control-sm" v-model="department.name">
+                    <input v-if="department.id" type="text" class="form-control form-control-sm" v-model="department.name" disabled>
+                    <input v-else type="text" class="form-control form-control-sm" v-model="department.name">
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>
@@ -340,9 +348,9 @@ export default {
                     <label><b>Trưởng phòng ban <span class="text-danger">*</span></b></label>
                     <m-select
                       :size="'sm'"
-                      :text="text_select_leader"
+                      :text="select_leader.text"
                       url="user/search-user-not-deparment" 
-                      :statusReset="reset_select_comp"
+                      :statusReset="select_leader.status"
                       @changeValue="getLeader"
                       @remove="removeLeader"
                       :variable="{first: 'fullname', second: 'username'}"
@@ -353,23 +361,27 @@ export default {
 
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Thành viên <span class="text-danger">*</span></b></label>
+                    <label><b>Thành viên</b></label>
                     <m-select
                       :size="'sm'"
-                      text="-- Tìm họ tên hoặc tên đăng nhập --"
+                      :text="select_members.text"
                       :show_icon_x="false"
                       url="user/search-user-not-deparment" 
-                      :statusReset="reset_select_comp"
+                      :statusReset="select_members.status"
                       @changeValue="getMember"
                       :variable="{first: 'fullname', second: 'username'}"
                     />
                     <div class="text-danger font-italic error">{{error.members}}</div>
                     <div class="members">
-                      <ul>
-                        <li v-for="(item, index) in members_show" :key="index">
+                      <ul class="d-flex flex-wrap">
+                        <li v-for="(item, index) in department.members" :key="index">
                           <img :src="item.avatar ? item.avatar : $root.avatar_default" alt="">
                           {{item.fullname || item.username}}
-                          <i class="fas fa-times icon-remove" @click="removeMember(index)"></i>
+                        </li>
+                        <li v-for="(item, index) in members_show" :key="index + department.members.length">
+                          <img :src="item.avatar ? item.avatar : $root.avatar_default" alt="">
+                          {{item.fullname || item.username}}
+                          <i class="fas fa-times icon-remove" @click="removeNewMember(index)"></i>
                         </li>
                       </ul>
                     </div>
