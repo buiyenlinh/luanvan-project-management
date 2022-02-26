@@ -745,6 +745,12 @@ $side-bar-width-small: 65px;
     }
 }
 
+.list .btn-sm {
+    padding: 2px 5px;
+    font-size: 12px;
+}
+
+textarea { font-size: 14px; }
 
 /* Profile page*/
 .profile {
@@ -759,23 +765,9 @@ $side-bar-width-small: 65px;
 
 /* Project page */
 #project {
-    .list .btn-sm {
-        padding: 2px 5px;
-        font-size: 12px;
-    }
-
     .list ul {
         padding: 0;
         list-style: none;
-        // li {
-            // a {
-            //     display: block;
-            //     padding: 10px;
-            //     color: #333;
-            // }
-            // border: 1px solid #17a2b8;
-            // cursor: pointer;
-        // }
         .block {
             background-color: #e4e4e4;
             position: relative;
@@ -799,7 +791,6 @@ $side-bar-width-small: 65px;
         li .info {
             padding: 10px;
             border: 1px solid #17a2b8;
-            cursor: pointer;
         }
         .avt-mem li {
             margin-left: -15px;
@@ -832,14 +823,12 @@ $side-bar-width-small: 65px;
         ul {
             list-style-type: none;
             padding: 0;
-            display: flex;
-
             li {
                 border: 1px solid #ddd;
                 border-radius: 30px;
                 padding: 6px 30px 6px 12px;
                 position: relative;
-                margin-right: 5px;
+                margin: 0px 5px 5px 0px;
                 img {
                     width: 20px;
                     height: 20px;
@@ -856,12 +845,39 @@ $side-bar-width-small: 65px;
     }
 }
 
+
+/* Chi tiết phòng ban */
+#department-detail {
+    .new-members {
+        margin-top: 10px;
+        ul {
+            list-style-type: none;
+            padding: 0;
+            li {
+                border: 1px solid #ddd;
+                border-radius: 30px;
+                padding: 6px 30px 6px 12px;
+                position: relative;
+                margin: 0px 5px 5px 0px;
+                img {
+                    width: 20px;
+                    height: 20px;
+                    object-fit: cover;
+                    border-radius: 50%;
+                }
+                .icon-remove {
+                    position: absolute;
+                    right: 10px;
+                    top: 10px;
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+}
+
 /* Công việc */
 #task {
-    .list .btn-sm {
-        padding: 2px 5px;
-        font-size: 12px;
-    }
     ul {
         padding: 0px;
         list-style: none;
@@ -892,10 +908,6 @@ $side-bar-width-small: 65px;
 
 /* job */
 #job {
-    .list .btn-sm {
-        padding: 2px 5px;
-        font-size: 12px;
-    }
     ul {
         padding: 0px;
         list-style: none;
@@ -916,6 +928,19 @@ $side-bar-width-small: 65px;
             i {
                 margin-left: 5px;
             }
+        }
+    }
+}
+
+#label {
+    .list ul {
+        list-style-type: none;
+        padding: 0;
+        .item {
+            width: 100%;
+            display: block;
+            border: 1px solid #117a8b;
+            padding: 10px;
         }
     }
 }

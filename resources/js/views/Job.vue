@@ -40,6 +40,14 @@ export default {
       reason_not_approval_refuse: '',
       reason_not_approval_refuse_error: '',
       loading_not_approval_refuse_job: '',
+      select_user: {
+        text: '--- Tìm tên hoặc tên đăng nhập ---',
+        status: false
+      },
+      select_pre_job: {
+        text: '--- Tìm tên nhiệm vụ ---',
+        status: false
+      }
     }
   },
   methods: {
@@ -67,7 +75,7 @@ export default {
         if (res.data.status == "OK") {
           this.info = res.data.data;
         } else {
-          this.$root.showError(res.data.error);
+          this.$router.replace({name: 'task', params: { 'id': this.params.project_id }});
         }
       }).catch(err => {
         this.loading_info = false;
@@ -110,12 +118,12 @@ export default {
 
       this.select_user = {
         text: '--- Tìm tên hoặc tên đăng nhập ---',
-        status: false
+        status: !this.select_user.status
       }
 
       this.select_pre_job = {
         text: '--- Tìm tên nhiệm vụ ---',
-        status: false
+        status: !this.select_pre_job.status
       }
 
       this.reason =  '';
@@ -264,6 +272,7 @@ export default {
       this.file.show = _file.target.files[0].name;
     },
     removeFile() {
+      $('#job_file').val('');
       this.file.show = '';
       this.job.file = '';
     },
@@ -532,11 +541,9 @@ export default {
       </nav>
 
       <div v-if="info.task.status.status <= 0">
-        <m-spinner class="mb-2" />
         <b>Hãy chọn tiếp nhận công việc trước khi thêm nhiệm vụ</b>
       </div>
       <div v-else-if="info.task.status.status == 5">
-        <m-spinner class="mb-2" />
         <b>Công việc đã gửi yêu cầu từ chối nhận</b>
       </div>
       <div v-else>
@@ -550,7 +557,7 @@ export default {
                 <i class="fas fa-search"></i> Tìm
               </button>
             </div>  
-            <div class="col-md-6 col-sm-3 col-12 text-right mb-2" v-if="$root.isManager() || $root.auth.id == info.task.department.leader.id">
+            <div class="col-md-6 col-sm-3 col-12 text-right mb-2" v-if="$root.auth.id == info.task.department.leader.id">
               <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#job_modal_add_update">Thêm</button>
             </div>
           </div>
@@ -566,8 +573,8 @@ export default {
                       <td><b>STT</b></td>
                       <td><b>Tên</b></td>
                       <td><b>Phân cho</b></td>
-                      <td><b>Thống kê</b></td>
                       <td><b>Trạng thái</b></td>
+                      <td><b>Bắt đầu</b></td>
                       <td><b>Ngày tạo</b></td>
                       <td></td>
                     </tr>
@@ -583,7 +590,6 @@ export default {
                         <td>{{ index + 1 }}</td>
                         <td>{{ item.name }}</td>
                         <td>{{ item.user.fullname || item.user.username }}</td>
-                        <td>SLHT / SLTH</td>
                         <td>
                           <span class="badge badge-danger" v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5 || item.status.status == 6">
                             {{ $root.getStatusTaskName(item.status.status) }}
@@ -603,37 +609,38 @@ export default {
                             <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
                           </span>
                         </td>
+                        <td>{{ item.start_time }}</td>
                         <td>{{ item.created_at }}</td>
                         <td>
                           <button @click="getJobUpdate(item)"
                             data-toggle="modal"
                             data-target="#job_modal_details"
-                            class="btn btn-secondary btn-sm">Xem</button>
+                            class="mb-1 btn btn-secondary btn-sm">Xem</button>
 
                           <template v-if="info && $root.auth.id == info.task.department.leader.id">
                             <template v-if="item.status.status != 3">
                               <button
-                                class="btn btn-info btn-sm"
+                                class="mb-1 btn btn-info btn-sm"
                                 @click="getJobUpdate(item)"
                                 data-toggle="modal"
                                 data-target="#job_modal_add_update">Sửa</button>
 
                               <button
-                                class="btn btn-danger btn-sm"
+                                class="mb-1 btn btn-danger btn-sm"
                                 @click="getJobUpdate(item)"
                                 data-toggle="modal"
                                 data-target="#job_modal_delete">Xóa</button>
                             </template>
                             <template v-if="item.status.status == 2">
-                              <button class="btn btn-info btn-sm" @click="handleApprovalJob(item)">Duyệt </button>
-                              <button class="btn btn-danger btn-sm"
+                              <button class="mb-1 btn btn-info btn-sm" @click="handleApprovalJob(item)">Duyệt </button>
+                              <button class="mb-1 btn btn-danger btn-sm"
                                 @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_not_approval_modal">
                                 Không duyệt
                               </button>
                             </template>
 
                             <button v-if="item.status.status == 5"
-                              class="btn btn-danger btn-sm"
+                              class="mb-1 btn btn-danger btn-sm"
                               @click="getJobUpdate(item)"
                               data-toggle="modal"
                               data-target="#job_not_approval_refuse_modal"
@@ -642,12 +649,12 @@ export default {
 
                           <template v-else-if="item && item.user.id == $root.auth.id">
                             <span v-if="item.status.status == 0">
-                              <button @click="handleTakeJob(item)" class="btn btn-info btn-sm">Tiếp nhận</button>
-                              <button @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal" class="btn btn-sm btn-dark">Từ chối</button>
+                              <button @click="handleTakeJob(item)" class="mb-1 btn btn-info btn-sm">Tiếp nhận</button>
+                              <button @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal" class="mb-1 btn btn-sm btn-danger">Từ chối</button>
                             </span>
                             <span v-else-if="item.status.status == 1 || item.status.status == 4 || item.status.status == 6">
                               <button @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_finish_modal"
-                                class="btn btn-sm btn-success">Hoàn thành</button>
+                                class="mb-1 btn btn-sm btn-success">Hoàn thành</button>
                             </span>
                           </template>
                         </td>
@@ -664,7 +671,7 @@ export default {
     <m-spinner v-else class="mb-2" />
 
     <div class="modal fade" id="job_modal_add_update">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div :class="['modal-dialog modal-dialog-scrollable', job.id ? 'modal-lg' : 'modal-xl']">
         <div class="modal-content">
           <div class="modal-header">
             <h4 class="modal-title">Nhiệm vụ</h4>
@@ -751,6 +758,7 @@ export default {
                     <label><b>Đính kèm</b></label>
                     <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
                     <input
+                      id="job_file"
                       type="file"
                       ref="ref_file"
                       style="display: none"
@@ -826,8 +834,11 @@ export default {
 
             <div class="form-group" v-if="job.status">
               <b>Trạng thái: </b><span>{{ $root.getStatusTaskName(job.status.status) }}</span>
-              <div class="pl-2" v-if="job.status.content"><b>Nội dung phản hồi: </b>
-              <br><span>{{ job.status.content }}</span> </div>
+            </div> 
+
+            <div class="form-group" v-if="job.status && job.status.content">
+              <b>Nội dung phản hồi: </b>
+              <span>{{ job.status.content }}</span>
             </div> 
 
             <div class="form-group">

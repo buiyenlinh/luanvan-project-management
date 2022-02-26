@@ -55,6 +55,12 @@ export default {
           link: "user",
           icon: "fas fa-users",
         });
+
+        this.menu.push({
+          label: 'Nhãn',
+          link: "label",
+          icon: "fas fa-tags",
+        });
       }
       this.menu.push({
         label: 'Cá nhân',

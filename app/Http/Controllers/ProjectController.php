@@ -74,7 +74,7 @@ class ProjectController extends Controller
             $db->where('manager', $manager_id);
         }
 
-        $list = $db->orderBy('id','desc')->paginate(2);
+        $list = $db->orderBy('id','desc')->paginate(5);
         $data = ProjectResource::collection($list)->response()->getData();
         return $this->success('Danh sách dự án', $data);
     }
@@ -188,36 +188,10 @@ class ProjectController extends Controller
             return $this->error('Dự án không tồn tại');
         }
         $tasks = Task::where('project_id', $id);
-        foreach($tasks->get() as $_task) {
-            $jobs = Job::where('task_id', $_task->id);
-            foreach($jobs->get() as $_job) {
-                $department_user_job = DepartmentUserJob::where('job_id', $_job->id);
-                foreach($department_user_job->get() as $_department_user_job) {
-                    DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->delete();
-                }
-                $department_user_job->delete();
-            }
-            $jobs->delete();
+        if ($tasks->count() > 0) 
+            return $this->error('Dự án đã được phân công công việc. Không thể xóa');
 
-            $department_task = DepartmentTask::where('task_id', $_task->id);
-            foreach($department_task->get() as $_department_task) {
-                DepartmentTaskStatus::where('department_task_id', $_department_task->id)->delete();
-                $department = Department::find($_department_task->department_id);
-                foreach($department->get() as $_department) {
-                    $department_user = DepartmentUser::where('department_id', $_department->id);
-                    foreach($department_user->get() as $_department_user) {
-                        $department_user_job = DepartmentUserJob::where('department_user_id', $_department_user->id);
-                        foreach($department_user_job->get() as $_department_user_job) {
-                            DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->delete();
-                        }
-                        $department_user_job->delete();
-                    }   
-                    $department_user->delete();
-                }
-            }
-            $department_task->delete();
-        }
-        $tasks->delete();
+        $project_status = ProjectStatus::where('project_id', $id)->delete();
         Project::find($id)->delete();
 
         return $this->success('Xóa dự án thành công');
@@ -232,6 +206,34 @@ class ProjectController extends Controller
     
         if (!$project) {
             return $this->error('Dự án không tồn tại');
+        }
+
+        /** Kiểm tra role manager & user có thuộc dự án? */
+        if ($this->auth->role->level == 3) {
+            if ($this->auth->id != $project->create_by && $this->auth->id != $project->manager)
+                return $this->error('Bạn không thuộc dự án này');
+        }
+
+        if ($this->auth->role->level == 4) {
+            $checkUserBelongProject = false; // Check user có thuộc project
+            $tasks = Task::where('project_id', $project_id)->get();
+            if ($tasks) {
+                foreach ($tasks as $_task) {
+                    $department_task = DepartmentTask::where('task_id', $_task->id)->latest('id')->first();
+                    if ($department_task) {
+                        $department_users = DepartmentUser::where('department_id', $department_task->department_id)->get();
+                        if ($department_users) {
+                            foreach ($department_users as $_department_user) {
+                                if ($_department_user && $_department_user->user_id == $this->auth->id)
+                                $checkUserBelongProject = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!$checkUserBelongProject) 
+                return $this->error('Bạn không thuộc dự án này');
         }
 
         $project = new ProjectResource(Project::find($project_id));

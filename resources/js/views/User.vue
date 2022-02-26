@@ -259,6 +259,9 @@ export default {
     this.handleCloseModal();
   },
   mounted() {
+    if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
+      this.$router.replace({ name: 'dashboard' });
+    }
     this.current_page = parseInt(this.$route.query.page || 1);
     this.getUserList();
     this.getRole();
@@ -332,60 +335,62 @@ export default {
         </div>
       </div>
     </form>
-    <div class="card">
-      <div class="card-header bg-info text-white">Danh sách người dùng</div>
-      <div class="table-responsive">
-        <table class="table table-bordered table-stripped mb-0">
-          <thead>
-            <tr>
-              <td><b>STT</b></td>
-              <td><b>Tên đăng nhập</b></td>
-              <td><b>Tên tài khoản</b></td>
-              <td><b>Email</b></td>
-              <td><b>Nhóm</b></td>
-              <td><b>Trạng thái</b></td>
-              <td><b>Ngày tạo</b></td>
-              <td></td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading_get_user">
-              <td colspan="1000" align="center">
-                <m-spinner />
-              </td>
-            </tr>
-            <template v-else-if="list">
-              <tr v-for="(item, index) in list.data" :key="index">
-                <td>{{ index + 1 }}</td>
-                <td>{{ item.username }}</td>
-                <td>{{ item.fullname }}</td>
-                <td>{{ item.email }}</td>
-                <td>{{ item.role.name }}</td>
-                <td>
-                  <span class="badge" :class="{
-                    'badge-secondary': !item.active,
-                    'badge-success': item.active
-                  }">{{ item.active ? 'Kích hoạt' : 'Khóa' }}</span>
-                </td>
-                <td>{{ item.created_at }}</td>
-                <td>
-                  <div v-if="$root.auth.role.level < item.role.level && $root.isAdmin()" class="icon">
-                    <i class="fas fa-edit text-info"
-                      title="Cập nhật"
-                      @click="getInfoUpdate(item)"
-                      data-toggle="modal"
-                      data-target="#user_modal"></i>
-                    <i class="fas fa-trash-alt text-danger"
-                      title="Xóa"
-                      @click="getInfoUpdate(item)"
-                      data-toggle="modal"
-                      data-target="#delete_user_modal"></i>
-                  </div>
+    <div class="list">
+      <div class="card">
+        <div class="card-header bg-info text-white">Danh sách người dùng</div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-stripped mb-0">
+            <thead>
+              <tr>
+                <td><b>STT</b></td>
+                <td><b>Tên đăng nhập</b></td>
+                <td><b>Tên tài khoản</b></td>
+                <td><b>Email</b></td>
+                <td><b>Nhóm</b></td>
+                <td><b>Trạng thái</b></td>
+                <td><b>Ngày tạo</b></td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading_get_user">
+                <td colspan="1000" align="center">
+                  <m-spinner />
                 </td>
               </tr>
-            </template>
-          </tbody>
-        </table>
+              <template v-else-if="list">
+                <tr v-for="(item, index) in list.data" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ item.username }}</td>
+                  <td>{{ item.fullname }}</td>
+                  <td>{{ item.email }}</td>
+                  <td>{{ item.role.name }}</td>
+                  <td>
+                    <span class="badge" :class="{
+                      'badge-secondary': !item.active,
+                      'badge-success': item.active
+                    }">{{ item.active ? 'Kích hoạt' : 'Khóa' }}</span>
+                  </td>
+                  <td>{{ item.created_at }}</td>
+                  <td>
+                    <div v-if="$root.auth.role.level < item.role.level && $root.isAdmin()" class="icon">
+                      <button class="btn btn-sm btn-info"
+                        title="Cập nhật"
+                        @click="getInfoUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#user_modal">Sửa</button>
+                      <button class="btn btn-sm btn-danger"
+                        title="Xóa"
+                        @click="getInfoUpdate(item)"
+                        data-toggle="modal"
+                        data-target="#delete_user_modal">Xóa</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

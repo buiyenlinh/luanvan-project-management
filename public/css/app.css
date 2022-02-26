@@ -838,6 +838,15 @@ a:hover {
   }
 }
 
+.list .btn-sm {
+  padding: 2px 5px;
+  font-size: 12px;
+}
+
+textarea {
+  font-size: 14px;
+}
+
 /* Profile page*/
 
 .profile .avatar img {
@@ -850,11 +859,6 @@ a:hover {
 }
 
 /* Project page */
-
-#project .list .btn-sm {
-  padding: 2px 5px;
-  font-size: 12px;
-}
 
 #project .list ul {
   padding: 0;
@@ -885,7 +889,6 @@ a:hover {
 #department .list ul li .info {
   padding: 10px;
   border: 1px solid #17a2b8;
-  cursor: pointer;
 }
 
 #department .list ul .avt-mem li {
@@ -924,7 +927,6 @@ a:hover {
 #department #department_modal_add .members ul {
   list-style-type: none;
   padding: 0;
-  display: flex;
 }
 
 #department #department_modal_add .members ul li {
@@ -932,7 +934,7 @@ a:hover {
   border-radius: 30px;
   padding: 6px 30px 6px 12px;
   position: relative;
-  margin-right: 5px;
+  margin: 0px 5px 5px 0px;
 }
 
 #department #department_modal_add .members ul li img {
@@ -949,12 +951,41 @@ a:hover {
   top: 10px;
 }
 
-/* Công việc */
+/* Chi tiết phòng ban */
 
-#task .list .btn-sm {
-  padding: 2px 5px;
-  font-size: 12px;
+#department-detail .new-members {
+  margin-top: 10px;
 }
+
+#department-detail .new-members ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#department-detail .new-members ul li {
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  padding: 6px 30px 6px 12px;
+  position: relative;
+  margin: 0px 5px 5px 0px;
+}
+
+#department-detail .new-members ul li img {
+  width: 20px;
+  height: 20px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 50%;
+}
+
+#department-detail .new-members ul li .icon-remove {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+/* Công việc */
 
 #task ul {
   padding: 0px;
@@ -985,11 +1016,6 @@ a:hover {
 
 /* job */
 
-#job .list .btn-sm {
-  padding: 2px 5px;
-  font-size: 12px;
-}
-
 #job ul {
   padding: 0px;
   list-style: none;
@@ -1010,5 +1036,17 @@ a:hover {
 
 #job .pre-jobs ul li i {
   margin-left: 5px;
+}
+
+#label .list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#label .list ul .item {
+  width: 100%;
+  display: block;
+  border: 1px solid #117a8b;
+  padding: 10px;
 }
 

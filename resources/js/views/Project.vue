@@ -127,15 +127,23 @@ export default {
     checkStartTime() {
       if (this.project.start_time == '') {
         this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
+      } else if (this.project.end_time && this.project.start_time > this.project.end_time) {
+        this.error.start_time = 'Thời gian bắt đầu phải trước thời gian kết thúc';
       } else {
         this.error.start_time = '';
+        if (this.error.end_time == 'Thời gian kết thúc phải sau thời gian bắt đầu') 
+          this.error.end_time = '';
       }
     },
     checkEndTime() {
       if (this.project.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
+      } else if (this.project.start_time && this.project.start_time > this.project.end_time) {
+        this.error.end_time = 'Thời gian kết thúc phải sau thời gian bắt đầu';
       } else {
         this.error.end_time = '';
+        if (this.error.start_time == 'Thời gian bắt đầu phải trước thời gian kết thúc')
+          this.error.start_time = '';
       }
     },
     checkManager() {
@@ -235,6 +243,7 @@ export default {
       })
     },
     removeFile() {
+      $('#project_file').val('');
       this.file_show = '';
       this.project.file = '';
     },
@@ -351,6 +360,7 @@ export default {
                 <td><b>Quản lý</b></td>
                 <td><b>Thống kê</b></td>
                 <td><b>Trạng thái</b></td>
+                <td><b>Bắt đầu</b></td>
                 <td><b>Ngày tạo</b></td>
                 <td></td>
               </tr>
@@ -366,7 +376,16 @@ export default {
                   <td>{{ index + 1 }}</td>
                   <td>{{ item.name }}</td>
                   <td>{{ item.manager.fullname || item.manager.username }}</td>
-                  <td>SLHT / SLTH</td>
+                  <td>
+                    <div v-if="item.task_statistic" style="font-size: 11px">
+                      <b>{{ item.task_statistic.finish }}/ {{ item.task_statistic.total }}</b> Hoàn thành 
+                      <b>{{ item.task_statistic.overdue }}</b> quá hạn
+                    </div>
+                    <div class="progress" style="height: 0.5em">
+                      <div :class="['progress-bar', item.task_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
+                        :style="'width:' + item.task_statistic.finish_percent + '%'"></div>
+                    </div>
+                  </td>
                   <td>
                     <span v-if="item.active == 0" class="badge badge-danger">Khóa</span>
                     <span v-else class="badge badge-success">{{ $root.getStatusTaskName(item.status.status) }}</span>
@@ -374,34 +393,35 @@ export default {
                       {{ $root.checkDeadline(item) }}
                     </span>
                   </td>
-                  <td>{{ item.created_at }}</td>
+                  <td style="font-size: 13px">{{ item.start_time }}</td>
+                  <td style="font-size: 13px">{{ item.created_at }}</td>
                   <td>
-                    <button class="btn btn-secondary btn-sm"
+                    <button class="mb-1 btn btn-secondary btn-sm"
                       @click="getProjectUpdate(item)"
                       data-toggle="modal"
                       data-target="#project_modal_details"
                     >Xem</button>
                     <router-link :to="{name: 'task', params: { 'id': item.id }}" v-if="item.status.status != 0">
-                      <button class="btn btn-sm btn-dark">Công việc</button>
+                      <button class="mb-1 btn btn-sm btn-dark">Công việc</button>
                     </router-link>
                     <template v-if="$root.auth.id == item.manager.id || $root.auth.id == item.created_by.id">
-                      <button class="btn btn-info btn-sm"
+                      <button class="mb-1 btn btn-info btn-sm"
                         @click="getProjectUpdate(item)"
                         data-toggle="modal"
                         data-target="#project_modal_add"
                       >Sửa</button>
-                      <button class="btn btn-danger btn-sm"
+                      <button class="mb-1 btn btn-danger btn-sm"
                         @click="getProjectUpdate(item)"
                         data-toggle="modal"
                         data-target="#project_modal_delete"
                       >Xóa</button>
                       
                       <template v-if="item.active == 1 && $root.auth.id == item.manager.id">
-                        <button class="btn btn-outline-info btn-sm"
+                        <button class="mb-1 btn btn-outline-info btn-sm"
                           v-if="item.status && item.status.status == 0 && $root.auth.id == item.manager.id"
                           @click="handleTakeProject(item)"
                         >Tiếp nhận</button>
-                        <button class="btn btn-success btn-sm" 
+                        <button class="mb-1 btn btn-success btn-sm" 
                           v-if="item.status && item.status.status == 1"
                           @click="getProjectUpdate(item)"
                           data-toggle="modal"
@@ -423,7 +443,7 @@ export default {
     </div>
 
     <div class="modal fade" id="project_modal_add">
-      <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h4 class="modal-title">Dự án</h4>
@@ -432,7 +452,7 @@ export default {
           <div class="modal-body">
             <form @submit.prevent="onSubmit">
               <div class="row">
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Tên dự án <span class="text-danger">*</span></b></label>
                     <input v-if="project.id" type="text" class="form-control form-control-sm" v-model="project.name" disabled>
@@ -440,21 +460,21 @@ export default {
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12" v-if="!project.id">
+                <div class="col-md-12 col-sm-12 col-12" v-if="!project.id">
                   <div class="form-group">
                     <label><b>Thời gian bắt đầu <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="project.start_time">
                     <div class="text-danger font-italic error">{{error.start_time}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12" v-if="!project.id">
+                <div class="col-md-12 col-sm-12 col-12" v-if="!project.id">
                   <div class="form-group">
                     <label><b>Thời gian kết thức <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="project.end_time">
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12" v-if="$root.isAdmin() && !project.id">
+                <div class="col-md-12 col-sm-12 col-12" v-if="$root.isAdmin() && !project.id">
                   <div class="form-group">
                     <label><b>Quản lý <span class="text-danger">*</span></b></label>
                     <m-select
@@ -469,7 +489,7 @@ export default {
                     <div class="text-danger font-italic error">{{error.manager}}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Trạng thái <span class="text-danger">*</span></b></label><br>
                     <div class="form-check-inline">
@@ -492,11 +512,12 @@ export default {
                   </div>
                 </div>
 
-                <div class="col-md-6 col-sm-12 col-12">
+                <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Đính kèm</b></label>
                     <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
                     <input
+                      id="project_file"
                       type="file"
                       ref="ref_file"
                       style="display: none"
@@ -584,7 +605,7 @@ export default {
               <div v-if="project.name" class="d-flex justify-content-start">
                 <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
                 <span>
-                  Xóa dự án <b>{{ project.name }}</b> thì tất cả các công việc liên quan sẽ bị xóa.
+                  Xóa dự án <b>{{ project.name }}</b> thì tất cả trạng thái của dự án sẽ bị xóa.
                   <br>
                   Bạn có muốn xóa?
                 </span>

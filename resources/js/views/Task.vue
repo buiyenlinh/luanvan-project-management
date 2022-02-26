@@ -49,9 +49,9 @@ export default {
       }).then(res => {
         this.loading_list = false;
         if (res.data.status == "OK") {
-          this.list = res.data.data.data;  
+          this.list = res.data.data.data;
         } else {
-          this.$root.showError(res.data.error);
+          this.$root.$notify(res.data.error, 'error');
         }
       }).catch(err => {
         this.$root.showError(err);
@@ -239,6 +239,7 @@ export default {
       })
     },
     removeFile() {
+      $('#task_file').val('');
       this.file_show = '';
       this.task.file = '';
     },
@@ -320,10 +321,11 @@ export default {
         if (res.data.status == 'OK') {
           this.project = res.data.data;
         } else {
-          this.$root.showError(res.data.error);
+          this.$root.$notify(res.data.error, 'error');
+          this.$router.replace({name: 'project'});
         }
       }).catch(err => {
-        this.$root.showError(err);
+        this.$root.$notify(res.data.error, 'error');
       })
     },
     getTaskUpdate(_task) {
@@ -425,8 +427,8 @@ export default {
   },
   mounted() {
     this.project_id = this.$route.params.id;
-    this.getList();
     this.getProject();
+    this.getList();
 
     $(document).on('hidden.bs.modal', '#task_modal_add_update, #task_modal_delete, #task_modal_details, #task_modal_finish, #task_modal_not_approval_finish', () => {
       this.closeModal();
@@ -468,131 +470,153 @@ export default {
         </ol>
       </nav>
 
-      <form @submit.prevent="getList">
-        <div class="row">
-          <div class="col-md-3 col-sm-5 col-12 mb-2">
-            <input type="text" class="form-control form-control-sm" placeholder="Tên công việc..." v-model="search.name">
+      <div v-if="project.active == 0">
+        <b>Dự án đã bị khóa</b>
+      </div>
+
+      <div v-else-if="project.status.status <= 0">
+        <b>Hãy chọn tiếp nhận dự án trước khi thêm công việc</b>
+      </div>
+      <div v-else>
+
+        <form @submit.prevent="getList">
+          <div class="row">
+            <div class="col-md-3 col-sm-5 col-12 mb-2">
+              <input type="text" class="form-control form-control-sm" placeholder="Tên công việc..." v-model="search.name">
+            </div>
+            <div class="col-md-3 col-sm-5 col-12 mb-2">
+              <m-select
+                :size="'sm'"
+                text="--Tìm theo phòng ban--"
+                url="department/search"
+                :statusReset="false"
+                @changeValue="getDepartmentSearch"
+                @remove="removeDepartmentSearch"
+                :variable="{first: 'name'}"
+              />
+            </div>
+            <div class="col-md-2 col-sm-2 col-6 mb-2"> 
+              <button type="submit" class="btn btn-info btn-sm">
+                <i class="fas fa-search"></i> Tìm
+              </button>
+            </div>
+            <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="project.manager.id == $root.auth.id">
+              <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add_update">Thêm</button>
+            </div>
           </div>
-          <div class="col-md-3 col-sm-5 col-12 mb-2">
-            <m-select
-              :size="'sm'"
-              text="--Tìm theo phòng ban--"
-              url="department/search"
-              :statusReset="false"
-              @changeValue="getDepartmentSearch"
-              @remove="removeDepartmentSearch"
-              :variable="{first: 'name'}"
-            />
-          </div>
-          <div class="col-md-2 col-sm-2 col-6 mb-2"> 
-            <button type="submit" class="btn btn-info btn-sm">
-              <i class="fas fa-search"></i> Tìm
-            </button>
-          </div>  
-          <div class="col-md-4 col-sm-12 col-6 text-right mb-2" v-if="$root.isManager()">
-            <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#task_modal_add_update">Thêm</button>
-          </div>
-        </div>
-      </form>
-      <div class="list">
-        <div class="card">
-        <div class="card-header bg-info text-white">Danh sách công việc</div>
-          <div class="table-responsive">
-            <table class="table table-bordered table-stripped mb-0">
-              <thead>
-                <tr>
-                  <td><b>STT</b></td>
-                  <td><b>Tên</b></td>
-                  <td><b>Phòng ban</b></td>
-                  <td><b>Thống kê</b></td>
-                  <td><b>Trạng thái</b></td>
-                  <td><b>Ngày tạo</b></td>
-                  <td></td>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="loading_list">
-                  <td colspan="1000" align="center">
-                    <m-spinner />
-                  </td>
-                </tr>
-                <template v-else-if="list && list.length > 0">
-                  <tr v-for="(item, index) in list" :key="index">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.department.name }}</td>
-                    <td>SLHT / SLTH</td>
-                    <td>
-                      <span v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5" class="badge badge-danger">
-                        {{ $root.getStatusTaskName(item.status.status) }}
-                      </span>
-                      <span v-else-if="item.status.status == 3">
-                        <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
-                        <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
-                      </span>
-                      <span v-else class="badge badge-info">
-                        {{ $root.getStatusTaskName(item.status.status) }}
-                      </span>
-                      <span v-if="item.status.status != 3" :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-success' : 'badge-danger']">
-                        {{ $root.checkDeadline(item) }}
-                      </span>
-                    </td>
-                    <td>{{ item.created_at }}</td>
-                    <td>
-                      <button @click="getTaskUpdate(item)" class="btn btn-sm btn-secondary"
-                        data-toggle="modal"
-                        data-target="#task_modal_details"
-                      >Xem</button>
-
-                      <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
-                        <button v-if="item && item.status.status != 3 && item.status.status != 0" class="btn btn-dark btn-sm">Nhiệm vụ</button>
-                      </router-link>
-
-                      <template v-if="item.status.status != 3 && project && project.manager.id == $root.auth.id">
-                        <button class="btn btn-sm btn-info"
-                          @click="getTaskUpdate(item)"
-                          data-toggle="modal"
-                          data-target="#task_modal_add_update">Sửa</button>
-
-                        <button class="btn btn-sm btn-danger"
-                          @click="getTaskUpdate(item)"
-                          data-toggle="modal"
-                          data-target="#task_modal_delete">Xóa</button> 
-                    
-                        <template v-if="item.status.status == 2">
-                          <button class="btn btn-sm btn-info" @click="handleApprovalTask(item)">Duyệt</button>
-                          <button class="btn btn-sm btn-danger"
-                            @click="getTaskUpdate(item)"
-                            data-toggle="modal"
-                            data-target="#task_modal_not_approval_finish">
-                            Không duyệt
-                          </button>
-                        </template>
-
-                      </template>
-                      <template v-if="item && item.department.leader.id == $root.auth.id">
-                        <button v-if="item.status.status == 0" 
-                          @click="handleTakeTask(item)" class="btn btn-sm btn-info">
-                          Tiếp nhận
-                        </button>
-                        <button v-if="item.status.status == 1 || item.status.status == 4"
-                          @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_modal_finish"
-                          class="btn btn-sm btn-success">
-                          Hoàn thành
-                        </button>
-                      </template>
+        </form>
+        <div class="list">
+          <div class="card">
+          <div class="card-header bg-info text-white">Danh sách công việc</div>
+            <div class="table-responsive">
+              <table class="table table-bordered table-stripped mb-0">
+                <thead>
+                  <tr>
+                    <td><b>STT</b></td>
+                    <td><b>Tên</b></td>
+                    <td><b>Phòng ban</b></td>
+                    <td><b>Thống kê</b></td>
+                    <td><b>Trạng thái</b></td>
+                    <td><b>Bắt đầu</b></td>
+                    <td><b>Ngày tạo</b></td>
+                    <td></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="loading_list">
+                    <td colspan="1000" align="center">
+                      <m-spinner />
                     </td>
                   </tr>
-                </template>
-                <tr v-else ><td colspan="1000" align="center">Không có công việc</td></tr>
-              </tbody>
-            </table>
+                  <template v-else-if="list && list.length > 0">
+                    <tr v-for="(item, index) in list" :key="index">
+                      <td>{{ index + 1 }}</td>
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.department.name }}</td>
+                      <td>
+                        <div v-if="item.job_statistic" style="font-size: 11px">
+                          <b>{{ item.job_statistic.finish }}/ {{ item.job_statistic.total }}</b> Hoàn thành 
+                          <b>{{ item.job_statistic.overdue }}</b> quá hạn
+                        </div>
+                        <div class="progress" style="height: 0.5em">
+                          <div :class="['progress-bar', item.job_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
+                            :style="'width:' + item.job_statistic.finish_percent + '%'"></div>
+                        </div>
+                      </td>
+                      <td>
+                        <span v-if="item.status.status == 2 || item.status.status == 4 || item.status.status == 5" class="badge badge-danger">
+                          {{ $root.getStatusTaskName(item.status.status) }}
+                        </span>
+                        <span v-else-if="item.status.status == 3">
+                          <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                          <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                        </span>
+                        <span v-else class="badge badge-info">
+                          {{ $root.getStatusTaskName(item.status.status) }}
+                        </span>
+                        <span v-if="item.status.status != 3" :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-success' : 'badge-danger']">
+                          {{ $root.checkDeadline(item) }}
+                        </span>
+                      </td>
+                      <td>{{ item.start_time }}</td>
+                      <td>{{ item.created_at }}</td>
+                      <td>
+                        <button @click="getTaskUpdate(item)" class="mb-1 btn btn-sm btn-secondary"
+                          data-toggle="modal"
+                          data-target="#task_modal_details"
+                        >Xem</button>
+
+                        <router-link :to="{name: 'job', params: { 'project_id': project_id, 'id': item.id }}">
+                          <button v-if="item && item.status.status != 0" class="mb-1 btn btn-dark btn-sm">Nhiệm vụ</button>
+                        </router-link>
+
+                        <template v-if="item.status.status != 3 && project && project.manager.id == $root.auth.id">
+                          <button class="mb-1 btn btn-sm btn-info"
+                            @click="getTaskUpdate(item)"
+                            data-toggle="modal"
+                            data-target="#task_modal_add_update">Sửa</button>
+
+                          <button class="mb-1 btn btn-sm btn-danger"
+                            @click="getTaskUpdate(item)"
+                            data-toggle="modal"
+                            data-target="#task_modal_delete">Xóa</button> 
+                      
+                          <template v-if="item.status.status == 2">
+                            <button class="mb-1 btn btn-sm btn-info" @click="handleApprovalTask(item)">Duyệt</button>
+                            <button class="mb-1 btn btn-sm btn-danger"
+                              @click="getTaskUpdate(item)"
+                              data-toggle="modal"
+                              data-target="#task_modal_not_approval_finish">
+                              Không duyệt
+                            </button>
+                          </template>
+
+                        </template>
+                        <template v-if="item && item.department.leader.id == $root.auth.id">
+                          <button v-if="item.status.status == 0" 
+                            @click="handleTakeTask(item)" class="mb-1 btn btn-sm btn-info">
+                            Tiếp nhận
+                          </button>
+                          <button v-if="item.status.status == 1 || item.status.status == 4"
+                            @click="getTaskUpdate(item)" data-toggle="modal" data-target="#task_modal_finish"
+                            class="mb-1 btn btn-sm btn-success">
+                            Hoàn thành
+                          </button>
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr v-else ><td colspan="1000" align="center">Không có công việc</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+
       </div>
 
       <div class="modal fade" id="task_modal_add_update">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div :class="['modal-dialog modal-dialog-scrollable', task.id ? 'modal-lg' : 'modal-xl']">
           <div class="modal-content">
             <div class="modal-header">
               <h4 class="modal-title">Công việc</h4>
@@ -699,6 +723,7 @@ export default {
                       <label><b>Đính kèm</b></label>
                       <button type="button" class="btn btn-info btn-sm" @click="$refs.ref_file.click()">Chọn tập tin</button>
                       <input
+                        id="task_file"
                         type="file"
                         ref="ref_file"
                         style="display: none"

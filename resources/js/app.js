@@ -43,7 +43,6 @@ new Vue({
         this.auth = null;
         localStorage.removeItem('yl_token');
         this.api.defaults.headers.common['Authorization'] = '';
-
         if (this.$route.meta.auth) {
           this.$router.replace({name: 'login'});
         }
