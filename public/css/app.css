@@ -754,6 +754,10 @@ a:hover {
   cursor: pointer;
 }
 
+#main .header .avatar .dropdown-menu.show {
+  top: 5px !important;
+}
+
 #main .header .avatar img {
   width: 40px;
   height: 40px;
@@ -761,6 +765,23 @@ a:hover {
      object-fit: cover;
   border-radius: 50%;
   border: 1px solid #369;
+}
+
+#main .header .clock-icon .dropdown-menu {
+  width: 200px;
+}
+
+#main .header .clock-icon .dropdown-menu.show {
+  left: -160px !important;
+  top: 14px !important;
+}
+
+#main .header .clock-icon .number-job {
+  position: absolute;
+  left: 18px;
+  bottom: 10px;
+  z-index: 2;
+  font-weight: bold;
 }
 
 #main .main-relative {

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Functions;
 use App\Http\Resources\LabelResource;
 use App\Model\Label;
+use App\Model\Task;
 use Illuminate\Support\Facades\Storage;
 
 class LabelController extends Controller
@@ -115,7 +116,19 @@ class LabelController extends Controller
      * Xóa nhãn
      */
 
-    public function deleteLabel(Request $request) {
-        //
+    public function delete(Request $request, $id) {
+        $label = Label::find($id);
+        if (!$label) return $this->error('Nhãn không tồn tại');
+
+        $check_task = Task::where('label_id', $id)->count();
+        if ($check_task > 0) return $this->error('Nhãn đã được sử dụng cho công việc không xóa được');
+
+        if (!empty($label->file)) {
+            Storage::disk('public')->delete($label->file);
+        }
+
+        $label->delete();
+
+        return $this->success('Xóa nhãn thành công', []);
     }
 }

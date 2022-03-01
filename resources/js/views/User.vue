@@ -16,7 +16,8 @@ export default {
       search: {
         keyword: '',
         active: -1
-      }
+      },
+      user_show_detail: null
     }
   },
   methods: {
@@ -231,6 +232,8 @@ export default {
         role: '',
         phone: ''
       }
+
+      this.user_show_detail = null;
       
       this.avatar_preview = '';
       
@@ -250,6 +253,9 @@ export default {
       this.user.role = item.role.id;
       this.avatar_preview = item.avatar;
     },
+    getInfoUserShowDetail(_user) {
+      this.user_show_detail = _.clone(_user);
+    },
     handleSearch() {
       this.last_page = 1;
       this.changePage(1);
@@ -266,7 +272,7 @@ export default {
     this.getUserList();
     this.getRole();
     
-    $(document).on('hidden.bs.modal', '#user_modal, #delete_user_modal', () => {
+    $(document).on('hidden.bs.modal', '#user_modal, #detail_user_modal, #delete_user_modal', () => {
       this.handleCloseModal();
     });
   },
@@ -374,11 +380,18 @@ export default {
                   <td>{{ item.created_at }}</td>
                   <td>
                     <div v-if="$root.auth.role.level < item.role.level && $root.isAdmin()" class="icon">
-                      <button class="btn btn-sm btn-info"
+                      <button class="btn btn-sm btn-dark mb-1"
+                        title="Xem"
+                        @click="getInfoUserShowDetail(item)"
+                        data-toggle="modal"
+                        data-target="#detail_user_modal">Xem</button>
+
+                      <button class="btn btn-sm btn-info mb-1"
                         title="Cập nhật"
                         @click="getInfoUpdate(item)"
                         data-toggle="modal"
                         data-target="#user_modal">Sửa</button>
+
                       <button class="btn btn-sm btn-danger"
                         title="Xóa"
                         @click="getInfoUpdate(item)"
@@ -547,6 +560,58 @@ export default {
               <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="detail_user_modal">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Thông tin người dùng</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body" v-if="user_show_detail">
+            <div class="form-group text-center">
+              <img :src="user_show_detail.avatar ? user_show_detail.avatar : $root.avatar_default" alt="" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 1px solid #ddd">
+              <div class="mt-1"><b>{{ user_show_detail.fullname || user_show_detail.username }}</b></div>
+              <div class="mb-2"><span class="badge badge-info">{{ user_show_detail.role.name }}</span></div>
+              <div>
+                <span :class="['badge', user_show_detail.active ? 'badge-success' : 'badge-danger']">
+                  {{ user_show_detail.active ? 'Kích hoạt' : 'Khóa'}}
+                </span>
+              </div>
+            </div>
+            <table class="table">
+              <tr>
+                <td class="text-left">Tên đăng nhập</td>
+                <td class="text-right">{{ user_show_detail.username }}</td>
+              </tr>
+              <tr>
+                <td class="text-left">Ngày sinh</td>
+                <td class="text-right">{{ user_show_detail.birthday }}</td>
+              </tr>
+              <tr>
+                <td class="text-left">Giới tính</td>
+                <td class="text-right">
+                  <template v-if="user_show_detail.gender == 'F'">Nữ</template>
+                  <template v-else-if="user_show_detail.gender == 'M'">Nam</template>
+                  <template v-if="user_show_detail.gender == 'N'">Khác</template>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-left">Số điện thoại</td>
+                <td class="text-right">{{ user_show_detail.phone }}</td>
+              </tr>
+              <tr>
+                <td class="text-left">Email</td>
+                <td class="text-right">{{ user_show_detail.email }}</td>
+              </tr>
+            </table> 
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
         </div>
       </div>
     </div>

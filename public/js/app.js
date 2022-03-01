@@ -2263,6 +2263,68 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Deadline.vue?vue&type=script&lang=js&":
+/*!**************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Deadline.vue?vue&type=script&lang=js& ***!
+  \**************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      list: null,
+      route_name: '',
+      loading_list: false
+    };
+  },
+  methods: {
+    getJobLateOrToday: function getJobLateOrToday() {
+      var _this = this;
+
+      this.loading_list = true;
+      var st = 'today';
+      if (this.route_name == 'tre') st = 'late';
+      this.$root.api.post("job/late-or-today/".concat(st)).then(function (res) {
+        _this.loading_list = false;
+
+        if (res.data.status == "OK") {
+          _this.list = res.data.data;
+        } else {
+          _this.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this.loading_list = false;
+
+        _this.$root.showError(res.data.err);
+      });
+    },
+    getInfo: function getInfo() {
+      this.route_name = this.$route.params.name;
+
+      if (this.route_name != 'hom-nay' && this.route_name != 'tre' || this.$root.isAdmin()) {
+        this.$router.replace({
+          name: 'dashboard'
+        });
+      }
+
+      this.getJobLateOrToday();
+    }
+  },
+  mounted: function mounted() {
+    this.getInfo();
+  },
+  watch: {
+    '$route.params.name': function $routeParamsName() {
+      this.getInfo();
+    }
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Department.vue?vue&type=script&lang=js&":
 /*!****************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Department.vue?vue&type=script&lang=js& ***!
@@ -2745,7 +2807,8 @@ __webpack_require__.r(__webpack_exports__);
       change_bar: false,
       menu: null,
       name_route: '',
-      loading_logout: false
+      loading_logout: false,
+      number_deadline: 0
     };
   },
   methods: {
@@ -2813,6 +2876,17 @@ __webpack_require__.r(__webpack_exports__);
     },
     closeSideBarTablet: function closeSideBarTablet() {
       this.change_bar = false;
+    },
+    getNumberJob: function getNumberJob() {
+      var _this2 = this;
+
+      this.$root.api.get('job/number-job').then(function (res) {
+        if (res.data.status == "OK") {
+          _this2.number_deadline = res.data.data;
+        }
+      })["catch"](function (err) {
+        console.log(err);
+      });
     }
   },
   watch: {
@@ -2822,6 +2896,10 @@ __webpack_require__.r(__webpack_exports__);
   },
   mounted: function mounted() {
     this.name_route = this.$root.$route.name;
+
+    if (!this.$root.isAdmin()) {
+      this.getNumberJob();
+    }
   },
   created: function created() {
     this.createMenu();
@@ -3461,7 +3539,8 @@ __webpack_require__.r(__webpack_exports__);
       file_show: {
         name: '',
         url: ''
-      }
+      },
+      loading_delete: false
     };
   },
   methods: {
@@ -3591,13 +3670,35 @@ __webpack_require__.r(__webpack_exports__);
       } else {
         this.error_name = '';
       }
+    },
+    onSubmitDelete: function onSubmitDelete() {
+      var _this4 = this;
+
+      this.loading_delete = true;
+      this.$root.api["delete"]("label/delete/".concat(this.label.id)).then(function (res) {
+        _this4.loading_delete = false;
+
+        if (res.data.status == "OK") {
+          _this4.$root.notify(res.data.message, 'success');
+
+          _this4.getList();
+
+          $('#label_delete').modal('hide');
+        } else {
+          _this4.$root.showError(res.data.error);
+        }
+      })["catch"](function (err) {
+        _this4.$root.showError(err);
+
+        _this4.loading_delete = false;
+      });
     }
   },
   created: function created() {
     this.handleCloseModal();
   },
   mounted: function mounted() {
-    var _this4 = this;
+    var _this5 = this;
 
     if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
       this.$router.replace({
@@ -3607,7 +3708,7 @@ __webpack_require__.r(__webpack_exports__);
 
     this.current_page = 1;
     $(document).on('hidden.bs.modal', '#label_details, #label_add_update', function () {
-      _this4.handleCloseModal();
+      _this5.handleCloseModal();
     });
     this.getList();
   },
@@ -4745,7 +4846,8 @@ __webpack_require__.r(__webpack_exports__);
       search: {
         keyword: '',
         active: -1
-      }
+      },
+      user_show_detail: null
     };
   },
   methods: {
@@ -4992,6 +5094,7 @@ __webpack_require__.r(__webpack_exports__);
         role: '',
         phone: ''
       };
+      this.user_show_detail = null;
       this.avatar_preview = '';
       setTimeout(function () {
         _this5.validate_form = true;
@@ -5008,6 +5111,9 @@ __webpack_require__.r(__webpack_exports__);
       this.user.active = item.active;
       this.user.role = item.role.id;
       this.avatar_preview = item.avatar;
+    },
+    getInfoUserShowDetail: function getInfoUserShowDetail(_user) {
+      this.user_show_detail = _.clone(_user);
     },
     handleSearch: function handleSearch() {
       this.last_page = 1;
@@ -5029,7 +5135,7 @@ __webpack_require__.r(__webpack_exports__);
     this.current_page = parseInt(this.$route.query.page || 1);
     this.getUserList();
     this.getRole();
-    $(document).on('hidden.bs.modal', '#user_modal, #delete_user_modal', function () {
+    $(document).on('hidden.bs.modal', '#user_modal, #detail_user_modal, #delete_user_modal', function () {
       _this6.handleCloseModal();
     });
   },
@@ -5093,7 +5199,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  padding-right: 35px;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-component .icon-x[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 25px;\n  top: 9px;\n  cursor: pointer;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
+exports.push([module.i, ".select-component[data-v-17cc0527] {\n  position: relative;\n}\n.select-component .form-control[data-v-17cc0527] {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  padding-right: 35px;\n}\n.select-component .select-icon-bottom[data-v-17cc0527] {\n  position: absolute;\n  z-index: 5;\n  right: 8px;\n  top: 9px;\n  transition: all ease-in-out 0.4s;\n}\n.select-component .select-icon-transition[data-v-17cc0527] {\n  transform: rotate(180deg);\n  transition: all ease-in-out 0.4s;\n}\n.select-component .icon-x[data-v-17cc0527] {\n  position: absolute;\n  z-index: 5;\n  right: 25px;\n  top: 9px;\n  cursor: pointer;\n}\n.select-dropdown[data-v-17cc0527] {\n  border: 1px solid #ddd;\n  border-top: none;\n  padding: 10px;\n  position: absolute;\n  width: 100%;\n  top: 31px;\n  left: 0px;\n  z-index: 10;\n  background: #fff;\n  box-shadow: 0px 2px 4px 1px #d8d8d8;\n}\n.select-dropdown .loading[data-v-17cc0527] {\n  position: absolute;\n  z-index: 10;\n  right: 15px;\n  top: 17px;\n}\n.select-dropdown ul[data-v-17cc0527] {\n  overflow-y: auto;\n  max-height: 230px;\n  list-style-type: none;\n  padding: 0px;\n  margin: 0;\n}\n.select-dropdown ul li[data-v-17cc0527] {\n  cursor: pointer;\n}\n.select-dropdown ul li a[data-v-17cc0527] {\n  padding: 5px 10px;\n  display: inline-block;\n  width: 100%;\n}\n.select-dropdown ul .li-no-data[data-v-17cc0527]:hover {\n  background: #fff;\n  cursor: auto;\n}\n.select-dropdown ul li[data-v-17cc0527]:hover {\n  background: #117a8b;\n}\n.select-dropdown ul li:hover a[data-v-17cc0527] {\n  color: #fff;\n}", ""]);
 
 // exports
 
@@ -23887,6 +23993,284 @@ render._withStripped = true
 
 /***/ }),
 
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12&":
+/*!******************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12& ***!
+  \******************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function () {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "deadline" } }, [
+    _c("div", { staticClass: "list" }, [
+      _c("div", { staticClass: "card" }, [
+        _c("div", { staticClass: "card-header bg-info text-white" }, [
+          _vm._v(
+            "Danh sách " + _vm._s(_vm.route_name == "tre" ? " trễ" : "hôm nay")
+          ),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "table-responsive" }, [
+          _c(
+            "table",
+            { staticClass: "table table-bordered table-stripped mb-0" },
+            [
+              _vm._m(0),
+              _vm._v(" "),
+              _c(
+                "tbody",
+                [
+                  _vm.loading_list
+                    ? _c("tr", [
+                        _c(
+                          "td",
+                          { attrs: { colspan: "1000", align: "center" } },
+                          [_c("m-spinner")],
+                          1
+                        ),
+                      ])
+                    : _vm.list && _vm.list.length > 0
+                    ? [
+                        _vm.$root.auth.role.level == 3
+                          ? _vm._l(_vm.list, function (item, index) {
+                              return _c("tr", { key: index }, [
+                                _c("td", [_vm._v(_vm._s(index + 1) + " ")]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.name))]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  item.active == 0
+                                    ? _c(
+                                        "span",
+                                        { staticClass: "badge badge-danger" },
+                                        [_vm._v("Khóa")]
+                                      )
+                                    : _c(
+                                        "span",
+                                        { staticClass: "badge badge-success" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.$root.getStatusTaskName(
+                                                item.status.status
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "span",
+                                    {
+                                      class: [
+                                        "badge",
+                                        _vm.$root.checkDeadline(item) ==
+                                        "Chưa tới hạn"
+                                          ? "badge-info"
+                                          : "badge-danger",
+                                      ],
+                                    },
+                                    [
+                                      _vm._v(
+                                        "\n                      " +
+                                          _vm._s(
+                                            _vm.$root.checkDeadline(item)
+                                          ) +
+                                          "\n                    "
+                                      ),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.start_time))]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.created_at))]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  [
+                                    _c(
+                                      "router-link",
+                                      {
+                                        attrs: {
+                                          to: {
+                                            name: "task",
+                                            params: { id: item.id },
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _c(
+                                          "button",
+                                          {
+                                            staticClass:
+                                              "mb-1 btn btn-sm btn-dark",
+                                          },
+                                          [_vm._v("Xem")]
+                                        ),
+                                      ]
+                                    ),
+                                  ],
+                                  1
+                                ),
+                              ])
+                            })
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.$root.auth.role.level == 4
+                          ? _vm._l(_vm.list, function (item, index) {
+                              return _c("tr", { key: index }, [
+                                _c("td", [_vm._v(_vm._s(index + 1) + " ")]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.job.name))]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  item.job.status.status == 0 ||
+                                  item.job.status.status == 1
+                                    ? _c(
+                                        "span",
+                                        { staticClass: "badge badge-info" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.$root.getStatusTaskName(
+                                                item.job.status.status
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      )
+                                    : _c(
+                                        "span",
+                                        { staticClass: "badge badge-danger" },
+                                        [
+                                          _vm._v(
+                                            _vm._s(
+                                              _vm.$root.getStatusTaskName(
+                                                item.job.status.status
+                                              )
+                                            )
+                                          ),
+                                        ]
+                                      ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "span",
+                                    {
+                                      class: [
+                                        "badge",
+                                        _vm.$root.checkDeadline(item.job) ==
+                                        "Chưa tới hạn"
+                                          ? "badge-info"
+                                          : "badge-danger",
+                                      ],
+                                    },
+                                    [
+                                      _vm._v(
+                                        "\n                      " +
+                                          _vm._s(
+                                            _vm.$root.checkDeadline(item.job)
+                                          ) +
+                                          "\n                    "
+                                      ),
+                                    ]
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.job.start_time))]),
+                                _vm._v(" "),
+                                _c("td", [_vm._v(_vm._s(item.job.created_at))]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  [
+                                    _c(
+                                      "router-link",
+                                      {
+                                        attrs: {
+                                          to: {
+                                            name: "job",
+                                            params: {
+                                              project_id: item.project.id,
+                                              id: item.task.id,
+                                            },
+                                          },
+                                        },
+                                      },
+                                      [
+                                        item.job && item.job.status.status != 0
+                                          ? _c(
+                                              "button",
+                                              {
+                                                staticClass:
+                                                  "mb-1 btn btn-dark btn-sm",
+                                              },
+                                              [_vm._v("Xem")]
+                                            )
+                                          : _vm._e(),
+                                      ]
+                                    ),
+                                  ],
+                                  1
+                                ),
+                              ])
+                            })
+                          : _vm._e(),
+                      ]
+                    : _c("tr", [_vm._m(1)]),
+                ],
+                2
+              ),
+            ]
+          ),
+        ]),
+      ]),
+    ]),
+  ])
+}
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("thead", [
+      _c("tr", [
+        _c("td", [_c("b", [_vm._v("STT")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Tên")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Trạng thái")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Bắt đầu")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
+        _vm._v(" "),
+        _c("td"),
+      ]),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", { attrs: { colspan: "1000", align: "center" } }, [
+      _c("b", [_vm._v("Không có danh sách")]),
+    ])
+  },
+]
+render._withStripped = true
+
+
+
+/***/ }),
+
 /***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Department.vue?vue&type=template&id=166a08b1&":
 /*!********************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/views/Department.vue?vue&type=template&id=166a08b1& ***!
@@ -25362,47 +25746,145 @@ var render = function () {
               on: { click: _vm.handleSideBar },
             }),
             _vm._v(" "),
-            _c("div", { staticClass: "btn-group" }, [
-              _c(
-                "div",
-                { staticClass: "avatar", attrs: { "data-toggle": "dropdown" } },
-                [
-                  _vm.$root.auth.avatar
-                    ? _c("img", {
-                        attrs: { src: _vm.$root.auth.avatar, alt: "" },
-                      })
-                    : _c("img", {
-                        attrs: { src: _vm.$root.avatar_default, alt: "" },
-                      }),
-                  _vm._v(" "),
-                  _c("b", [_vm._v(" " + _vm._s(_vm.$root.auth.fullname))]),
-                ]
-              ),
+            _c("div", [
+              _vm.number_deadline && !_vm.$root.isAdmin()
+                ? _c(
+                    "div",
+                    {
+                      staticClass: "btn-group mr-4 clock-icon",
+                      attrs: { title: "Nhiệm vụ" },
+                    },
+                    [
+                      _c("div", { attrs: { "data-toggle": "dropdown" } }, [
+                        _c("i", {
+                          staticClass: "far fa-clock",
+                          staticStyle: { "font-size": "18px" },
+                        }),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "number-job" }, [
+                          _vm._v(_vm._s(_vm.number_deadline.count)),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "dropdown-menu" }, [
+                        _c(
+                          "div",
+                          {
+                            staticClass:
+                              "d-flex justify-content-start pl-2 pr-2",
+                          },
+                          [
+                            _vm._m(0),
+                            _vm._v(" "),
+                            _c("div", { staticStyle: { width: "70%" } }, [
+                              _vm.$root.auth.role.level == 3
+                                ? _c("b", [_vm._v("Dự án")])
+                                : _vm.$root.auth.role.level == 4
+                                ? _c("b", [_vm._v("Nhiệm vụ")])
+                                : _vm._e(),
+                              _vm._v(" "),
+                              _c(
+                                "div",
+                                {
+                                  staticClass: "d-flex justify-content-between",
+                                },
+                                [
+                                  _c(
+                                    "router-link",
+                                    {
+                                      attrs: {
+                                        to: {
+                                          name: "deadline",
+                                          params: { name: "tre" },
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _c("span", [
+                                        _vm._v(
+                                          _vm._s(_vm.number_deadline.late) +
+                                            " Trễ"
+                                        ),
+                                      ]),
+                                    ]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "router-link",
+                                    {
+                                      attrs: {
+                                        to: {
+                                          name: "deadline",
+                                          params: { name: "hom-nay" },
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _c("span", [
+                                        _vm._v(
+                                          _vm._s(_vm.number_deadline.today) +
+                                            " Hôm nay"
+                                        ),
+                                      ]),
+                                    ]
+                                  ),
+                                ],
+                                1
+                              ),
+                            ]),
+                          ]
+                        ),
+                      ]),
+                    ]
+                  )
+                : _vm._e(),
               _vm._v(" "),
-              _c(
-                "div",
-                { staticClass: "dropdown-menu" },
-                [
-                  _c(
-                    "a",
-                    {
-                      staticClass: "dropdown-item",
-                      on: { click: _vm.handleLogout },
+              _c("div", { staticClass: "btn-group avatar" }, [
+                _c("div", { attrs: { "data-toggle": "dropdown" } }, [
+                  _c("img", {
+                    attrs: {
+                      src: _vm.$root.auth.avatar
+                        ? _vm.$root.auth.avatar
+                        : _vm.$root.avatar_default,
+                      alt: "",
                     },
-                    [_vm._v("Đăng xuất")]
-                  ),
+                  }),
                   _vm._v(" "),
-                  _c(
-                    "router-link",
-                    {
-                      staticClass: "dropdown-item",
-                      attrs: { to: { name: "profile" } },
-                    },
-                    [_vm._v("Trang cá nhân")]
-                  ),
-                ],
-                1
-              ),
+                  _c("b", [
+                    _vm._v(
+                      " " +
+                        _vm._s(
+                          _vm.$root.auth.fullname || _vm.$root.auth.username
+                        )
+                    ),
+                  ]),
+                ]),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  { staticClass: "dropdown-menu" },
+                  [
+                    _c(
+                      "a",
+                      {
+                        staticClass: "dropdown-item",
+                        on: { click: _vm.handleLogout },
+                      },
+                      [_vm._v("Đăng xuất")]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "router-link",
+                      {
+                        staticClass: "dropdown-item",
+                        attrs: { to: { name: "profile" } },
+                      },
+                      [_vm._v("Trang cá nhân")]
+                    ),
+                  ],
+                  1
+                ),
+              ]),
             ]),
           ]),
         ]),
@@ -25419,7 +25901,19 @@ var render = function () {
     1
   )
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticStyle: { width: "30%" } }, [
+      _c("i", {
+        staticClass: "fas fa-tasks mr-1",
+        staticStyle: { "font-size": "25px", "margin-top": "5px" },
+      }),
+    ])
+  },
+]
 render._withStripped = true
 
 
@@ -27537,7 +28031,7 @@ var render = function () {
                       "li",
                       {
                         key: index,
-                        staticClass: "col-md-3 col-sm-6 col-xs-12",
+                        staticClass: "col-md-3 col-sm-6 col-xs-12 mb-2",
                       },
                       [
                         _c("div", { staticClass: "item" }, [
@@ -27563,6 +28057,27 @@ var render = function () {
                                   [_vm._v("Xem tệp")]
                                 )
                               : _c("span", [_vm._v("Không có")]),
+                          ]),
+                          _vm._v(" "),
+                          _c("div", [
+                            _c(
+                              "span",
+                              {
+                                class: [
+                                  item.active
+                                    ? "badge-success"
+                                    : "badge-danger",
+                                  "badge",
+                                ],
+                              },
+                              [
+                                _vm._v(
+                                  "\n              " +
+                                    _vm._s(item.active ? "Kích hoạt" : "Khóa") +
+                                    "\n            "
+                                ),
+                              ]
+                            ),
                           ]),
                           _vm._v(" "),
                           _c("div", [
@@ -27614,7 +28129,18 @@ var render = function () {
                             _vm._v(" "),
                             _c(
                               "button",
-                              { staticClass: "btn btn-sm btn-danger" },
+                              {
+                                staticClass: "btn btn-sm btn-danger",
+                                attrs: {
+                                  "data-toggle": "modal",
+                                  "data-target": "#label_delete",
+                                },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.getInfoLabel(item)
+                                  },
+                                },
+                              },
                               [_vm._v("Xóa")]
                             ),
                           ]),
@@ -27906,6 +28432,51 @@ var render = function () {
         ]),
       ]),
       _vm._v(" "),
+      _c("div", { staticClass: "modal fade", attrs: { id: "label_delete" } }, [
+        _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+          _c("div", { staticClass: "modal-content" }, [
+            _vm._m(8),
+            _vm._v(" "),
+            _vm.label
+              ? _c("div", { staticClass: "modal-body" }, [
+                  _c("div", { staticClass: "d-flex justify-content-start" }, [
+                    _c("i", {
+                      staticClass:
+                        "fas fa-exclamation-triangle text-danger icon-warm-delete",
+                    }),
+                    _vm._v(" "),
+                    _c("span", [
+                      _vm._v("\n                Bạn có muốn xóa nhãn "),
+                      _c("b", [_vm._v(_vm._s(_vm.label.name) + " không?")]),
+                    ]),
+                  ]),
+                ])
+              : _vm._e(),
+            _vm._v(" "),
+            _c("div", { staticClass: "modal-footer" }, [
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-sm btn-danger",
+                  attrs: { type: "button" },
+                  on: { click: _vm.onSubmitDelete },
+                },
+                [_vm._v("Xóa nhãn")]
+              ),
+              _vm._v(" "),
+              _c(
+                "button",
+                {
+                  staticClass: "btn btn-secondary btn-sm",
+                  attrs: { type: "button", "data-dismiss": "modal" },
+                },
+                [_vm._v("Đóng")]
+              ),
+            ]),
+          ]),
+        ]),
+      ]),
+      _vm._v(" "),
       _vm.loading_add_update
         ? _c("m-loading", {
             attrs: {
@@ -27914,6 +28485,10 @@ var render = function () {
               full: true,
             },
           })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.loading_delete
+        ? _c("m-loading", { attrs: { title: "Đang xóa nhãn", full: true } })
         : _vm._e(),
     ],
     1
@@ -28008,6 +28583,23 @@ var staticRenderFns = [
           attrs: { type: "button", "data-dismiss": "modal" },
         },
         [_vm._v("Đóng")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa nhãn")]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
       ),
     ])
   },
@@ -29633,7 +30225,7 @@ var render = function () {
                     {
                       class: [
                         "badge",
-                        _vm.project.active ? "badge-info" : "badge-danger",
+                        _vm.project.active ? "badge-success" : "badge-danger",
                       ],
                     },
                     [_vm._v(_vm._s(_vm.project.active ? "Kích hoạt" : "Khóa"))]
@@ -31373,6 +31965,55 @@ var render = function () {
                                 _c("span", [
                                   _vm._v(_vm._s(_vm.task.label.name)),
                                 ]),
+                                _vm._v(" "),
+                                _c("div", { staticClass: "pl-2 pr-2" }, [
+                                  _c("b", [_vm._v("Mô tả: ")]),
+                                  _vm._v(" "),
+                                  _c("textarea", {
+                                    directives: [
+                                      {
+                                        name: "model",
+                                        rawName: "v-model",
+                                        value: _vm.task.label.describe,
+                                        expression: "task.label.describe",
+                                      },
+                                    ],
+                                    staticClass: "form-control",
+                                    attrs: { rows: "3" },
+                                    domProps: {
+                                      value: _vm.task.label.describe,
+                                    },
+                                    on: {
+                                      input: function ($event) {
+                                        if ($event.target.composing) {
+                                          return
+                                        }
+                                        _vm.$set(
+                                          _vm.task.label,
+                                          "describe",
+                                          $event.target.value
+                                        )
+                                      },
+                                    },
+                                  }),
+                                  _vm._v(" "),
+                                  _vm.task.label.file
+                                    ? _c("span", [
+                                        _c("b", [_vm._v("Tệp của nhãn: ")]),
+                                        _vm._v(" "),
+                                        _c(
+                                          "a",
+                                          {
+                                            attrs: {
+                                              target: "blank",
+                                              href: _vm.task.label.file,
+                                            },
+                                          },
+                                          [_vm._v("Xem tệp")]
+                                        ),
+                                      ])
+                                    : _vm._e(),
+                                ]),
                               ])
                             : _vm._e(),
                           _vm._v(" "),
@@ -32318,7 +32959,27 @@ var render = function () {
                                     _c(
                                       "button",
                                       {
-                                        staticClass: "btn btn-sm btn-info",
+                                        staticClass: "btn btn-sm btn-dark mb-1",
+                                        attrs: {
+                                          title: "Xem",
+                                          "data-toggle": "modal",
+                                          "data-target": "#detail_user_modal",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.getInfoUserShowDetail(
+                                              item
+                                            )
+                                          },
+                                        },
+                                      },
+                                      [_vm._v("Xem")]
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "button",
+                                      {
+                                        staticClass: "btn btn-sm btn-info mb-1",
                                         attrs: {
                                           title: "Cập nhật",
                                           "data-toggle": "modal",
@@ -33130,6 +33791,149 @@ var render = function () {
         ]
       ),
       _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "modal fade", attrs: { id: "detail_user_modal" } },
+        [
+          _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
+            _c("div", { staticClass: "modal-content" }, [
+              _vm._m(15),
+              _vm._v(" "),
+              _vm.user_show_detail
+                ? _c("div", { staticClass: "modal-body" }, [
+                    _c("div", { staticClass: "form-group text-center" }, [
+                      _c("img", {
+                        staticStyle: {
+                          width: "150px",
+                          height: "150px",
+                          "object-fit": "cover",
+                          "border-radius": "50%",
+                          border: "1px solid #ddd",
+                        },
+                        attrs: {
+                          src: _vm.user_show_detail.avatar
+                            ? _vm.user_show_detail.avatar
+                            : _vm.$root.avatar_default,
+                          alt: "",
+                        },
+                      }),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "mt-1" }, [
+                        _c("b", [
+                          _vm._v(
+                            _vm._s(
+                              _vm.user_show_detail.fullname ||
+                                _vm.user_show_detail.username
+                            )
+                          ),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", { staticClass: "mb-2" }, [
+                        _c("span", { staticClass: "badge badge-info" }, [
+                          _vm._v(_vm._s(_vm.user_show_detail.role.name)),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("div", [
+                        _c(
+                          "span",
+                          {
+                            class: [
+                              "badge",
+                              _vm.user_show_detail.active
+                                ? "badge-success"
+                                : "badge-danger",
+                            ],
+                          },
+                          [
+                            _vm._v(
+                              "\n                " +
+                                _vm._s(
+                                  _vm.user_show_detail.active
+                                    ? "Kích hoạt"
+                                    : "Khóa"
+                                ) +
+                                "\n              "
+                            ),
+                          ]
+                        ),
+                      ]),
+                    ]),
+                    _vm._v(" "),
+                    _c("table", { staticClass: "table" }, [
+                      _c("tr", [
+                        _c("td", { staticClass: "text-left" }, [
+                          _vm._v("Tên đăng nhập"),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", { staticClass: "text-right" }, [
+                          _vm._v(_vm._s(_vm.user_show_detail.username)),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("tr", [
+                        _c("td", { staticClass: "text-left" }, [
+                          _vm._v("Ngày sinh"),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", { staticClass: "text-right" }, [
+                          _vm._v(_vm._s(_vm.user_show_detail.birthday)),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("tr", [
+                        _c("td", { staticClass: "text-left" }, [
+                          _vm._v("Giới tính"),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "td",
+                          { staticClass: "text-right" },
+                          [
+                            _vm.user_show_detail.gender == "F"
+                              ? [_vm._v("Nữ")]
+                              : _vm.user_show_detail.gender == "M"
+                              ? [_vm._v("Nam")]
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.user_show_detail.gender == "N"
+                              ? [_vm._v("Khác")]
+                              : _vm._e(),
+                          ],
+                          2
+                        ),
+                      ]),
+                      _vm._v(" "),
+                      _c("tr", [
+                        _c("td", { staticClass: "text-left" }, [
+                          _vm._v("Số điện thoại"),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", { staticClass: "text-right" }, [
+                          _vm._v(_vm._s(_vm.user_show_detail.phone)),
+                        ]),
+                      ]),
+                      _vm._v(" "),
+                      _c("tr", [
+                        _c("td", { staticClass: "text-left" }, [
+                          _vm._v("Email"),
+                        ]),
+                        _vm._v(" "),
+                        _c("td", { staticClass: "text-right" }, [
+                          _vm._v(_vm._s(_vm.user_show_detail.email)),
+                        ]),
+                      ]),
+                    ]),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              _vm._m(16),
+            ]),
+          ]),
+        ]
+      ),
+      _vm._v(" "),
       _vm.loading_add
         ? _c("m-loading", {
             attrs: {
@@ -33330,6 +34134,40 @@ var staticRenderFns = [
           attrs: { type: "button", "data-dismiss": "modal" },
         },
         [_vm._v("Hủy")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-header" }, [
+      _c("h4", { staticClass: "modal-title" }, [
+        _vm._v("Thông tin người dùng"),
+      ]),
+      _vm._v(" "),
+      _c(
+        "button",
+        {
+          staticClass: "close",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("×")]
+      ),
+    ])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "modal-footer" }, [
+      _c(
+        "button",
+        {
+          staticClass: "btn btn-secondary btn-sm",
+          attrs: { type: "button", "data-dismiss": "modal" },
+        },
+        [_vm._v("Đóng")]
       ),
     ])
   },
@@ -49228,10 +50066,12 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       var date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-' + today.getDate();
       date = new Date(date).getTime();
       var end_time_param = new Date(_param.end_time).getTime();
-      var check = date - end_time_param;
+      var check = (date - end_time_param) / 86400000;
 
-      if (check > 0) {
-        check = check / 86400000;
+      if (check == 0) {
+        return 'Hôm nay';
+      } else if (check > 0) {
+        if (check < 0.5) check = 1;else check = Math.round(check);
         return 'Trễ ' + check + ' ngày';
       } else {
         return 'Chưa tới hạn';
@@ -49683,6 +50523,14 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
         auth: true,
         title: 'Nhãn'
       }
+    }, {
+      path: 'toi-han/:name',
+      name: 'deadline',
+      component: __webpack_require__(/*! ../views/Deadline.vue */ "./resources/js/views/Deadline.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Nhãn'
+      }
     }]
   }, {
     path: '/dang-nhap',
@@ -49796,6 +50644,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_DashBoard_vue_vue_type_template_id_67b53265___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_DashBoard_vue_vue_type_template_id_67b53265___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/views/Deadline.vue":
+/*!*****************************************!*\
+  !*** ./resources/js/views/Deadline.vue ***!
+  \*****************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Deadline.vue?vue&type=template&id=67c01b12& */ "./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12&");
+/* harmony import */ var _Deadline_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Deadline.vue?vue&type=script&lang=js& */ "./resources/js/views/Deadline.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Deadline_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/views/Deadline.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/views/Deadline.vue?vue&type=script&lang=js&":
+/*!******************************************************************!*\
+  !*** ./resources/js/views/Deadline.vue?vue&type=script&lang=js& ***!
+  \******************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Deadline_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Deadline.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Deadline.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Deadline_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12&":
+/*!************************************************************************!*\
+  !*** ./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12& ***!
+  \************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./Deadline.vue?vue&type=template&id=67c01b12& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/views/Deadline.vue?vue&type=template&id=67c01b12&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Deadline_vue_vue_type_template_id_67c01b12___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 

@@ -572,7 +572,7 @@ export default {
 
             <div class="form-group">
               <b>Trạng thái: </b> 
-              <span :class="['badge', project.active ? 'badge-info' : 'badge-danger']">{{ project.active ? 'Kích hoạt' : 'Khóa'}}</span>
+              <span :class="['badge', project.active ? 'badge-success' : 'badge-danger']">{{ project.active ? 'Kích hoạt' : 'Khóa'}}</span>
             </div>
 
             <div class="form-group" v-if="project.describe">
