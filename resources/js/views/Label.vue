@@ -14,7 +14,8 @@ export default {
       file_show: {
         name: '',
         url: ''
-      }
+      },
+      loading_delete: false
     }
   },
   methods: {
@@ -129,6 +130,22 @@ export default {
       } else {
         this.error_name = '';
       }
+    },
+    onSubmitDelete() {
+      this.loading_delete = true;
+      this.$root.api.delete(`label/delete/${this.label.id}`).then(res => {
+        this.loading_delete = false;
+        if (res.data.status == "OK") {
+          this.$root.notify(res.data.message, 'success');
+          this.getList();
+          $('#label_delete').modal('hide');
+        } else {
+          this.$root.showError(res.data.error);
+        }
+      }).catch(err => {
+        this.$root.showError(err);
+        this.loading_delete = false;
+      })
     }
   },
   created() {
@@ -177,7 +194,7 @@ export default {
     </div>
     <div class="list" v-else>
       <ul class="row" v-if="list && list.data.length > 0">
-        <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-6 col-xs-12">
+        <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-6 col-xs-12 mb-2">
           <div class="item">
             <div class="mb-2">
               <i class="fas fa-tag"></i>
@@ -189,13 +206,18 @@ export default {
               <span v-else>Không có</span>
             </div>
             <div>
+              <span :class="[item.active ? 'badge-success' : 'badge-danger', 'badge']">
+                {{ item.active ? 'Kích hoạt' : 'Khóa'}}
+              </span>
+            </div>
+            <div>
               <i class="far fa-clock" style="font-size: 12px"></i>
               {{ item.created_at }}
             </div>
             <div class="text-right mt-2">
               <button class="btn btn-sm btn-dark" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_details">Xem</button>
               <button class="btn btn-sm btn-info" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_add_update">Sửa</button>
-              <button class="btn btn-sm btn-danger">Xóa</button>
+              <button class="btn btn-sm btn-danger" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_delete">Xóa</button>
             </div>
           </div>
         </li>
@@ -300,6 +322,30 @@ export default {
       </div>
     </div>
 
+    <div class="modal fade" id="label_delete">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Xóa nhãn</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+          </div>
+          <div class="modal-body" v-if="label">
+            <div class="d-flex justify-content-start">
+                <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
+                <span>
+                  Bạn có muốn xóa nhãn <b>{{ label.name }} không?</b>
+                </span>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" @click="onSubmitDelete" class="btn btn-sm btn-danger">Xóa nhãn</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <m-loading v-if="loading_add_update" :title="label.id != null ? 'Đang cập nhật nhãn' : 'Đang thêm nhãn'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa nhãn" :full="true" />
   </div>
 </template>

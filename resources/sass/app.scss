@@ -673,12 +673,36 @@ $side-bar-width-small: 65px;
         .btn-group {
             cursor: pointer;
         }
-        .avatar img {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 1px solid #369;
+        .avatar {
+            .dropdown-menu.show {
+                top: 5px !important;
+            }
+            img {
+                width: 40px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 50%;
+                border: 1px solid #369;
+            }
+        }
+
+
+        //Icon clock
+        .clock-icon {
+            .dropdown-menu {
+                width: 200px;
+            }
+            .dropdown-menu.show {
+                left: -160px !important;
+                top: 14px !important;
+            }
+            .number-job {
+                position: absolute;
+                left: 18px;
+                bottom: 10px;
+                z-index: 2;
+                font-weight: bold;
+            }
         }
     }
     .main-relative {

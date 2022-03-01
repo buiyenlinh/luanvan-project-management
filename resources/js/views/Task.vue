@@ -791,6 +791,14 @@ export default {
 
               <div class="form-group" v-if="task.label">
                 <b>Nhãn: </b> <span>{{ task.label.name }}</span>
+                <div class="pl-2 pr-2">
+                  <b>Mô tả: </b>
+                  <textarea class="form-control" rows="3" v-model="task.label.describe"></textarea>
+                  <span v-if="task.label.file">
+                    <b>Tệp của nhãn: </b>
+                    <a target="blank" :href="task.label.file">Xem tệp</a>
+                  </span>
+                </div>
               </div>
 
               <div class="form-group" v-if="task.describe">

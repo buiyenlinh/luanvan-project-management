@@ -5,7 +5,8 @@ export default {
       change_bar: false,
       menu: null,
       name_route: '',
-      loading_logout: false
+      loading_logout: false,
+      number_deadline: 0
     }
   },
   methods: {
@@ -70,6 +71,15 @@ export default {
     },
     closeSideBarTablet() {
       this.change_bar = false;
+    },
+    getNumberJob() {
+      this.$root.api.get('job/number-job').then(res => {
+        if (res.data.status == "OK") {
+          this.number_deadline = res.data.data;
+        }
+      }).catch(err => {
+        console.log(err);
+      })
     }
   },
   watch: {
@@ -79,6 +89,9 @@ export default {
   },
   mounted() {
     this.name_route = this.$root.$route.name;
+    if (!this.$root.isAdmin()) {
+      this.getNumberJob();
+    }
   },
   created() {
     this.createMenu();
@@ -121,15 +134,40 @@ export default {
       <div class="header">
         <div class="d-flex justify-content-between">
           <i class="fas fa-bars pt-2" style="font-size: 25px" @click="handleSideBar"></i>
-          <div class="btn-group">
-            <div class="avatar" data-toggle="dropdown">
-              <img v-if="$root.auth.avatar" :src="$root.auth.avatar" alt="">
-              <img v-else :src="$root.avatar_default" alt="">
-              <b> {{ $root.auth.fullname }}</b>
+          <div>
+            <div class="btn-group mr-4 clock-icon" title="Nhiệm vụ" v-if="number_deadline && !$root.isAdmin()">
+              <div data-toggle="dropdown">
+                <i class="far fa-clock" style="font-size: 18px"></i>
+                <div class="number-job">{{ number_deadline.count }}</div>
+              </div>
+              <div class="dropdown-menu">
+                <div class="d-flex justify-content-start pl-2 pr-2">
+                  <div style="width: 30%"><i class="fas fa-tasks mr-1" style="font-size: 25px; margin-top: 5px"></i></div>
+                  <div style="width: 70%">
+                    <b v-if="$root.auth.role.level == 3">Dự án</b>
+                    <b v-else-if="$root.auth.role.level == 4">Nhiệm vụ</b>
+                    <div class="d-flex justify-content-between">
+                      <router-link :to="{ name: 'deadline', params: { name: 'tre'} }">
+                        <span>{{ number_deadline.late }} Trễ</span>
+                      </router-link>
+                      <router-link :to="{ name: 'deadline', params: { name: 'hom-nay'} }">
+                        <span>{{ number_deadline.today }} Hôm nay</span>
+                      </router-link>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" @click="handleLogout">Đăng xuất</a>
-              <router-link :to="{ name: 'profile' }"  class="dropdown-item">Trang cá nhân</router-link>
+
+            <div class="btn-group avatar">
+              <div data-toggle="dropdown">
+                <img :src="$root.auth.avatar ? $root.auth.avatar : $root.avatar_default" alt="">
+                <b> {{ $root.auth.fullname || $root.auth.username }}</b>
+              </div>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" @click="handleLogout">Đăng xuất</a>
+                <router-link :to="{ name: 'profile' }"  class="dropdown-item">Trang cá nhân</router-link>
+              </div>
             </div>
           </div>
         </div>

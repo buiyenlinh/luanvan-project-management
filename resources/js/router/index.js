@@ -95,6 +95,15 @@ const router = new VueRouter({
             title: 'Nhãn'
           },
         },
+        {
+          path: 'toi-han/:name',
+          name: 'deadline',
+          component: require('../views/Deadline.vue').default,
+          meta: {
+            auth: true,
+            title: 'Nhãn'
+          },
+        },
       ]
     },
     {

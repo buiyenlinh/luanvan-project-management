@@ -11,6 +11,12 @@ Route::middleware('is-token')->group(function() {
   Route::post('/profile', 'UserController@updateProfile');
   Route::delete('/profile/delete-avatar', 'UserController@deleteAvatar');
 
+  
+    // Số lượng nhiệm vụ trễ & hôm nay
+  Route::get('job/number-job', 'JobController@getNumberJob');
+    // Danh sách trễ hạn
+  Route::post('job/late-or-today/{status}', 'JobController@getJobLateOrToday'); // status: late or today
+
   Route::prefix("/user")->middleware('check-role:1|2')->group(function() {
     Route::get('list', 'UserController@getUserList')->withoutMiddleware('check-role:1|2');
     Route::post('add', 'UserController@addUser');
@@ -62,6 +68,7 @@ Route::middleware('is-token')->group(function() {
       Route::post('not-approval-finish-task/{task_id}', 'TaskController@notApprovalFinishTask')->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
     });
 
+    // Nhiệm vụ
     Route::prefix('task/{task_id}')->group(function() {
       Route::get('info', 'JobController@getInfo');
       Route::post('search-user-member', 'JobController@searchUserMember');
@@ -77,6 +84,7 @@ Route::middleware('is-token')->group(function() {
       Route::post('approval-job/{job_id}', 'JobController@approvalJob');
       Route::post('not-approval-job/{job_id}', 'JobController@notApprovalJob');
       Route::post('not-approval-refuse-job/{job_id}', 'JobController@notApprovalRefuseJob');
+
     });
   });
 
@@ -85,6 +93,7 @@ Route::middleware('is-token')->group(function() {
     Route::get('list', 'LabelController@getList');
     Route::post('add', 'LabelController@add');
     Route::post('update/{id}', 'LabelController@update');
+    Route::delete('delete/{id}', 'LabelController@delete');
   });
 
   Route::prefix('/role')->group(function() {

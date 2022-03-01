@@ -14,6 +14,7 @@ use App\Model\DepartmentUserJob;
 use App\Model\DepartmentUserJobStatus;
 use App\Http\Resources\DepartmentTaskStatusResource;
 use App\Http\Resources\DepartmentResource;
+use App\Http\Resources\LabelResource;
 
 use Illuminate\Support\Facades\Storage;
 
@@ -40,7 +41,7 @@ class TaskResource extends JsonResource
             $file = Storage::url($this->file);
         }
 
-        $label = Label::find($this->label_id);
+        $label = new LabelResource(Label::find($this->label_id));
 
         $pre_tasks = array();
         $pre_task = PreTask::where('task_id', $this->id)->get();

@@ -122,7 +122,7 @@ export default {
   }
   .select-icon-bottom {
     position: absolute;
-    z-index: 10;
+    z-index: 5;
     right: 8px;
     top: 9px;
     transition: all ease-in-out 0.4s;
@@ -134,7 +134,7 @@ export default {
 
   .icon-x {
     position: absolute;
-    z-index: 10;
+    z-index: 5;
     right: 25px;
     top: 9px;
     cursor: pointer;

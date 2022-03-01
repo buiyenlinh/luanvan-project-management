@@ -404,14 +404,18 @@ new Vue({
 			date = new Date(date).getTime();
 			let end_time_param = new Date(_param.end_time).getTime();
 
-			let check = date - end_time_param;
-			if (check > 0) {
-				check = check / 86400000;
+			let check = (date - end_time_param) / 86400000;
+			if (check == 0) {
+				return 'Hôm nay';
+			} else if (check > 0) {
+				if (check < 0.5) check = 1;
+				else check = Math.round(check);
+				
 				return 'Trễ ' + check + ' ngày';
 			} else {
 				return 'Chưa tới hạn'	
 			}
-		}
+		},
   },
   created() {
     this.page_title = document.title;
