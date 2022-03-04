@@ -7,6 +7,7 @@ use App\Http\Functions;
 use App\Model\Task;
 use App\Model\Project;
 use App\Model\Job;
+use App\Model\User;
 use App\Model\Label;
 use App\Model\PreTask;
 use App\Model\Department;
@@ -174,16 +175,9 @@ class TaskController extends Controller
             if (!$label_check) return $this->error('Nhãn chọn không tồn tại');
         }
 
-        if (!$department_id) 
-            return $this->error('Phân công cho phòng ban là bắt buộc');
-        else {
-            if ($department_id < 0) return $this->error('Phòng ban không hợp lệ');
-            else {
-                $department_check = Department::find($department_id);
-                if (!$department_check) 
-                    return $this->error('Phòng ban không tồn tại');
-            }
-        }
+        $department_check = Department::find($department_id);
+        if (!$department_check) 
+            return $this->error('Phòng ban không tồn tại');
 
         $file = '';
         if ($request->file('file')) {
@@ -223,6 +217,17 @@ class TaskController extends Controller
             'status' => 0,
             'department_task_id' => $department_task->id
         ]);
+
+        // Gửi email cho trưởng phòng ban
+        $leader_department = DepartmentUser::where('leader', 1)
+            ->where('department_id', $department_check->id)->first();
+        $leader_user = User::find($leader_department->user_id);
+        if ($leader_user) {
+            $_name = $leader_user->fullname;
+            if (!$_name) $_name = $leader_user->username;
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Phòng ban của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án<b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
+            $this->_sendEmail($leader_user->email, $name, $content_mail);
+        }
 
         return $this->success('Thêm công việc thành công', []);
     }
@@ -425,10 +430,20 @@ class TaskController extends Controller
             ]);
         }
 
-        return $this->success('Yêu cầu từ chối công việc đã được gửi thành công', []);
+        /** Gửi mail cho manager => duyệt task */
+        $manager = User::find($project->manager);
+        if ($manager) {
+            $_name = $manager->fullname;
+            if (!$_name) $_name = $manager->username;
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> vừa hoàn thành, vui lòng kiểm duyệt hoàn thành. Cảm ơn!</div>';
+            $this->_sendEmail($manager->email, 'Kiểm duyệt công việc ' . $task->name, $content_mail);
+        }
+
+        return $this->success('Yêu cầu duyệt hoàn thành công việc đã được gửi', []);
     }
 
 
+    
     /**
      * Duyệt công việc
      */
@@ -449,8 +464,19 @@ class TaskController extends Controller
             ]);
         }
 
+        /** Gửi mail cho trưởng phòng ban của task khi được manager duyệt task */
+        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->first();
+        $leader = User::find($department_user_leader->user_id);
+        if ($leader) {
+            $_name = $leader->fullname;
+            if (!$_name) $_name = $leader->username;
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Chúc mừng bạn! Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> đã được duyệt. Cảm ơn!</div>';
+            $this->_sendEmail($leader->email, 'Hoàn thành công việc ' . $task->name, $content_mail);
+        }
+
         return $this->success('Duyệt công việc thành công', []);
     }
+
 
     /**
      * Từ chối duyệt công việc
@@ -473,6 +499,18 @@ class TaskController extends Controller
                 'status' => 4,
                 'department_task_id' => $department_task->id
             ]);
+        }
+
+        /**
+         * Gửi mail cho trưởng phòng ban tiếp nhận task => bị manager từ chối
+         */
+        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->first();
+        $leader = User::find($department_user_leader->user_id);
+        if ($leader) {
+            $_name = $leader->fullname;
+            if (!$_name) $_name = $leader->username;
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> không được duyệt. Vui lòng kiểm tra lại và thực hiện. Cảm ơn!</div>';
+            $this->_sendEmail($leader->email, 'Không duyệt hoàn thành công việc ' . $task->name, $content_mail);
         }
 
         return $this->success('Từ chối duyệt công việc thành công', []);

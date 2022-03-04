@@ -12,8 +12,10 @@ use App\Model\DepartmentUserJob;
 use App\Model\DepartmentTaskStatus;
 use App\Model\DepartmentUserJobStatus;
 use App\Model\ProjectStatus;
+use App\Model\User;
 use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
+use Mail;
 
 use Illuminate\Support\Facades\Storage;
 class ProjectController extends Controller
@@ -79,6 +81,7 @@ class ProjectController extends Controller
         return $this->success('Danh sách dự án', $data);
     }
 
+   
     /**
      * Thêm dự án
      */
@@ -90,6 +93,10 @@ class ProjectController extends Controller
         $manager = $request->manager;
         $describe = $request->describe;
         $created_by = $request->created_by;
+
+        $check_manager = User::find($manager);
+        if (!$check_manager) return $this->error('Quản lý không tồn tại');
+
         if (!$describe) {
             $describe = '';
         }
@@ -137,6 +144,13 @@ class ProjectController extends Controller
                 'content' => '',
                 'status' => 0 // Đã giao
             ]);
+
+            if ($check_manager->email) {
+                $_name = $check_manager->fullname;
+                if (!$_name) $_name = $check_manager->username;
+                $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Bạn đã được giao dự án ' . $name . ', vui lòng kiểm tra. Cảm ơn!</div>';
+                $this->_sendEmail($check_manager->email, $name, $content_mail);
+            }
         }
         return $this->success('Thêm dự án thành công');
     }
@@ -175,8 +189,9 @@ class ProjectController extends Controller
             'file' => $file,
             'describe' => $describe,
         ]);
+
         return $this->success('Cập nhật dự án thành công');
-    } 
+    }
 
     /**
      * Xóa dự án
