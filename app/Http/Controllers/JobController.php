@@ -267,6 +267,12 @@ class JobController extends Controller
             ]);
         }
 
+        /** Gửi mail cho thành viên nhận task */
+        $_name = $user->fullname;
+        if (!$_name) $_name = $user->username;
+        $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Bạn đã được phân công nhiệm vụ <b>' . $name . '</b> thuộc công việc <b>' . $task->name . '</b> của dự án <b>' . $project->name . '</b>. Vui lòng kiểm tra. Cảm ơn!</div>';
+        $this->_sendEmail($user->email, 'Phân công nhiệm vụ ' . $task->name, $content_mail);
+
         return $this->success("Thêm nhiệm vụ thành công", []);
     }
 
@@ -515,9 +521,30 @@ class JobController extends Controller
                         'status' => 5,
                         'department_user_job_id' => $_department_user_job->id
                     ]);
+
+                    /** Gửi email cho trưởng phòng -> xem xét từ chối */
+                    $_department_task = DepartmentTask::where('task_id', $task->id)->first();
+                    if ($_department_task) {
+                        $department_user_leader = DepartmentUser::where('department_id', $_department_task->department_id)
+                            ->where('leader', 1)->first();
+                        if ($department_user_leader) {
+                            $leader = User::find($department_user_leader->user_id);
+
+                            if ($leader && $leader->email) {
+                                $_name = $leader->fullname;
+                                if (!$_name) $_name = $leader->username;
+                                $content_mail = '<div>Xin chào ' . $_name 
+                                . '!</div><div> Nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
+                                . $task->name . '</b> của dự án <b>' . $project->name . '</b> đã gửi yêu cầu từ chối nhận. Vui lòng kiểm duyệt. Cảm ơn!</div>';
+
+                                $this->_sendEmail($leader->email, 'Yêu cầu từ chối nhận nhiệm vụ ' . $task->name, $content_mail);
+                            }
+                        }
+                    }
                 }
             }
         }
+
 
         return $this->success('Từ chối nhận nhiệm vụ đã được gửi', []);
     }
@@ -548,6 +575,22 @@ class JobController extends Controller
                         'status' => 6,
                         'department_user_job_id' => $_department_user_job->id
                     ]);
+
+                    /** Gửi email cho thành viên chịu trách nhiệm với job */
+                    $_department_user = DepartmentUser::find($_department_user_job->department_user_id);
+                    if ($_department_user) {
+                        $_user = User::find($_department_user->user_id);
+                        if ($_user && $_user->email) {
+                            $_name = $_user->fullname;
+                            if (!$_name) $_name = $_user->username;
+
+                            $content_mail = '<div>Xin chào ' . $_name 
+                            . '!</div><div>Yêu cầu từ chối nhận nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
+                            . $task->name . '</b> của dự án <b>' . $project->name . '</b> của bạn đã không được duyệt . Vui lòng kiểm tra và thực hiện. Cảm ơn!</div>';
+
+                            $this->_sendEmail($_user->email, 'Không duyệt yêu cầu từ chối nhận nhiệm vụ ' . $task->name, $content_mail);
+                        }
+                    }
                 }
             }
         }
@@ -556,6 +599,9 @@ class JobController extends Controller
     }
 
 
+
+
+    /**  TỚI ĐÂY */
 
     /**
      * Hoàn thành job
@@ -595,6 +641,8 @@ class JobController extends Controller
                         'status' => 2,
                         'department_user_job_id' => $_department_user_job->id
                     ]);
+
+                    /** Gửi email cho leader => Báo duyệt hoàn thành */
                 }
             }
         }
@@ -655,6 +703,8 @@ class JobController extends Controller
                         'status' => 4,
                         'department_user_job_id' => $_department_user_job->id
                     ]);
+
+                    /** Gửi email cho user báo không được duyệt hoàn thành */
                 }
             }
         }
@@ -741,7 +791,7 @@ class JobController extends Controller
                                                 }
                                             } else {
                                                 // Cần duyệt hoàn thành & từ chối nhận job
-                                                if ($department_user_job_status && $department_user_job_status->status == 2 || $department_user_job_status->status == 5) {
+                                                if ($department_user_job_status && ($department_user_job_status->status == 2 || $department_user_job_status->status == 5)) {
                                                     if ($_job && $time_now - $_job->end_time > 0){ // trễ
                                                         $data['late']++;
                                                         $data['count']++;

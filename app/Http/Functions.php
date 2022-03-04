@@ -9,6 +9,7 @@ use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
 use App\Model\DepartmentUser;
 use App\Model\Role;
+use Mail;
 
 trait Functions {
   private $auth = null;
@@ -119,6 +120,18 @@ trait Functions {
     $str = preg_replace('/[^a-z0-9-\s]/', '', $str);
     $str = preg_replace('/([\s]+)/', '-', $str);
     return $str;
+  }
+
+
+  /**
+   * Gửi email
+   */
+  public function _sendEmail($to, $subject, $content) {
+    Mail::send([], [], function($message) use ($to, $subject, $content) {
+        $message->to($to)
+            ->subject($subject)
+            ->setBody($content, 'text/html');
+    });
   }
   
 }
