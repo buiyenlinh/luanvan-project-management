@@ -122,7 +122,7 @@ class JobController extends Controller
         $user_ids = array();
         if ($department_user) {
             foreach ($department_user as $_department_user) {
-                // if ($_department_user && $_department_user->leader == 0) 
+                // if ($_department_user && $_department_user->leader == 0) // == 0 chỉ phân công cho thành viên
                 $user_ids[] = $_department_user->user_id;
             }
         }
@@ -208,8 +208,9 @@ class JobController extends Controller
         if (!$user || !$user->active) return $this->error('Thành viên được phân công không tồn tại hoặc đã bị khóa');
 
         // Department User
-        $department_user = DepartmentUser::where('user_id', $user_id)->first();
+        $department_user = DepartmentUser::where('user_id', $user_id)->latest('id')->first();
         if (!$department_user) return $this->error('Thành viên chưa có phòng ban');
+
         $department_task = DepartmentTask::where('task_id', $task_id)->first();
         if (!$department_task) return $this->error('Vui lòng thử lại');
 
@@ -270,7 +271,7 @@ class JobController extends Controller
         /** Gửi mail cho thành viên nhận task */
         $_name = $user->fullname;
         if (!$_name) $_name = $user->username;
-        $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Bạn đã được phân công nhiệm vụ <b>' . $name . '</b> thuộc công việc <b>' . $task->name . '</b> của dự án <b>' . $project->name . '</b>. Vui lòng kiểm tra. Cảm ơn!</div>';
+        $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Bạn đã được phân công nhiệm vụ <b>' . $name . '</b> thuộc công việc <b>' . $task->name . '</b> của dự án <b>' . $project->name . '</b>.<br>Vui lòng kiểm tra.<br>Cảm ơn!</div>';
         $this->_sendEmail($user->email, 'Phân công nhiệm vụ ' . $task->name, $content_mail);
 
         return $this->success("Thêm nhiệm vụ thành công", []);
@@ -298,8 +299,9 @@ class JobController extends Controller
         if (!$user || !$user->active) return $this->error('Thành viên được phân công không tồn tại hoặc đã bị khóa');
 
         // Department User
-        $department_user = DepartmentUser::where('user_id', $user_id)->first();
+        $department_user = DepartmentUser::where('user_id', $user_id)->latest('id')->first();
         if (!$department_user) return $this->error('Thành viên chưa có phòng ban');
+
         $department_task = DepartmentTask::where('task_id', $task_id)->first();
         if (!$department_task) return $this->error('Vui lòng thử lại');
 
@@ -327,6 +329,7 @@ class JobController extends Controller
         $department_user_job = DepartmentUserJob::where('job_id', $job_id)->latest('id')->first();
         if ($department_user_job) {
             $department_user_old = DepartmentUser::find($department_user_job->department_user_id);
+
             if ($department_user_old && $department_user_old->user_id != $user_id) {
                 // Cập nhật status cho user cũ
                 DepartmentUserJobStatus::create([
@@ -336,7 +339,7 @@ class JobController extends Controller
                 ]);
 
                 // Thêm department_user_job & status cho user mới
-                $department_user_new = DepartmentUser::where('user_id', $user_id)->first();
+                $department_user_new = DepartmentUser::where('user_id', $user_id)->latest('id')->first();
                 if ($department_user_new) {
                     $department_user_job_new = DepartmentUserJob::create([
                         'department_user_id' => $department_user_new->id,
@@ -380,7 +383,7 @@ class JobController extends Controller
 
         if ($this->isUser()) {
             if (!$this->isLeader()) {
-                $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+                $department_user = DepartmentUser::where('user_id', $this->auth->id)->latest('id')->first();
                 $job_ids = array();
                 if ($department_user) {
                     $department_user_job = DepartmentUserJob::where('department_user_id', $department_user->id)->get();
@@ -434,6 +437,7 @@ class JobController extends Controller
 
         // Xóa prejob
         PreJob::where('job_id', $job_id)->delete();
+        PreJob::where('pre_job_id', $job_id)->delete();
 
         // Xóa status
         $department_user_job = DepartmentUserJob::where('job_id', $job_id);
@@ -526,7 +530,7 @@ class JobController extends Controller
                     $_department_task = DepartmentTask::where('task_id', $task->id)->first();
                     if ($_department_task) {
                         $department_user_leader = DepartmentUser::where('department_id', $_department_task->department_id)
-                            ->where('leader', 1)->first();
+                            ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
                         if ($department_user_leader) {
                             $leader = User::find($department_user_leader->user_id);
 
@@ -535,7 +539,7 @@ class JobController extends Controller
                                 if (!$_name) $_name = $leader->username;
                                 $content_mail = '<div>Xin chào ' . $_name 
                                 . '!</div><div> Nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
-                                . $task->name . '</b> của dự án <b>' . $project->name . '</b> đã gửi yêu cầu từ chối nhận. Vui lòng kiểm duyệt. Cảm ơn!</div>';
+                                . $task->name . '</b> của dự án <b>' . $project->name . '</b> đã gửi yêu cầu từ chối nhận.<br>Vui lòng kiểm duyệt.<br>Cảm ơn!</div>';
 
                                 $this->_sendEmail($leader->email, 'Yêu cầu từ chối nhận nhiệm vụ ' . $task->name, $content_mail);
                             }
@@ -586,7 +590,7 @@ class JobController extends Controller
 
                             $content_mail = '<div>Xin chào ' . $_name 
                             . '!</div><div>Yêu cầu từ chối nhận nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
-                            . $task->name . '</b> của dự án <b>' . $project->name . '</b> của bạn đã không được duyệt . Vui lòng kiểm tra và thực hiện. Cảm ơn!</div>';
+                            . $task->name . '</b> của dự án <b>' . $project->name . '</b> của bạn đã không được duyệt.<br>Vui lòng kiểm tra và thực hiện.<br>Cảm ơn!</div>';
 
                             $this->_sendEmail($_user->email, 'Không duyệt yêu cầu từ chối nhận nhiệm vụ ' . $task->name, $content_mail);
                         }
@@ -643,6 +647,25 @@ class JobController extends Controller
                     ]);
 
                     /** Gửi email cho leader => Báo duyệt hoàn thành */
+                    $_department_task = DepartmentTask::where('task_id', $task->id)->latest('id')->first();
+                    if ($_department_task) {
+                        $leader_department_user = DepartmentUser::where('department_id', $_department_task->department_id)
+                            ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
+                        
+                        if ($leader_department_user) {
+                            $_leader = User::find($leader_department_user->user_id);
+                            if ($_leader && $_leader->email) {
+                                $_name = $_leader->fullname;
+                                if (!$_name) $_name = $_leader->username;
+
+                                $content_mail = '<div>Xin chào ' . $_name 
+                                . '!</div><div>Nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
+                                . $task->name . '</b> của dự án <b>' . $project->name . '</b> đã gửi yêu cầu kiểm duyệt hoàn thành.<br> Vui lòng kiểm tra.<br> Cảm ơn!</div>';
+
+                                $this->_sendEmail($_leader->email, 'Yêu cầu kiểm duyệt hoàn thành nhiệm vụ ' . $task->name, $content_mail);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -672,6 +695,22 @@ class JobController extends Controller
                         'status' => 3,
                         'department_user_job_id' => $_department_user_job->id
                     ]);
+
+                    /** Thông báo đến user - job đã được duyệt */
+                    $_department_user = DepartmentUser::find($_department_user_job->department_user_id);
+                    if ($_department_user) {
+                        $_user = User::find($_department_user->user_id);
+                        if ($_user) {
+                            $_name = $_user->fullname;
+                            if (!$_name) $_name = $_user->username;
+
+                            $content_mail = '<div>Xin chào ' . $_name 
+                            . '!</div><div>Yêu cầu duyệt hoàn thành nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
+                            . $task->name . '</b> của dự án <b>' . $project->name . '</b> của bạn đã được duyệt.<br>Chúc mừng bạn.</div>';
+
+                            $this->_sendEmail($_user->email, 'Duyệt hoàn thành nhiệm vụ ' . $task->name, $content_mail);
+                        }
+                    }
                 }
             }
         }
@@ -705,6 +744,22 @@ class JobController extends Controller
                     ]);
 
                     /** Gửi email cho user báo không được duyệt hoàn thành */
+                    $_department_user = DepartmentUser::find($_department_user_job->department_user_id);
+                    if ($_department_user) {
+                        $_user = User::find($_department_user->user_id);
+                        if ($_user) {
+                            $_name = $_user->fullname;
+                            if (!$_name) $_name = $_user->username;
+
+                            $content_mail = '<div>Xin chào ' . $_name 
+                            . '!</div><div>Yêu cầu duyệt hoàn thành nhiệm vụ <b>' . $job->name . '</b> thuộc công việc <b>' 
+                            . $task->name . '</b> của dự án <b>' . $project->name 
+                            . '</b> của bạn đã không được duyệt.'
+                            . '<br>Vui lòng kiểm tra lý do và thực hiện lại.<br>Cảm ơn!</div>';
+
+                            $this->_sendEmail($_user->email, 'Không duyệt hoàn thành nhiệm vụ ' . $task->name, $content_mail);
+                        }
+                    }
                 }
             }
         }
@@ -719,7 +774,8 @@ class JobController extends Controller
         $data = [
             'count' =>  0,
             'late' => 0,
-            'today'=> 0
+            'today'=> 0,
+            'working' => 0
         ];
         $time_now = date("Y-m-d");
         $time_now = strtotime($time_now);
@@ -731,14 +787,23 @@ class JobController extends Controller
                     $project_status = ProjectStatus::where('project_id', $_project->id)->latest('id')->first();
                     // Dự án trễ
                     
-                    if ($time_now - $_project->end_time >= 0 && $project_status->status != 9 && $_project->active == 1) { // > 0 trễ, =0 today
-                        $data['count']++;
-                        if ($_project && $time_now - $_project->end_time > 0) // trễ
+                    if ($_project && $project_status->status != 9 && $_project->active == 1) { // > 0 trễ, =0 today
+                        if ($time_now - $_project->end_time > 0){
                             $data['late']++;
+                            $data['count']++;
+                        }
 
-                        if ($_project && $time_now - $_project->end_time == 0) // trễ
-                            $data['today']++;
+                        if ($time_now - $_project->start_time == 0) {
+                            $data['count']++;
+                            $data['today']++;    
+                        }
+                            
+                        if ($time_now > $_project->start_time && $time_now <= $_project->end_time) {
+                            $data['count']++;
+                            $data['working']++;
+                        }
                     }
+                
                 }
             }
         }
@@ -747,7 +812,7 @@ class JobController extends Controller
         else if ($this->auth->role->level == 4) {
             $department_user = DepartmentUser::where('user_id', $this->auth->id)->latest('id')->first();
             if ($department_user) {
-                if ($department_user->leader == 1) { // Là trưởng phòng ban
+                if ($department_user->leader == 1 && $department_user->active_leader == 1) { // Là trưởng phòng ban
                     $department_task = DepartmentTask::where('department_id', $department_user->department_id)->get();
                     if ($department_task) {
                         foreach ($department_task as $_department_task) {
@@ -756,15 +821,21 @@ class JobController extends Controller
                             if ($department_task_status && $department_task_status->status != 2 && $department_task_status->status != 3 && $department_task_status->status != 8) {
                                 $task = Task::find($_department_task->task_id);
 
-                                if ($task && $time_now - $task->end_time > 0){ // trễ
-                                    $data['late']++;
-                                    $data['count']++;
-                                }
+                                // if ($task && $time_now - $task->end_time > 0){ // trễ
+                                //     $data['late']++;
+                                //     $data['count']++;
+                                // }
         
-                                if ($task && $time_now - $task->end_time == 0){ // today
-                                    $data['today']++;  
-                                    $data['count']++;
-                                }
+                                // if ($task && $time_now - $task->start_time == 0){ // today
+                                //     $data['today']++;  
+                                //     $data['count']++;
+                                // }
+
+                                // if ($task && $time_now > $task->start_time && $time_now <= $task->end_time) {
+                                //     // Đang trong tgian thực hiện
+                                //     $data['working']++;  
+                                //     $data['count']++;
+                                // }
 
                                 // Lấy danh sách job (nhiệm vụ user này làm, nv duyệt hoàn thành, duyệt từ chối)
                                 $job = Job::where('task_id', $task->id)->get();
@@ -788,6 +859,12 @@ class JobController extends Controller
                                                         $data['today']++;  
                                                         $data['count']++;
                                                     }
+
+                                                    if ($_job && $time_now > $_job->start_time && $time_now <= $_job->end_time){
+                                                        // Đang trong tg thực hiện
+                                                        $data['working']++;  
+                                                        $data['count']++;
+                                                    }
                                                 }
                                             } else {
                                                 // Cần duyệt hoàn thành & từ chối nhận job
@@ -799,6 +876,12 @@ class JobController extends Controller
                             
                                                     if ($_job && $time_now - $_job->end_time == 0){ // today
                                                         $data['today']++;  
+                                                        $data['count']++;
+                                                    }
+
+                                                    if ($_job && $time_now > $_job->start_time && $time_now <= $_job->end_time){
+                                                        // Đang trong tg thực hiện
+                                                        $data['working']++;  
                                                         $data['count']++;
                                                     }
                                                 }
@@ -815,6 +898,7 @@ class JobController extends Controller
                     if ($department_user_job) {
                         foreach ($department_user_job as $_department_user_job) {
                             $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $_department_user_job->id)->latest('id')->first();
+
                             if ($department_user_job_status && $department_user_job_status->status != 2 && $department_user_job_status->status != 3 && $department_user_job_status->status != 7) {
                                 $job = Job::find($_department_user_job->job_id);
 
@@ -823,8 +907,14 @@ class JobController extends Controller
                                     $data['count']++;
                                 }
         
-                                if ($job && $time_now - $job->end_time == 0){ // today
+                                if ($job && $time_now - $job->start_time == 0){ // today
                                     $data['today']++;  
+                                    $data['count']++;
+                                }
+
+                                if ($job && $time_now > $job->start_time && $time_now <= $job->end_time) {
+                                    // Đang trong tgian thực hiện
+                                    $data['working']++;  
                                     $data['count']++;
                                 }
                             }
@@ -850,9 +940,9 @@ class JobController extends Controller
             if ($project) {
                 foreach ($project as $_project) {
                     $project_status = ProjectStatus::where('project_id', $_project->id)->latest('id')->first();
-                    // Dự án trễ
-                    if (($time_now - $_project->end_time > 0 && $status == 'late') || ($time_now - $_project->end_time == 0 && $status == 'today')) {
-                        if ($project_status->status != 9 && $_project->active == 1) { // > 0 trễ
+                    // Dự án
+                    if (($time_now - $_project->end_time > 0 && $status == 'late') || ($time_now - $_project->start_time == 0 && $status == 'today') || ($time_now > $_project->start_time && $time_now <= $_project->end_time && $status == 'working')) {
+                        if ($project_status->status != 9 && $_project->active == 1) {
                             $list[] = new ProjectResource($_project);
                         }
                     }
@@ -869,7 +959,8 @@ class JobController extends Controller
                             if ($department_user_job_status && $department_user_job_status->status != 2 && $department_user_job_status->status != 3 && $department_user_job_status->status != 7) {
 
                                 $job = Job::find($_department_user_job->job_id);
-                                if (($job && $time_now - $job->end_time > 0 && $status == 'late') || ($job && $time_now - $job->end_time == 0 && $status == 'today')){ // trễ
+                                if (($job && $time_now - $job->end_time > 0 && $status == 'late') || ($job && $time_now - $job->start_time == 0 && $status == 'today') || ($job && $time_now > $job->start_time && $time_now <= $job->end_time && $status == 'working')){
+
                                     $task = Task::find($job->task_id);
                                     $project = Project::find($task->project_id);
                                     $list[] = [
@@ -904,7 +995,9 @@ class JobController extends Controller
                                             
                                             if ($department_user && $department_user->user_id == $this->auth->id) {
                                                 if ($department_user_job_status && $department_user_job_status->status != 2 && $department_user_job_status->status != 3 && $department_user_job_status->status != 7) {
-                                                    if (($_job && $time_now - $_job->end_time > 0 && $status == 'late') || ($_job && $time_now - $_job->end_time == 0 && $status == 'today')){ // trễ
+
+                                                    if (($_job && $time_now - $_job->end_time > 0 && $status == 'late') || ($_job && $time_now - $_job->start_time == 0 && $status == 'today') || ($_job && $time_now > $_job->start_time && $time_now <= $_job->end_time && $status == 'working')){
+
                                                         $list[] = [
                                                             'job' => new JobResource($_job),
                                                             'task' => $task,

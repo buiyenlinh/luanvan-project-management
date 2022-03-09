@@ -180,6 +180,7 @@ export default {
                     <td><b>STT</b></td>
                     <td><b>Tên</b></td>
                     <td><b>Chức vụ</b></td>
+                    <td><b>Trạng thái</b></td>
                     <td><b>Ngày tạo</b></td>
                     <td></td>
                   </tr>
@@ -197,6 +198,11 @@ export default {
                       <td>
                         <span class="badge badge-success" v-if="list && list.leader == item.id">Trưởng phòng</span>
                         <span class="badge badge-info" v-else>thành viên</span>
+                      </td>
+                      <td>
+                        <span :class="['badge', item.active ? 'badge-success' : 'badge-danger']">
+                          {{ item.active ? 'Kích hoạt' : 'Khóa'}}
+                        </span>
                       </td>
                       <td style="font-size: 13px">{{ item.created_at }}</td>
                       <td>

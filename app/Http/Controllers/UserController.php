@@ -277,7 +277,7 @@ class UserController extends Controller
 
         $data = array();
         foreach($list->get() as $_list) {
-            $department_user_old_leader = DepartmentUser::where('user_id', $_list->id)->where('active', 1)->count();
+            $department_user_old_leader = DepartmentUser::where('user_id', $_list->id)->count();
             $department_user = DepartmentUser::where('user_id', $_list->id)->where('leader', 0)->count();
             if ($department_user == 0 && $department_user_old_leader == 0) {
                 $data[] = $_list;

@@ -65,7 +65,7 @@ export default {
         </div>
         
         <div class="mb-3">
-          <label for="">Tên đăng nhập <span class="text-danger font-weight-bold">*</span></label>
+          <label for=""><b>Tên đăng nhập <span class="text-danger font-weight-bold">*</span></b></label>
           <div class="input-group">
             <div class="input-group-prepend">
               <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -76,7 +76,7 @@ export default {
         </div>
 
         <div class="mb-2">
-          <label for="">Mật khẩu <span class="text-danger font-weight-bold">*</span></label>
+          <label for=""><b>Mật khẩu <span class="text-danger font-weight-bold">*</span></b></label>
           <div class="input-group">
             <div class="input-group-prepend">
               <span class="input-group-text"><i class="fas fa-lock"></i></span>

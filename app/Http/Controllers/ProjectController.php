@@ -46,7 +46,7 @@ class ProjectController extends Controller
         if ($this->isManager()) {
             $db->where('manager', $this->auth->id);
         } else if ($this->isUser()) {
-            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->latest('id')->first();
             $project_ids = array();
             if ($department_user) {
                 $department_task = DepartmentTask::where('department_id', $department_user->department_id);
@@ -148,7 +148,7 @@ class ProjectController extends Controller
             if ($check_manager->email) {
                 $_name = $check_manager->fullname;
                 if (!$_name) $_name = $check_manager->username;
-                $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Bạn đã được giao dự án ' . $name . ', vui lòng kiểm tra. Cảm ơn!</div>';
+                $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Bạn đã được phân công quản lý dự án ' . $name . ', vui lòng kiểm tra. Cảm ơn!</div>';
                 $this->_sendEmail($check_manager->email, $name, $content_mail);
             }
         }
@@ -207,6 +207,9 @@ class ProjectController extends Controller
             return $this->error('Dự án đã được phân công công việc. Không thể xóa');
 
         $project_status = ProjectStatus::where('project_id', $id)->delete();
+        if ($project->file) {
+            Storage::disk('public')->delete($project->file);
+        }
         Project::find($id)->delete();
 
         return $this->success('Xóa dự án thành công');

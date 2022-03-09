@@ -246,7 +246,8 @@ export default {
     checkTimePreTask(_pre_task, _task) {
       let start_time_task = new Date(_task.start_time).getTime(); // đơn vị mili giây
       let end_time_pre_task = new Date(_pre_task.end_time).getTime();
-      if (start_time_task <= end_time_pre_task) { 
+      
+      if (start_time_task < end_time_pre_task) {
         this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với công việc tiên quyết "' + _pre_task.name + '"';
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
         return false;
@@ -289,7 +290,15 @@ export default {
         if (this.error.end_time == 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu') {
           this.error.end_time = '';
         }
-        this.error.start_time = '';
+
+        if (this.pre_task_ids_show.length > 0) {
+          for (let i in this.pre_task_ids_show) {
+            if (!this.checkTimePreTask(this.pre_task_ids_show[i], this.task))
+              break;
+          }
+        } else {
+          this.error.start_time = '';
+        }
       }
     },
     checkEndTime() {
@@ -518,6 +527,7 @@ export default {
                     <td><b>Thống kê</b></td>
                     <td><b>Trạng thái</b></td>
                     <td><b>Bắt đầu</b></td>
+                    <td><b>Hoàn thành</b></td>
                     <td><b>Ngày tạo</b></td>
                     <td></td>
                   </tr>
@@ -559,6 +569,7 @@ export default {
                         </span>
                       </td>
                       <td>{{ item.start_time }}</td>
+                      <td>Trước {{ item.end_time }}</td>
                       <td>{{ item.created_at }}</td>
                       <td>
                         <button @click="getTaskUpdate(item)" class="mb-1 btn btn-sm btn-secondary"
@@ -594,7 +605,7 @@ export default {
                         </template>
                         <template v-if="item && item.department.leader.id == $root.auth.id">
                           <button v-if="item.status.status == 0" 
-                            @click="handleTakeTask(item)" class="mb-1 btn btn-sm btn-info">
+                            @click="handleTakeTask(item)" class="mb-1 btn btn-sm btn-dark">
                             Tiếp nhận
                           </button>
                           <button v-if="item.status.status == 1 || item.status.status == 4"
@@ -602,6 +613,10 @@ export default {
                             class="mb-1 btn btn-sm btn-success">
                             Hoàn thành
                           </button>
+                        </template>
+
+                        <template v-if="project && (project.manager.id == $root.auth.id || $root.auth.id == item.department.leader.id)">
+                          <router-link :to="{ name: 'chart', params: { name: 'cong-viec', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                         </template>
                       </td>
                     </tr>
@@ -612,7 +627,6 @@ export default {
             </div>
           </div>
         </div>
-
       </div>
 
       <div class="modal fade" id="task_modal_add_update">
@@ -644,7 +658,7 @@ export default {
 
                   <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
-                      <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
+                      <label><b>Hoàn thành trước <span class="text-danger">*</span></b></label>
                       <input type="date" class="form-control form-control-sm" v-model="task.end_time">
                       <div class="text-danger font-italic error">{{error.end_time}}</div>
                     </div>
@@ -774,7 +788,7 @@ export default {
               </div>
 
               <div class="form-group">
-                <b>Hạn chót: </b> <span>{{ task.end_time }}</span>
+                <b>Hoàn thành trước: </b> <span>{{ task.end_time }}</span>
               </div>
 
               <div class="form-group">

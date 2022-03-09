@@ -361,6 +361,7 @@ export default {
                 <td><b>Thống kê</b></td>
                 <td><b>Trạng thái</b></td>
                 <td><b>Bắt đầu</b></td>
+                <td><b>Hoàn thành</b></td>
                 <td><b>Ngày tạo</b></td>
                 <td></td>
               </tr>
@@ -394,6 +395,7 @@ export default {
                     </span>
                   </td>
                   <td style="font-size: 13px">{{ item.start_time }}</td>
+                  <td style="font-size: 13px"> Trước{{ item.end_time }}</td>
                   <td style="font-size: 13px">{{ item.created_at }}</td>
                   <td>
                     <button class="mb-1 btn btn-secondary btn-sm"
@@ -417,7 +419,7 @@ export default {
                       >Xóa</button>
                       
                       <template v-if="item.active == 1 && $root.auth.id == item.manager.id">
-                        <button class="mb-1 btn btn-outline-info btn-sm"
+                        <button class="mb-1 btn btn-dark btn-sm"
                           v-if="item.status && item.status.status == 0 && $root.auth.id == item.manager.id"
                           @click="handleTakeProject(item)"
                         >Tiếp nhận</button>
@@ -428,6 +430,9 @@ export default {
                           data-target="#project_modal_finish"
                         >Hoàn thành</button>
                       </template>
+                    </template>
+                    <template v-if="$root.isAdmin() || $root.isManager()">
+                      <router-link :to="{ name: 'chart', params: { name: 'du-an', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                     </template>
                   </td>
                 </tr>
@@ -469,7 +474,7 @@ export default {
                 </div>
                 <div class="col-md-12 col-sm-12 col-12" v-if="!project.id">
                   <div class="form-group">
-                    <label><b>Thời gian kết thức <span class="text-danger">*</span></b></label>
+                    <label><b>Hoàn thành trước <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="project.end_time">
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
@@ -567,7 +572,7 @@ export default {
             </div>
 
             <div class="form-group">
-              <b>Hạn chót: </b> <span>{{ project.end_time }}</span>
+              <b>Hoàn thành trước: </b> <span>{{ project.end_time }}</span>
             </div>
 
             <div class="form-group">

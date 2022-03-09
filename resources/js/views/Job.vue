@@ -308,7 +308,7 @@ export default {
       let start_time_job = new Date(_job.start_time).getTime(); // đơn vị mili giây
       let end_time_pre_job = new Date(_pre_job.end_time).getTime();
 
-      if (start_time_job <= end_time_pre_job) {
+      if (start_time_job < end_time_pre_job) {
         this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với nhiệm vụ tiên quyết "' + _pre_job.name + '"';
         this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
         return false;
@@ -575,6 +575,7 @@ export default {
                       <td><b>Phân cho</b></td>
                       <td><b>Trạng thái</b></td>
                       <td><b>Bắt đầu</b></td>
+                      <td><b>Hoàn thành</b></td>
                       <td><b>Ngày tạo</b></td>
                       <td></td>
                     </tr>
@@ -610,6 +611,7 @@ export default {
                           </span>
                         </td>
                         <td>{{ item.start_time }}</td>
+                        <td>Trước {{ item.end_time }}</td>
                         <td>{{ item.created_at }}</td>
                         <td>
                           <button @click="getJobUpdate(item)"
@@ -632,7 +634,7 @@ export default {
                                 data-target="#job_modal_delete">Xóa</button>
                             </template>
                             <template v-if="item.status.status == 2">
-                              <button class="mb-1 btn btn-info btn-sm" @click="handleApprovalJob(item)">Duyệt </button>
+                              <button class="mb-1 btn btn-success btn-sm" @click="handleApprovalJob(item)">Duyệt </button>
                               <button class="mb-1 btn btn-danger btn-sm"
                                 @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_not_approval_modal">
                                 Không duyệt
@@ -699,7 +701,7 @@ export default {
 
                 <div class="col-md-6 col-sm-12 col-12" v-if="!job.id">
                   <div class="form-group">
-                    <label><b>Thời gian kết thúc <span class="text-danger">*</span></b></label>
+                    <label><b>Hoàn thành trước <span class="text-danger">*</span></b></label>
                     <input type="date" class="form-control form-control-sm" v-model="job.end_time">
                     <div class="text-danger font-italic error">{{error.end_time}}</div>
                   </div>
@@ -808,7 +810,7 @@ export default {
             </div>
 
             <div class="form-group">
-              <b>Hạn chót: </b> <span>{{ job.end_time }}</span>
+              <b>Hoàn thành trước: </b> <span>{{ job.end_time }}</span>
             </div>
 
             <div class="form-group" v-if="job.content">

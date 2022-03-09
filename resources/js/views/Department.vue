@@ -346,6 +346,7 @@ export default {
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
                     <label><b>Trưởng phòng ban <span class="text-danger">*</span></b></label>
+                    
                     <m-select
                       :size="'sm'"
                       :text="select_leader.text"

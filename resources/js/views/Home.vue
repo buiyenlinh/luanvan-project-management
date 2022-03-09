@@ -141,17 +141,22 @@ export default {
                 <div class="number-job">{{ number_deadline.count }}</div>
               </div>
               <div class="dropdown-menu">
-                <div class="d-flex justify-content-start pl-2 pr-2">
-                  <div style="width: 30%"><i class="fas fa-tasks mr-1" style="font-size: 25px; margin-top: 5px"></i></div>
-                  <div style="width: 70%">
+                <div class="pl-2 pr-2">
+                  <div>
                     <b v-if="$root.auth.role.level == 3">Dự án</b>
                     <b v-else-if="$root.auth.role.level == 4">Nhiệm vụ</b>
                     <div class="d-flex justify-content-between">
+
                       <router-link :to="{ name: 'deadline', params: { name: 'tre'} }">
                         <span>{{ number_deadline.late }} Trễ</span>
                       </router-link>
+
                       <router-link :to="{ name: 'deadline', params: { name: 'hom-nay'} }">
                         <span>{{ number_deadline.today }} Hôm nay</span>
+                      </router-link>
+
+                      <router-link :to="{ name: 'deadline', params: { name: 'dang-thuc-hien'} }">
+                        <span>{{ number_deadline.working }} Đang thực hiện</span>
                       </router-link>
                     </div>
                   </div>

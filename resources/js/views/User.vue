@@ -373,7 +373,7 @@ export default {
                   <td>{{ item.role.name }}</td>
                   <td>
                     <span class="badge" :class="{
-                      'badge-secondary': !item.active,
+                      'badge-danger': !item.active,
                       'badge-success': item.active
                     }">{{ item.active ? 'Kích hoạt' : 'Khóa' }}</span>
                   </td>
