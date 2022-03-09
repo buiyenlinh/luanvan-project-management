@@ -18,7 +18,7 @@ class CreateDepartmentUserTable extends Migration
             $table->foreignId('user_id')->constrained('yl_users')->unsigned();
             $table->foreignId('department_id')->constrained('yl_departments')->unsigned();
             $table->boolean('leader')->default(0);
-            $table->tinyInteger('active');
+            $table->tinyInteger('active_leader')->default(0);
             $table->timestamps();
         });
     }

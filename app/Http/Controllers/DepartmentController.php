@@ -43,7 +43,7 @@ class DepartmentController extends Controller
 
         if ($leader_id > 0) { // Danh sách tìm theo leader
             $department_user = DepartmentUser::where('user_id', $leader_id)
-                ->where('leader', 1)->where('active', 1)->get();
+                ->where('leader', 1)->get();
             $arr = [];
             foreach($department_user as $_de_user) {
                 $arr[] = $_de_user['department_id'];
@@ -89,8 +89,12 @@ class DepartmentController extends Controller
             'user_id' => $leader,
             'department_id' => $department->id,
             'leader' => 1,
-            'active' => 1
+            'active_leader' => 1
         ]);
+
+        $mem_emails = array();
+        $_leader_user = User::find($leader);
+        $mem_emails[] = $_leader_user->email;
 
         if ($members) {
             foreach($members as $_member) {
@@ -102,10 +106,18 @@ class DepartmentController extends Controller
                     'user_id' => $_member,
                     'department_id' => $department->id,
                     'leader' => 0,
-                    'active' => 0
+                    'active_leader' => 0
                 ]);
+                $_user = user::find($_member);
+                if ($_user)
+                    $mem_emails[] = $_user->email;
             }
         }
+
+        /** Thông báo email cho leader & thành viên */
+        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào phòng ban <b>'
+        . $name . '</b></div><div>Cảm ơn!</div>';
+        $this->_sendEmail($mem_emails, 'Được thêm vào phòng ban', $content_mail);
 
         return $this->success('Tạo phòng ban thành công', $request);
     }
@@ -125,17 +137,17 @@ class DepartmentController extends Controller
 
         /* Trưởng phòng */
         $old_leader = DepartmentUser::where('department_id', $id)
-            ->where('leader', 1)->where('active', 1)->first();
+            ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
 
         if ($old_leader->user_id != $leader) {
             $old_leader->update([
-                'active' => 0
+                'active_leader' => 0
             ]); 
 
             // Tạo department_user cho trưởng phòng mới
             DepartmentUser::create([
                 'user_id' => $leader,
-                'active' => 1,
+                'active_leader' => 1,
                 'department_id' => $id,
                 'leader' => 1   
             ]);
@@ -147,12 +159,15 @@ class DepartmentController extends Controller
                 if ($user_check) {
                     DepartmentUser::create([
                         'user_id' => $_member,
-                        'active' => 0,
-                        'department_id' => $id
+                        'active_leader' => 0,
+                        'department_id' => $id,
+                        'leader' => 0
                     ]);
                 }
             }
         }
+
+        /** Gửi email cho trưởng phòng mới & thành viên mới */
 
         return $this->success('Cập nhật phòng ban thành công');
     }
@@ -168,17 +183,26 @@ class DepartmentController extends Controller
         $new_members = $request->new_members;
         if (!$new_members)
             return $this->error('Thành viên mới là bắt buộc');
-
+        
+        $mem_emails = array();
         foreach ($new_members as $_new_member) {
             $user_check = User::find($_new_member);
             if ($user_check) {
                 DepartmentUser::create([
                     'user_id' => $_new_member,  
-                    'active' => 0,
+                    'active_leader' => 0,
                     'department_id' => $department_id
                 ]);
+                $_user = User::find($_new_member);
+                if ($_user) 
+                    $mem_emails[] = $_user->email;
             }
         }
+
+        /** Thông báo email cho leader & thành viên */
+        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào phòng ban <b>'
+        . $department->name . '</b></div><div>Cảm ơn!</div>';
+        $this->_sendEmail($mem_emails, 'Được thêm vào phòng ban', $content_mail);
 
         return $this->success('Thêm thành viên mới thành công', []);
     }
@@ -234,9 +258,9 @@ class DepartmentController extends Controller
 
         if ($department_user->count()) {
             foreach ($department_user->get() as $_department_user) {
-                if (($_department_user->leader = 1 && $_department_user->active == 1) || $_department_user->leader == 0) {
+                if (($_department_user->leader == 1 && $_department_user->active_leader) || ($_department_user->leader == 0 && $_department_user->active_leader == 0)) {
                     $ids[] = $_department_user->user_id;
-                    if ($_department_user->leader) {
+                    if ($_department_user->leader == 1) {
                         $data['leader'] = $_department_user->user_id;
                     }
                 }

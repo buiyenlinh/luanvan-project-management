@@ -58,7 +58,7 @@ class TaskController extends Controller
         }
 
         if ($this->isUser()) { // Là user thì trả về task mà user có job thuộc
-            $department_user = DepartmentUser::where('user_id', $this->auth->id)->first();
+            $department_user = DepartmentUser::where('user_id', $this->auth->id)->latest('id')->first();
             if ($department_user) {
                 $task_ids = array();
                 if ($department_user->leader) {
@@ -219,14 +219,14 @@ class TaskController extends Controller
         ]);
 
         // Gửi email cho trưởng phòng ban
-        $leader_department = DepartmentUser::where('leader', 1)
-            ->where('department_id', $department_check->id)->first();
+        $leader_department = DepartmentUser::where('leader', 1)->where('active_leader', 1)
+            ->where('department_id', $department_check->id)->latest('id')->first();
         $leader_user = User::find($leader_department->user_id);
         if ($leader_user) {
             $_name = $leader_user->fullname;
             if (!$_name) $_name = $leader_user->username;
-            $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Phòng ban của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án<b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
-            $this->_sendEmail($leader_user->email, $name, $content_mail);
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Phòng ban của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án <b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
+            $this->_sendEmail($leader_user->email, $name, $content_mail); 
         }
 
         return $this->success('Thêm công việc thành công', []);
@@ -309,6 +309,13 @@ class TaskController extends Controller
         /** Kiểm tra công việc này có nhiệm vụ nào hay không */
         $jobs = Job::where('task_id', $id)->count();
         if ($jobs > 0) return $this->error('Công việc này đã phân công nhiệm vụ. Không thể xóa');
+
+        // Kiểm tra xem task này có là tiên quyết của task nào không?
+        $task_test = PreTask::where('pre_task_id', $id)->delete();
+
+        // Kiểm tra có pre task thì xóa
+        $task_test = PreTask::where('task_id', $id)->delete();
+
 
         $department_task = DepartmentTask::where('task_id', $id)->first();
         $department_task_status = DepartmentTaskStatus::where('department_task_id', $department_task->id)->delete();
@@ -465,7 +472,9 @@ class TaskController extends Controller
         }
 
         /** Gửi mail cho trưởng phòng ban của task khi được manager duyệt task */
-        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->first();
+        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
+            ->where('active_leader', 1)->latest('id')->first();
+
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
             $_name = $leader->fullname;
@@ -504,7 +513,8 @@ class TaskController extends Controller
         /**
          * Gửi mail cho trưởng phòng ban tiếp nhận task => bị manager từ chối
          */
-        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->first();
+        $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
+            ->where('active_leader', 1)->latest('id')->first();
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
             $_name = $leader->fullname;

@@ -8,6 +8,8 @@ Route::get('/config', 'AppController@getConfig');
 Route::middleware('is-token')->group(function() {
   Route::post('/login', 'AppController@login')->withoutMiddleware('is-token');
   Route::get('/logout', 'AppController@logout');
+  Route::post('/forget-password', 'AppController@forgetPassword')->withoutMiddleware('is-token');
+  Route::post('/change-password', 'AppController@changePassword')->withoutMiddleware('is-token');
   Route::post('/profile', 'UserController@updateProfile');
   Route::delete('/profile/delete-avatar', 'UserController@deleteAvatar');
 
@@ -15,7 +17,7 @@ Route::middleware('is-token')->group(function() {
     // Số lượng nhiệm vụ trễ & hôm nay
   Route::get('job/number-job', 'JobController@getNumberJob');
     // Danh sách trễ hạn
-  Route::post('job/late-or-today/{status}', 'JobController@getJobLateOrToday'); // status: late or today
+  Route::post('job/late-today-working/{status}', 'JobController@getJobLateOrToday'); // status: late or today or working
 
   Route::prefix("/user")->middleware('check-role:1|2')->group(function() {
     Route::get('list', 'UserController@getUserList')->withoutMiddleware('check-role:1|2');
@@ -94,6 +96,12 @@ Route::middleware('is-token')->group(function() {
     Route::post('add', 'LabelController@add');
     Route::post('update/{id}', 'LabelController@update');
     Route::delete('delete/{id}', 'LabelController@delete');
+  });
+
+  Route::prefix('chart')->group(function() {
+    Route::post('get-info/{name}/{id}', 'ChartController@getInfo');
+    Route::post('get-chart-project/{project_id}', 'ChartController@getDataProjectForChart');
+    Route::post('get-chart-task/{task_id}', 'ChartController@getDataTaskForGantt');
   });
 
   Route::prefix('/role')->group(function() {

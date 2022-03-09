@@ -13,7 +13,10 @@ export default {
       let st = 'today';
       if (this.route_name == 'tre')
         st = 'late'
-      this.$root.api.post(`job/late-or-today/${st}`).then(res => {
+      else if (this.route_name == 'dang-thuc-hien') 
+        st = 'working'
+
+      this.$root.api.post(`job/late-today-working/${st}`).then(res => {
         this.loading_list = false;
         if (res.data.status == "OK") {
           this.list = res.data.data;
@@ -27,7 +30,7 @@ export default {
     },
     getInfo() {
       this.route_name = this.$route.params.name;
-      if ((this.route_name != 'hom-nay' && this.route_name != 'tre') || this.$root.isAdmin()) {
+      if ((this.route_name != 'hom-nay' && this.route_name != 'tre' && this.route_name != 'dang-thuc-hien') || this.$root.isAdmin()) {
         this.$router.replace({ name: 'dashboard' });
       }
       this.getJobLateOrToday();

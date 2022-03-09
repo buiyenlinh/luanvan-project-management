@@ -768,12 +768,16 @@ a:hover {
 }
 
 #main .header .clock-icon .dropdown-menu {
-  width: 200px;
+  width: 250px;
 }
 
 #main .header .clock-icon .dropdown-menu.show {
   left: -160px !important;
   top: 14px !important;
+}
+
+#main .header .clock-icon .dropdown-menu.show a span {
+  font-size: 12px;
 }
 
 #main .header .clock-icon .number-job {
@@ -856,6 +860,19 @@ a:hover {
 
   .side-bar-small #main .header {
     width: 100%;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  #main .header .clock-icon .dropdown-menu.show {
+    left: 0px !important;
+    top: 14px !important;
+  }
+}
+
+@media screen and (max-width: 250px) {
+  #main .header .clock-icon .dropdown-menu {
+    width: 200px;
   }
 }
 

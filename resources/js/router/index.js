@@ -104,6 +104,15 @@ const router = new VueRouter({
             title: 'Nhãn'
           },
         },
+        {
+          path: 'tien-do/:name/:id',
+          name: 'chart',
+          component: require('../views/Chart.vue').default,
+          meta: {
+            auth: true,
+            title: 'Biểu đồ'
+          },
+        },
       ]
     },
     {

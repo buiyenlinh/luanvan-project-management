@@ -9,6 +9,7 @@ use App\Http\Resources\UserLoginResource;
 
 use App\Model\User;
 use App\Model\Role;
+use App\Model\PasswordReset;
 
 class AppController extends Controller
 {
@@ -89,6 +90,59 @@ class AppController extends Controller
 
         $user->update(['token' => '']);
         return $this->success("Đăng xuất thành công");
+    }
+
+    /**
+     * Quên mật khẩu
+     */
+    public function forgetPassword(Request $request) {
+        $random_code = Str::random(6);
+        $user = User::where('email', $request->email)->latest('id')->first();
+        if (!$user) return $this->error('Email không tồn tại trong hệ thống');
+
+        $name = $user->fullname;
+        if (!$name) $name = $user->username;
+        $content_mail = '<div>Chào ' . $name . '</div><div>Bạn đã yêu cầu thay đổi mật khẩu. Vui lòng nhập mã xác thực bên dưới</div><div style="margin: 10px 0px 30px 0px"><b style="font-size: 25px; border: 1px solid #333; padding: 6px 10px">' . $random_code . '</b></div>';
+
+        PasswordReset::create([
+            'email' => $request->email,
+            'code' => $random_code,
+        ]);
+
+        $this->_sendEmail($request->email, 'Xác thực quên mật khẩu', $content_mail);
+        return $this->success('Đã gửi mã xác thực đến email của bạn', []);
+    }
+
+    /**
+     * Thực hiện thay đổi pass
+     */
+    public function changePassword(Request $request) {
+        $pass_reset = PasswordReset::where('email', $request->email)
+            ->where('code', $request->code)->latest('id')->first();
+
+        if (!$pass_reset)
+            return $this->error('Mã xác thực không đúng');
+        
+        $time_now = strtotime(date("H:i:s, d-m-Y"));
+        $created_at = strtotime($pass_reset->created_at->format('H:i:s, d-m-Y'));
+
+        $limit = 5 * 60;
+        if ($time_now - $created_at > $limit) {
+            $pass_reset->delete();
+            return $this->error('Mã xác thực đã hết hạn');
+        }
+
+        $user = User::where('username', $request->username)->latest('id')->first();
+        if (!$user)
+            return $this->error('Tài khoản không tồn tại');
+        
+        $user->update([
+            'password' => bcrypt($request->password)
+        ]);
+
+        $pass_reset->delete();
+
+        return $this->success('Thay đổi mật khẩu thành công', []);
     }
 
 }

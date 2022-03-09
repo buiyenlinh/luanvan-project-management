@@ -690,11 +690,14 @@ $side-bar-width-small: 65px;
         //Icon clock
         .clock-icon {
             .dropdown-menu {
-                width: 200px;
+                width: 250px;
             }
             .dropdown-menu.show {
                 left: -160px !important;
                 top: 14px !important;
+                a span {
+                    font-size: 12px;
+                }
             }
             .number-job {
                 position: absolute;
@@ -765,6 +768,23 @@ $side-bar-width-small: 65px;
             .header {
                 width: 100%;
             }
+        }
+    }
+}
+
+@media screen and (max-width: 450px) {
+    #main .header .clock-icon {
+        .dropdown-menu.show {
+            left: 0px !important;
+            top: 14px !important;
+        }
+    }
+}
+
+@media screen and (max-width: 250px) {
+    #main .header .clock-icon {
+        .dropdown-menu {
+            width: 200px;
         }
     }
 }

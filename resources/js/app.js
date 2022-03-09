@@ -404,7 +404,7 @@ new Vue({
 			date = new Date(date).getTime();
 			let end_time_param = new Date(_param.end_time).getTime();
 
-			let check = (date - end_time_param) / 86400000;
+			let check = ((date - end_time_param) / 86400000) + 1;// do hoàn thành trước end_time
 			if (check == 0) {
 				return 'Hôm nay';
 			} else if (check > 0) {
@@ -416,6 +416,46 @@ new Vue({
 				return 'Chưa tới hạn'	
 			}
 		},
+		daysToMilliseconds(days) {
+      return days * 24 * 60 * 60 * 1000;
+    },
+    drawChart(_arr, _id_html) {
+
+			for (let i in _arr) {
+				_arr[i][3] = new Date(_arr[i][3]);
+				_arr[i][4] = new Date(_arr[i][4]);
+			}
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'ID');
+      data.addColumn('string', 'Name');
+      data.addColumn('string', 'Resource');
+      data.addColumn('date', 'Start Date');
+      data.addColumn('date', 'End Date');
+      data.addColumn('number', 'Duration');
+      data.addColumn('number', 'Percent Complete');
+      data.addColumn('string', 'Dependencies');
+      data.addRows(_arr);
+
+      var options = {
+        height: 500,
+        gantt: {
+          trackHeight: 40,
+					criticalPathStyle: {
+						stroke: '#e64a19',
+						strokeWidth: 3
+					}
+        }
+      };
+
+      var chart = new google.visualization.Gantt(document.getElementById(_id_html));
+      chart.draw(data, options);
+    },
+    ganttChart(_id_html, _arr) {
+      google.charts.load('current', {'packages':['gantt']});
+      google.charts.setOnLoadCallback(() => { this.drawChart(_arr, _id_html) });
+			
+    }
   },
   created() {
     this.page_title = document.title;
