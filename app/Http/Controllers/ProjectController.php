@@ -311,6 +311,19 @@ class ProjectController extends Controller
             }
         }
 
+        // Tính thời gian delay
+        $time_now = strtotime(date("Y-m-d"));
+        
+        $delay_time = ($project->end_time - $time_now - 24 * 60 * 60);
+        if ($delay_time < 0)
+            $delay_time = -$delay_time / (24 * 3600);
+        else 
+            $delay_time = 0;
+
+        $project->update([
+            'delay_time' => $delay_time
+        ]);
+
         ProjectStatus::create([
             'status' => 9, // Đã hoàn thành
             'content' => '',

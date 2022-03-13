@@ -988,3 +988,26 @@ textarea { font-size: 14px; }
         }
     }
 }
+
+
+#dashboard {
+    .number {
+        .item {
+            border: 1px solid #117a8b;
+            background-color: #fff;
+            min-height: 164px;
+            .top {
+                border-bottom: 1px solid #ddd;
+                padding: 10px;
+            }
+            .bottom {
+                padding: 10px;
+
+                h3 {
+                    width: 20%;
+                    font-size: 40px;
+                }
+            }
+        }
+    }
+}

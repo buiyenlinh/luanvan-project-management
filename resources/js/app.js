@@ -386,16 +386,16 @@ new Vue({
 			return (this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3);
 		},
 		getStatusTaskName($num_status) {
-			if ($num_status == 0) return 'Đã giao';
-			if ($num_status == 1) return 'Đã tiếp nhận';
-			if ($num_status == 2) return 'Chờ duyệt hoàn thành';
-			if ($num_status == 3) return 'Đã duyệt';
-			if ($num_status == 4) return 'Từ chối duyệt';
-			if ($num_status == 5) return 'Từ chối nhận';
-			if ($num_status == 6) return 'Không duyệt từ chối nhận';
-			if ($num_status == 7) return 'Đổi thành viên';
-			if ($num_status == 8) return 'Đổi phòng ban';
-			if ($num_status == 9) return 'Đã hoàn thành';
+			if ($num_status == 0) return 'Đã giao'; // Project, task, job
+			if ($num_status == 1) return 'Đã tiếp nhận'; // Project, task, job
+			if ($num_status == 2) return 'Chờ duyệt hoàn thành'; // task, job
+			if ($num_status == 3) return 'Đã duyệt'; // task, job
+			if ($num_status == 4) return 'Từ chối duyệt'; // task, job
+			if ($num_status == 5) return 'Từ chối nhận'; // job
+			if ($num_status == 6) return 'Không duyệt từ chối nhận'; // job
+			if ($num_status == 7) return 'Đổi thành viên';  // job
+			if ($num_status == 8) return 'Đổi phòng ban'; // task
+			if ($num_status == 9) return 'Đã hoàn thành'; // Project
 		},
 		checkDeadline(_param) {
 			let today = new Date();
@@ -406,7 +406,7 @@ new Vue({
 
 			let check = ((date - end_time_param) / 86400000) + 1;// do hoàn thành trước end_time
 			if (check == 0) {
-				return 'Hôm nay';
+				return 'Tới hạn hôm nay';
 			} else if (check > 0) {
 				if (check < 0.5) check = 1;
 				else check = Math.round(check);
@@ -438,7 +438,7 @@ new Vue({
       data.addRows(_arr);
 
       var options = {
-        height: 500,
+        height: 1500,
         gantt: {
           trackHeight: 40,
 					criticalPathStyle: {
@@ -455,7 +455,25 @@ new Vue({
       google.charts.load('current', {'packages':['gantt']});
       google.charts.setOnLoadCallback(() => { this.drawChart(_arr, _id_html) });
 			
-    }
+    },
+		drawPieChart(_arr, _title, _id_html) {
+			var data = google.visualization.arrayToDataTable(_arr);
+
+			var options = {
+				title: _title,
+				pieHole: 0.3,
+				chartArea:{width:'95%',height:'70%'},
+				titleTextStyle: { fontSize: 16},
+				legend: {position: 'bottom'}
+			};
+
+			var chart = new google.visualization.PieChart(document.getElementById(_id_html));
+			chart.draw(data, options);
+		},
+		pieChart(_arr, _title, _id_html) {
+			google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(() => { this.drawPieChart(_arr, _title, _id_html) });
+		},
   },
   created() {
     this.page_title = document.title;

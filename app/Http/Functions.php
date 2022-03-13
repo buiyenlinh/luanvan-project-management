@@ -127,11 +127,11 @@ trait Functions {
    * Gửi email
    */
   public function _sendEmail($to, $subject, $content) {
-    Mail::send([], [], function($message) use ($to, $subject, $content) {
-        $message->to($to)
-            ->subject($subject)
-            ->setBody($content, 'text/html');
-    });
+    // Mail::send([], [], function($message) use ($to, $subject, $content) {
+    //     $message->to($to)
+    //         ->subject($subject)
+    //         ->setBody($content, 'text/html');
+    // });
   }
   
 }

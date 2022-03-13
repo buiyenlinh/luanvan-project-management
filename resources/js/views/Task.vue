@@ -548,7 +548,7 @@ export default {
                           <b>{{ item.job_statistic.finish }}/ {{ item.job_statistic.total }}</b> Hoàn thành 
                           <b>{{ item.job_statistic.overdue }}</b> quá hạn
                         </div>
-                        <div class="progress" style="height: 0.5em">
+                        <div v-if="item && item.job_statistic.total != 0" class="progress" style="height: 0.5em">
                           <div :class="['progress-bar', item.job_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
                             :style="'width:' + item.job_statistic.finish_percent + '%'"></div>
                         </div>

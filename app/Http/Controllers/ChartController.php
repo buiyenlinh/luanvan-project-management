@@ -156,7 +156,7 @@ class ChartController extends Controller
                 // Job tiên quyết
                 $pre_job = PreJob::where('job_id', $_job->id);
                 if ($pre_job->count() > 0) {
-                    foreach ($pre_job as $_pre_job) {
+                    foreach ($pre_job->get() as $_pre_job) {
                         $item = array(''.$_job->id.'', $_job->name, $user, $start_time, $end_time, null, $finish_percent, ''.$_pre_job->pre_job_id.'');
 
                         $data[] = $item;

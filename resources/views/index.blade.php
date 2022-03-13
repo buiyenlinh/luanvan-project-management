@@ -13,6 +13,7 @@
     <body>
         <div id="app"></div>
         <script src="/js/jquery.min.js"></script>
+        <script src="/js/chart.min.js"></script>
         <script src="/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script src="{{ mix('js/app.js') }}"></script>

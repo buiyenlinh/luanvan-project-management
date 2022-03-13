@@ -1088,3 +1088,23 @@ textarea {
   padding: 10px;
 }
 
+#dashboard .number .item {
+  border: 1px solid #117a8b;
+  background-color: #fff;
+  min-height: 164px;
+}
+
+#dashboard .number .item .top {
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+}
+
+#dashboard .number .item .bottom {
+  padding: 10px;
+}
+
+#dashboard .number .item .bottom h3 {
+  width: 20%;
+  font-size: 40px;
+}
+

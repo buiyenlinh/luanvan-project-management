@@ -597,7 +597,7 @@ export default {
                           </span>
 
                           <span v-else-if="item.status.status == 3">
-                            <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
+                            <b v-if="item.delay_time == 0" class="badge badge-success">Hoàn thành đúng hạn</b>
                             <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
                           </span>
                           

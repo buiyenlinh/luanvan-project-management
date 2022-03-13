@@ -402,11 +402,11 @@ class TaskController extends Controller
         if (!$content) $content = '';
 
         // Tính thời gian delay
-        $time_now = date("Y-m-d");
-        $time_now = strtotime($time_now);
-        $delay_time = ($time_now - $task->end_time);
-        if ($delay_time > 0)
-            $delay_time = $delay_time / (24 * 3600);
+        $time_now = strtotime(date("Y-m-d"));
+        
+        $delay_time = ($task->end_time - $time_now - 24 * 60 * 60);
+        if ($delay_time < 0)
+            $delay_time = -$delay_time / (24 * 3600);
         else 
             $delay_time = 0;
         

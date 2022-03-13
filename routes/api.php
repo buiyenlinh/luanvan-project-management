@@ -104,6 +104,12 @@ Route::middleware('is-token')->group(function() {
     Route::post('get-chart-task/{task_id}', 'ChartController@getDataTaskForGantt');
   });
 
+  /** Thống kê */
+  Route::prefix('dashboard')->group(function() {
+    Route::get('get-number', 'DashboardController@getNumber');
+    Route::get('get-percent-job', 'DashboardController@getPercentJob');
+  });
+
   Route::prefix('/role')->group(function() {
     Route::get('list', 'UserController@getRoleList');
   });

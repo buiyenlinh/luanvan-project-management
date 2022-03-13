@@ -382,17 +382,26 @@ export default {
                       <b>{{ item.task_statistic.finish }}/ {{ item.task_statistic.total }}</b> Hoàn thành 
                       <b>{{ item.task_statistic.overdue }}</b> quá hạn
                     </div>
-                    <div class="progress" style="height: 0.5em">
+                    <div class="progress" style="height: 0.5em" v-if="item && item.task_statistic.total != 0">
                       <div :class="['progress-bar', item.task_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
                         :style="'width:' + item.task_statistic.finish_percent + '%'"></div>
                     </div>
                   </td>
                   <td>
                     <span v-if="item.active == 0" class="badge badge-danger">Khóa</span>
-                    <span v-else class="badge badge-success">{{ $root.getStatusTaskName(item.status.status) }}</span>
-                    <span :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
-                      {{ $root.checkDeadline(item) }}
-                    </span>
+                    <template v-else>
+                      <span v-if="item.status.status == 9">
+                        <b v-if="item.delay_time == 0" class="badge badge-success">Hoàn thành đúng hạn</b>
+                        <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                      </span>
+                      
+                      <template v-else>
+                        <span class="badge badge-success">{{ $root.getStatusTaskName(item.status.status) }}</span>
+                        <span :class="['badge', $root.checkDeadline(item) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
+                          {{ $root.checkDeadline(item) }}
+                        </span>
+                      </template>
+                    </template>
                   </td>
                   <td style="font-size: 13px">{{ item.start_time }}</td>
                   <td style="font-size: 13px"> Trước{{ item.end_time }}</td>
@@ -406,7 +415,7 @@ export default {
                     <router-link :to="{name: 'task', params: { 'id': item.id }}" v-if="item.status.status != 0">
                       <button class="mb-1 btn btn-sm btn-dark">Công việc</button>
                     </router-link>
-                    <template v-if="$root.auth.id == item.manager.id || $root.auth.id == item.created_by.id">
+                    <template v-if="($root.auth.id == item.manager.id || $root.auth.id == item.created_by.id) && item.status.status != 9">
                       <button class="mb-1 btn btn-info btn-sm"
                         @click="getProjectUpdate(item)"
                         data-toggle="modal"

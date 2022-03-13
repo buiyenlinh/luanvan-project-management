@@ -95,19 +95,34 @@ export default {
                 <template v-if="$root.auth.role.level == 4">
                   <tr v-for="(item, index) in list" :key="index">
                     <td>{{ index + 1}} </td>
-                    <td>{{ item.job.name }}</td>
+                    <td>{{ item.job ? item.job.name : item.task.name }}</td>
                     <td>
-                      <span class="badge badge-info" v-if="item.job.status.status == 0 || item.job.status.status == 1">{{ $root.getStatusTaskName(item.job.status.status) }}</span>
-                      <span class="badge badge-danger" v-else>{{ $root.getStatusTaskName(item.job.status.status) }}</span>
-                      <span :class="['badge', $root.checkDeadline(item.job) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
-                        {{ $root.checkDeadline(item.job) }}
-                      </span>
+                      <template v-if="item && item.job">
+                        <span class="badge badge-info" v-if="item.job.status.status == 0 || item.job.status.status == 1">{{ $root.getStatusTaskName(item.job.status.status) }}</span>
+                        <span class="badge badge-danger" v-else>{{ $root.getStatusTaskName(item.job.status.status) }}</span>
+                        <span :class="['badge', $root.checkDeadline(item.job) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
+                          {{ $root.checkDeadline(item.job) }}
+                        </span>
+                      </template>
+
+                      <template v-else>
+                        <span class="badge badge-info" v-if="item.task.status.status == 0 || item.task.status.status == 1">{{ $root.getStatusTaskName(item.task.status.status) }}</span>
+                        <span class="badge badge-danger" v-else>{{ $root.getStatusTaskName(item.task.status.status) }}</span>
+                        <span :class="['badge', $root.checkDeadline(item.task) == 'Chưa tới hạn' ? 'badge-info' : 'badge-danger']">
+                          {{ $root.checkDeadline(item.task) }}
+                        </span>
+                      </template>
                     </td>
-                    <td>{{ item.job.start_time }}</td>
-                    <td>{{ item.job.created_at }}</td>
+                    <td>{{ item.job ? item.job.start_time : item.task.start_time }}</td>
+                    <td>{{ item.job ? item.job.created_at : item.task.created_at }}</td>
                     <td>
-                      <router-link :to="{name: 'job', params: { 'project_id': item.project.id, 'id': item.task.id }}">
-                        <button v-if="item.job && item.job.status.status != 0" class="mb-1 btn btn-dark btn-sm">Xem</button>
+
+                      <router-link v-if="item && item.job" :to="{name: 'job', params: { 'project_id': item.project.id, 'id': item.task.id }}">
+                        <button v-if="item.job && item.job.status.status != 3" class="mb-1 btn btn-dark btn-sm">Xem</button>
+                      </router-link>
+
+                      <router-link v-else :to="{name: 'task', params: { 'id': item.project.id }}">
+                        <button v-if="item.task && item.task.status.status != 3" class="mb-1 btn btn-dark btn-sm">Xem</button>
                       </router-link>
                     </td>
                   </tr>

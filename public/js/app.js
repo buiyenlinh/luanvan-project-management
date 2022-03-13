@@ -2360,7 +2360,91 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ({});
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      data: null,
+      arr_pie_job_chart: [],
+      arr_pie_task_chart: [],
+      arr_line_chart: [],
+      loading_chart: false
+    };
+  },
+  methods: {
+    getNumber: function getNumber() {
+      var _this = this;
+
+      this.$root.api.get('dashboard/get-number').then(function (res) {
+        if (res.data.status == "OK") {
+          _this.data = res.data.data;
+        } else {
+          _this.$root.notify(res.data.error, 'error');
+        }
+      })["catch"](function (err) {
+        _this.$root.notify(err, 'error');
+      });
+    },
+    getDataForChart: function getDataForChart() {
+      var _this2 = this;
+
+      this.loading_chart = true;
+      this.$root.api('dashboard/get-percent-job').then(function (res) {
+        _this2.loading_chart = false;
+
+        if (res.data.status == "OK") {
+          _this2.arr_pie_job_chart = res.data.data.data_pie_job_chart;
+          _this2.arr_pie_task_chart = res.data.data.data_pie_task_chart;
+          _this2.arr_line_chart = res.data.data.data_line_chart;
+          var arr_color = ['#fc2020', '#1e6d53', '#068f25', '#da4452', '#06618f'];
+
+          _this2.pieChart(_this2.arr_pie_job_chart, arr_color, 'pie_chart_job_div');
+
+          _this2.pieChart(_this2.arr_pie_task_chart, arr_color, 'pie_chart_task_div');
+
+          _this2.lineChartTaskJob();
+        } else {
+          console.log(res.data.data);
+        }
+      })["catch"](function (err) {
+        console.log(err);
+        _this2.loading_chart = false;
+      });
+    },
+    lineChartTaskJob: function lineChartTaskJob() {
+      var labels = this.arr_line_chart.labels;
+      var data = {
+        labels: labels,
+        datasets: this.arr_line_chart.data_label
+      };
+      var config = {
+        type: 'line',
+        data: data,
+        options: {}
+      };
+      var line_chart_div = new Chart(document.getElementById('line_chart_div'), config);
+    },
+    pieChart: function pieChart(_arr, _arr_color, _id_html) {
+      var data = {
+        labels: _arr.labels,
+        datasets: [{
+          label: 'My First Dataset',
+          data: _arr.data,
+          backgroundColor: _arr_color,
+          hoverOffset: 4
+        }]
+      };
+      var config = {
+        type: 'doughnut',
+        data: data
+      };
+      var pie_chart_div = new Chart(document.getElementById(_id_html), config);
+    }
+  },
+  mounted: function mounted() {
+    this.getNumber();
+    this.getDataForChart();
+  }
+});
 
 /***/ }),
 
@@ -24261,14 +24345,209 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _c(
+    "div",
+    { attrs: { id: "dashboard" } },
+    [
+      _vm.data
+        ? _c("div", { staticClass: "number mb-3" }, [
+            _c("div", { staticClass: "row" }, [
+              _c("div", { staticClass: "col-md-3 col-sm-4 col-xs-12 mb-2" }, [
+                _c("div", { staticClass: "item" }, [
+                  _vm._m(0),
+                  _vm._v(" "),
+                  _vm.data && _vm.data.project
+                    ? _c(
+                        "div",
+                        { staticClass: "bottom d-flex justify-content-start" },
+                        [
+                          _c("h3", [_vm._v(_vm._s(_vm.data.project.total))]),
+                          _vm._v(" "),
+                          _c("ul", [
+                            _c("li", { staticClass: "text-success" }, [
+                              _vm._v(
+                                _vm._s(_vm.data.project.finished) +
+                                  " Đã hoàn thành"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "text-info" }, [
+                              _vm._v(
+                                _vm._s(_vm.data.project.future) + " Tương lai"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", [
+                              _vm._v(
+                                _vm._s(_vm.data.project.working) +
+                                  " Đang thực hiện"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "text-danger" }, [
+                              _vm._v(_vm._s(_vm.data.project.late) + " Trễ"),
+                            ]),
+                          ]),
+                        ]
+                      )
+                    : _vm._e(),
+                ]),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-md-3 col-sm-4 col-xs-12 mb-2" }, [
+                _c("div", { staticClass: "item" }, [
+                  _vm._m(1),
+                  _vm._v(" "),
+                  _vm.data && _vm.data.department
+                    ? _c(
+                        "div",
+                        { staticClass: "bottom d-flex justify-content-start" },
+                        [
+                          _c("h3", [_vm._v(_vm._s(_vm.data.department.total))]),
+                          _vm._v(" "),
+                          _c("ul", [
+                            _c("li", [
+                              _vm._v(
+                                _vm._s(_vm.data.department.user_total) +
+                                  " Thành viên"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "text-success" }, [
+                              _vm._v(
+                                _vm._s(_vm.data.department.user_active) +
+                                  " Đang hoạt động"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "text-danger" }, [
+                              _vm._v(
+                                _vm._s(_vm.data.department.user_lock) +
+                                  " Bị khóa"
+                              ),
+                            ]),
+                          ]),
+                        ]
+                      )
+                    : _vm._e(),
+                ]),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "col-md-3 col-sm-4 col-xs-12 mb-2" }, [
+                _c("div", { staticClass: "item" }, [
+                  _vm._m(2),
+                  _vm._v(" "),
+                  _vm.data && _vm.data.user
+                    ? _c(
+                        "div",
+                        { staticClass: "bottom d-flex justify-content-start" },
+                        [
+                          _c("h3", [_vm._v(_vm._s(_vm.data.user.total))]),
+                          _vm._v(" "),
+                          _c("ul", [
+                            _c("li", { staticClass: "text-success" }, [
+                              _vm._v(
+                                _vm._s(_vm.data.user.active) + " Đang hoạt động"
+                              ),
+                            ]),
+                            _vm._v(" "),
+                            _c("li", { staticClass: "text-danger" }, [
+                              _vm._v(_vm._s(_vm.data.user.lock) + " Bị khóa"),
+                            ]),
+                          ]),
+                        ]
+                      )
+                    : _vm._e(),
+                ]),
+              ]),
+            ]),
+          ])
+        : _c("m-spinner"),
+      _vm._v(" "),
+      _c("div", { staticClass: "dashboard-01" }, [
+        _c("div", { staticClass: "row" }, [
+          _c(
+            "div",
+            { staticClass: "col-md-3 col-sm-6 col-12 mb-4" },
+            [
+              _vm.loading_chart
+                ? _c("m-spinner")
+                : _c("b", [_vm._v("Tỷ lệ công việc tháng hiện tại")]),
+              _vm._v(" "),
+              _c("canvas", { attrs: { id: "pie_chart_task_div" } }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "col-md-3 col-sm-6 col-12 mb-4" },
+            [
+              _vm.loading_chart
+                ? _c("m-spinner")
+                : _c("b", [_vm._v("Tỷ lệ nhiệm vụ tháng hiện tại")]),
+              _vm._v(" "),
+              _c("canvas", { attrs: { id: "pie_chart_job_div" } }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "col-md-6 col-sm-12 col-12 mb-2" },
+            [
+              _vm.loading_chart
+                ? _c("m-spinner")
+                : _c("b", [
+                    _vm._v("Số lượng công việc, nhiệm vụ tháng hiện tại"),
+                  ]),
+              _vm._v(" "),
+              _c("canvas", { attrs: { id: "line_chart_div" } }),
+            ],
+            1
+          ),
+        ]),
+      ]),
+      _vm._v(" "),
+      _vm._m(3),
+    ],
+    1
+  )
 }
 var staticRenderFns = [
   function () {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", [_c("h3", [_vm._v("Dashboard page")])])
+    return _c("div", { staticClass: "top" }, [_c("b", [_vm._v("DỰ ÁN")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "top" }, [_c("b", [_vm._v("PHÒNG BAN")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "top" }, [_c("b", [_vm._v("NGƯỜI DÙNG")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "dashboard-02" }, [
+      _c("div", { staticClass: "row" }, [
+        _c("div", { staticClass: "col-md-3 col-sm-4 col-12" }, [
+          _c("b", [_vm._v("Phòng ban có công việc trễ nhiều nhất")]),
+        ]),
+        _vm._v(" "),
+        _c("div", { staticClass: "col-md-3 col-sm-4 col-12" }, [
+          _c("b", [_vm._v("Thành viên có nhiệm vụ trễ nhiều nhất")]),
+        ]),
+      ]),
+    ])
   },
 ]
 render._withStripped = true
@@ -24413,94 +24692,219 @@ var render = function () {
                               return _c("tr", { key: index }, [
                                 _c("td", [_vm._v(_vm._s(index + 1) + " ")]),
                                 _vm._v(" "),
-                                _c("td", [_vm._v(_vm._s(item.job.name))]),
-                                _vm._v(" "),
                                 _c("td", [
-                                  item.job.status.status == 0 ||
-                                  item.job.status.status == 1
-                                    ? _c(
-                                        "span",
-                                        { staticClass: "badge badge-info" },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.$root.getStatusTaskName(
-                                                item.job.status.status
-                                              )
-                                            )
-                                          ),
-                                        ]
-                                      )
-                                    : _c(
-                                        "span",
-                                        { staticClass: "badge badge-danger" },
-                                        [
-                                          _vm._v(
-                                            _vm._s(
-                                              _vm.$root.getStatusTaskName(
-                                                item.job.status.status
-                                              )
-                                            )
-                                          ),
-                                        ]
-                                      ),
-                                  _vm._v(" "),
-                                  _c(
-                                    "span",
-                                    {
-                                      class: [
-                                        "badge",
-                                        _vm.$root.checkDeadline(item.job) ==
-                                        "Chưa tới hạn"
-                                          ? "badge-info"
-                                          : "badge-danger",
-                                      ],
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                      " +
-                                          _vm._s(
-                                            _vm.$root.checkDeadline(item.job)
-                                          ) +
-                                          "\n                    "
-                                      ),
-                                    ]
+                                  _vm._v(
+                                    _vm._s(
+                                      item.job ? item.job.name : item.task.name
+                                    )
                                   ),
                                 ]),
-                                _vm._v(" "),
-                                _c("td", [_vm._v(_vm._s(item.job.start_time))]),
-                                _vm._v(" "),
-                                _c("td", [_vm._v(_vm._s(item.job.created_at))]),
                                 _vm._v(" "),
                                 _c(
                                   "td",
                                   [
-                                    _c(
-                                      "router-link",
-                                      {
-                                        attrs: {
-                                          to: {
-                                            name: "job",
-                                            params: {
-                                              project_id: item.project.id,
-                                              id: item.task.id,
+                                    item && item.job
+                                      ? [
+                                          item.job.status.status == 0 ||
+                                          item.job.status.status == 1
+                                            ? _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-info",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.$root.getStatusTaskName(
+                                                        item.job.status.status
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              )
+                                            : _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-danger",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.$root.getStatusTaskName(
+                                                        item.job.status.status
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "span",
+                                            {
+                                              class: [
+                                                "badge",
+                                                _vm.$root.checkDeadline(
+                                                  item.job
+                                                ) == "Chưa tới hạn"
+                                                  ? "badge-info"
+                                                  : "badge-danger",
+                                              ],
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                        " +
+                                                  _vm._s(
+                                                    _vm.$root.checkDeadline(
+                                                      item.job
+                                                    )
+                                                  ) +
+                                                  "\n                      "
+                                              ),
+                                            ]
+                                          ),
+                                        ]
+                                      : [
+                                          item.task.status.status == 0 ||
+                                          item.task.status.status == 1
+                                            ? _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-info",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.$root.getStatusTaskName(
+                                                        item.task.status.status
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              )
+                                            : _c(
+                                                "span",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-danger",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    _vm._s(
+                                                      _vm.$root.getStatusTaskName(
+                                                        item.task.status.status
+                                                      )
+                                                    )
+                                                  ),
+                                                ]
+                                              ),
+                                          _vm._v(" "),
+                                          _c(
+                                            "span",
+                                            {
+                                              class: [
+                                                "badge",
+                                                _vm.$root.checkDeadline(
+                                                  item.task
+                                                ) == "Chưa tới hạn"
+                                                  ? "badge-info"
+                                                  : "badge-danger",
+                                              ],
+                                            },
+                                            [
+                                              _vm._v(
+                                                "\n                        " +
+                                                  _vm._s(
+                                                    _vm.$root.checkDeadline(
+                                                      item.task
+                                                    )
+                                                  ) +
+                                                  "\n                      "
+                                              ),
+                                            ]
+                                          ),
+                                        ],
+                                  ],
+                                  2
+                                ),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(
+                                      item.job
+                                        ? item.job.start_time
+                                        : item.task.start_time
+                                    )
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(
+                                      item.job
+                                        ? item.job.created_at
+                                        : item.task.created_at
+                                    )
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c(
+                                  "td",
+                                  [
+                                    item && item.job
+                                      ? _c(
+                                          "router-link",
+                                          {
+                                            attrs: {
+                                              to: {
+                                                name: "job",
+                                                params: {
+                                                  project_id: item.project.id,
+                                                  id: item.task.id,
+                                                },
+                                              },
                                             },
                                           },
-                                        },
-                                      },
-                                      [
-                                        item.job && item.job.status.status != 0
-                                          ? _c(
-                                              "button",
-                                              {
-                                                staticClass:
-                                                  "mb-1 btn btn-dark btn-sm",
+                                          [
+                                            item.job &&
+                                            item.job.status.status != 3
+                                              ? _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "mb-1 btn btn-dark btn-sm",
+                                                  },
+                                                  [_vm._v("Xem")]
+                                                )
+                                              : _vm._e(),
+                                          ]
+                                        )
+                                      : _c(
+                                          "router-link",
+                                          {
+                                            attrs: {
+                                              to: {
+                                                name: "task",
+                                                params: { id: item.project.id },
                                               },
-                                              [_vm._v("Xem")]
-                                            )
-                                          : _vm._e(),
-                                      ]
-                                    ),
+                                            },
+                                          },
+                                          [
+                                            item.task &&
+                                            item.task.status.status != 3
+                                              ? _c(
+                                                  "button",
+                                                  {
+                                                    staticClass:
+                                                      "mb-1 btn btn-dark btn-sm",
+                                                  },
+                                                  [_vm._v("Xem")]
+                                                )
+                                              : _vm._e(),
+                                          ]
+                                        ),
                                   ],
                                   1
                                 ),
@@ -30027,70 +30431,121 @@ var render = function () {
                                   )
                                 : _vm._e(),
                               _vm._v(" "),
-                              _c(
-                                "div",
-                                {
-                                  staticClass: "progress",
-                                  staticStyle: { height: "0.5em" },
-                                },
-                                [
-                                  _c("div", {
-                                    class: [
-                                      "progress-bar",
-                                      item.task_statistic.finish_percent >= 50
-                                        ? "bg-success"
-                                        : "bg-danger",
-                                    ],
-                                    style:
-                                      "width:" +
-                                      item.task_statistic.finish_percent +
-                                      "%",
-                                  }),
-                                ]
-                              ),
+                              item && item.task_statistic.total != 0
+                                ? _c(
+                                    "div",
+                                    {
+                                      staticClass: "progress",
+                                      staticStyle: { height: "0.5em" },
+                                    },
+                                    [
+                                      _c("div", {
+                                        class: [
+                                          "progress-bar",
+                                          item.task_statistic.finish_percent >=
+                                          50
+                                            ? "bg-success"
+                                            : "bg-danger",
+                                        ],
+                                        style:
+                                          "width:" +
+                                          item.task_statistic.finish_percent +
+                                          "%",
+                                      }),
+                                    ]
+                                  )
+                                : _vm._e(),
                             ]),
                             _vm._v(" "),
-                            _c("td", [
-                              item.active == 0
-                                ? _c(
-                                    "span",
-                                    { staticClass: "badge badge-danger" },
-                                    [_vm._v("Khóa")]
-                                  )
-                                : _c(
-                                    "span",
-                                    { staticClass: "badge badge-success" },
-                                    [
-                                      _vm._v(
-                                        _vm._s(
-                                          _vm.$root.getStatusTaskName(
-                                            item.status.status
-                                          )
-                                        )
-                                      ),
-                                    ]
-                                  ),
-                              _vm._v(" "),
-                              _c(
-                                "span",
-                                {
-                                  class: [
-                                    "badge",
-                                    _vm.$root.checkDeadline(item) ==
-                                    "Chưa tới hạn"
-                                      ? "badge-info"
-                                      : "badge-danger",
-                                  ],
-                                },
-                                [
-                                  _vm._v(
-                                    "\n                    " +
-                                      _vm._s(_vm.$root.checkDeadline(item)) +
-                                      "\n                  "
-                                  ),
-                                ]
-                              ),
-                            ]),
+                            _c(
+                              "td",
+                              [
+                                item.active == 0
+                                  ? _c(
+                                      "span",
+                                      { staticClass: "badge badge-danger" },
+                                      [_vm._v("Khóa")]
+                                    )
+                                  : [
+                                      item.status.status == 9
+                                        ? _c("span", [
+                                            item.delay_time == 0
+                                              ? _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-success",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành đúng hạn"
+                                                    ),
+                                                  ]
+                                                )
+                                              : _c(
+                                                  "b",
+                                                  {
+                                                    staticClass:
+                                                      "badge badge-danger",
+                                                  },
+                                                  [
+                                                    _vm._v(
+                                                      "Hoàn thành trễ " +
+                                                        _vm._s(
+                                                          item.delay_time
+                                                        ) +
+                                                        " ngày"
+                                                    ),
+                                                  ]
+                                                ),
+                                          ])
+                                        : [
+                                            _c(
+                                              "span",
+                                              {
+                                                staticClass:
+                                                  "badge badge-success",
+                                              },
+                                              [
+                                                _vm._v(
+                                                  _vm._s(
+                                                    _vm.$root.getStatusTaskName(
+                                                      item.status.status
+                                                    )
+                                                  )
+                                                ),
+                                              ]
+                                            ),
+                                            _vm._v(" "),
+                                            _c(
+                                              "span",
+                                              {
+                                                class: [
+                                                  "badge",
+                                                  _vm.$root.checkDeadline(
+                                                    item
+                                                  ) == "Chưa tới hạn"
+                                                    ? "badge-info"
+                                                    : "badge-danger",
+                                                ],
+                                              },
+                                              [
+                                                _vm._v(
+                                                  "\n                        " +
+                                                    _vm._s(
+                                                      _vm.$root.checkDeadline(
+                                                        item
+                                                      )
+                                                    ) +
+                                                    "\n                      "
+                                                ),
+                                              ]
+                                            ),
+                                          ],
+                                    ],
+                              ],
+                              2
+                            ),
                             _vm._v(" "),
                             _c("td", { staticStyle: { "font-size": "13px" } }, [
                               _vm._v(_vm._s(item.start_time)),
@@ -30149,8 +30604,9 @@ var render = function () {
                                     )
                                   : _vm._e(),
                                 _vm._v(" "),
-                                _vm.$root.auth.id == item.manager.id ||
-                                _vm.$root.auth.id == item.created_by.id
+                                (_vm.$root.auth.id == item.manager.id ||
+                                  _vm.$root.auth.id == item.created_by.id) &&
+                                item.status.status != 9
                                   ? [
                                       _c(
                                         "button",
@@ -31516,31 +31972,34 @@ var render = function () {
                                                 )
                                               : _vm._e(),
                                             _vm._v(" "),
-                                            _c(
-                                              "div",
-                                              {
-                                                staticClass: "progress",
-                                                staticStyle: {
-                                                  height: "0.5em",
-                                                },
-                                              },
-                                              [
-                                                _c("div", {
-                                                  class: [
-                                                    "progress-bar",
-                                                    item.job_statistic
-                                                      .finish_percent >= 50
-                                                      ? "bg-success"
-                                                      : "bg-danger",
-                                                  ],
-                                                  style:
-                                                    "width:" +
-                                                    item.job_statistic
-                                                      .finish_percent +
-                                                    "%",
-                                                }),
-                                              ]
-                                            ),
+                                            item &&
+                                            item.job_statistic.total != 0
+                                              ? _c(
+                                                  "div",
+                                                  {
+                                                    staticClass: "progress",
+                                                    staticStyle: {
+                                                      height: "0.5em",
+                                                    },
+                                                  },
+                                                  [
+                                                    _c("div", {
+                                                      class: [
+                                                        "progress-bar",
+                                                        item.job_statistic
+                                                          .finish_percent >= 50
+                                                          ? "bg-success"
+                                                          : "bg-danger",
+                                                      ],
+                                                      style:
+                                                        "width:" +
+                                                        item.job_statistic
+                                                          .finish_percent +
+                                                        "%",
+                                                    }),
+                                                  ]
+                                                )
+                                              : _vm._e(),
                                           ]),
                                           _vm._v(" "),
                                           _c("td", [
@@ -50674,16 +51133,25 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       return this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3;
     },
     getStatusTaskName: function getStatusTaskName($num_status) {
-      if ($num_status == 0) return 'Đã giao';
-      if ($num_status == 1) return 'Đã tiếp nhận';
-      if ($num_status == 2) return 'Chờ duyệt hoàn thành';
-      if ($num_status == 3) return 'Đã duyệt';
-      if ($num_status == 4) return 'Từ chối duyệt';
-      if ($num_status == 5) return 'Từ chối nhận';
-      if ($num_status == 6) return 'Không duyệt từ chối nhận';
-      if ($num_status == 7) return 'Đổi thành viên';
-      if ($num_status == 8) return 'Đổi phòng ban';
-      if ($num_status == 9) return 'Đã hoàn thành';
+      if ($num_status == 0) return 'Đã giao'; // Project, task, job
+
+      if ($num_status == 1) return 'Đã tiếp nhận'; // Project, task, job
+
+      if ($num_status == 2) return 'Chờ duyệt hoàn thành'; // task, job
+
+      if ($num_status == 3) return 'Đã duyệt'; // task, job
+
+      if ($num_status == 4) return 'Từ chối duyệt'; // task, job
+
+      if ($num_status == 5) return 'Từ chối nhận'; // job
+
+      if ($num_status == 6) return 'Không duyệt từ chối nhận'; // job
+
+      if ($num_status == 7) return 'Đổi thành viên'; // job
+
+      if ($num_status == 8) return 'Đổi phòng ban'; // task
+
+      if ($num_status == 9) return 'Đã hoàn thành'; // Project
     },
     checkDeadline: function checkDeadline(_param) {
       var today = new Date();
@@ -50693,7 +51161,7 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       var check = (date - end_time_param) / 86400000 + 1; // do hoàn thành trước end_time
 
       if (check == 0) {
-        return 'Hôm nay';
+        return 'Tới hạn hôm nay';
       } else if (check > 0) {
         if (check < 0.5) check = 1;else check = Math.round(check);
         return 'Trễ ' + check + ' ngày';
@@ -50721,7 +51189,7 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       data.addColumn('string', 'Dependencies');
       data.addRows(_arr);
       var options = {
-        height: 500,
+        height: 1500,
         gantt: {
           trackHeight: 40,
           criticalPathStyle: {
@@ -50741,6 +51209,35 @@ new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
       });
       google.charts.setOnLoadCallback(function () {
         _this5.drawChart(_arr, _id_html);
+      });
+    },
+    drawPieChart: function drawPieChart(_arr, _title, _id_html) {
+      var data = google.visualization.arrayToDataTable(_arr);
+      var options = {
+        title: _title,
+        pieHole: 0.3,
+        chartArea: {
+          width: '95%',
+          height: '70%'
+        },
+        titleTextStyle: {
+          fontSize: 16
+        },
+        legend: {
+          position: 'bottom'
+        }
+      };
+      var chart = new google.visualization.PieChart(document.getElementById(_id_html));
+      chart.draw(data, options);
+    },
+    pieChart: function pieChart(_arr, _title, _id_html) {
+      var _this6 = this;
+
+      google.charts.load("current", {
+        packages: ["corechart"]
+      });
+      google.charts.setOnLoadCallback(function () {
+        _this6.drawPieChart(_arr, _title, _id_html);
       });
     }
   },
