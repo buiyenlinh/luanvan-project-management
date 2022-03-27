@@ -68,9 +68,8 @@ class TaskResource extends JsonResource
                     if ($department_user_job_status && $department_user_job_status->status == 3) 
                         $job_statistic['finish']++;
                     else {
-                        $time_now = date("Y-m-d");
-                        $time_now = strtotime($time_now);
-                        if($time_now - $_job->end_time > 0) {
+                        $time_now = strtotime(date("Y-m-d"));
+                        if($_job->end_time - $time_now < 24 * 3600) {
                             $job_statistic['overdue']++;
                         }
                     }

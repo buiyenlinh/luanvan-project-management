@@ -104,13 +104,17 @@ class TaskController extends Controller
     public function searchTaskName(Request $request, $project_id) {
         $project = Project::find($project_id);
         $name = $request->keyword;
+        $tasks = array();
         if (!$name) {
-            return $this->success('Danh sách công việc tìm kiếm', []);
+            if ($request->callfirst == true) 
+                $tasks = Task::where('project_id', $project->id)->get();    
+            else
+                return $this->success('Danh sách công việc tìm kiếm', []);
+        } else {
+            $tasks = Task::where('name', 'LIKE', '%' . $name . '%')->where('project_id', $project->id)->get();
         }
         
-
         $data = array();
-        $tasks = Task::where('name', 'LIKE', '%' . $name . '%')->where('project_id', $project->id)->get();
         if ($tasks->count() > 0) {
             foreach($tasks as $_task) {
                 $data[] = new TaskResource($_task);
@@ -135,7 +139,7 @@ class TaskController extends Controller
 
         $project = Project::find($project_id);
         if (!$project) {
-            return $this->error('Dự án này không tồn tại');
+            return $this->error('Dự án này không tồn tại trong dự án');
         }
         
         if ($pre_task_ids) {
@@ -150,7 +154,7 @@ class TaskController extends Controller
 
         if (!$name) return $this->error('Tên công việc là bắt buộc');
 
-        $checkNameExist = Task::where('name', $name)->first();
+        $checkNameExist = Task::where('name', $name)->where('project_id', $project_id)->first();
         if ($checkNameExist) return $this->error('Tên công việc đã tồn tại');
 
         if (!$describe) $describe = '';
@@ -222,11 +226,23 @@ class TaskController extends Controller
         $leader_department = DepartmentUser::where('leader', 1)->where('active_leader', 1)
             ->where('department_id', $department_check->id)->latest('id')->first();
         $leader_user = User::find($leader_department->user_id);
+
         if ($leader_user) {
+
+            // Thông báo
+            $this->_sendRealtime([
+                'name' => 'task',
+                'notification' => [
+                    'title' => 'Thêm công việc',
+                    'message' => 'Bạn vừa được phân công công việc ' . $name
+                ]
+            ], 'user' . $leader_user->id);
+
+            // Gửi mail
             $_name = $leader_user->fullname;
             if (!$_name) $_name = $leader_user->username;
             $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Phòng ban của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án <b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
-            $this->_sendEmail($leader_user->email, $name, $content_mail); 
+            $this->_sendEmail($leader_user->email, $name, $content_mail);
         }
 
         return $this->success('Thêm công việc thành công', []);
@@ -290,6 +306,21 @@ class TaskController extends Controller
             'file' => $file
         ]);
 
+        // Tìm trưởng phòng
+        $department_task = DepartmentTask::where('task_id', $task->id)->latest('id')->first();
+        if ($department_task) {
+            $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->where('leader', 1)
+                ->where('active_leader', 1)->latest('id')->first();
+            if ($department_user_leader && $department_user_leader->user_id) {
+                $this->_sendRealtime([
+                    'name' => 'task',
+                    'notification' => [
+                        'title' => 'Cập nhật công việc',
+                        'message' => 'Công việc ' . $task->name . ' vừa được cập nhật'
+                    ]
+                ], 'user' . $department_user_leader->user_id);
+            }
+        }
 
         return $this->success('Cập nhật công việc thành công', []);
     }
@@ -310,12 +341,30 @@ class TaskController extends Controller
         $jobs = Job::where('task_id', $id)->count();
         if ($jobs > 0) return $this->error('Công việc này đã phân công nhiệm vụ. Không thể xóa');
 
+
+        // Thông báo cho leader phòng ban thực hiện task này
+        $department_task = DepartmentTask::where('task_id', $task->id)->latest('id')->first();
+        if ($department_task) {
+            $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
+                ->where('leader', 1)
+                ->where('active_leader', 1)
+                ->latest('id')->first();
+            if ($department_user_leader && $department_user_leader->user_id) {
+                $this->_sendRealtime([
+                    'name' => 'task',
+                    'notification' => [
+                        'title' => 'Cập nhật công việc',
+                        'message' => 'Công việc ' . $task->name . ' đã bị xóa'
+                    ]
+                ], 'user' . $department_user_leader->user_id);
+            }
+        }
+
         // Kiểm tra xem task này có là tiên quyết của task nào không?
         $task_test = PreTask::where('pre_task_id', $id)->delete();
 
         // Kiểm tra có pre task thì xóa
         $task_test = PreTask::where('task_id', $id)->delete();
-
 
         $department_task = DepartmentTask::where('task_id', $id)->first();
         $department_task_status = DepartmentTaskStatus::where('department_task_id', $department_task->id)->delete();
@@ -326,7 +375,9 @@ class TaskController extends Controller
         }
 
         $pre_tasks = PreTask::where('task_id', $id)->delete();
+
         $task->delete();
+
         return $this->success('Xóa công việc thành công', []);
     }
 
@@ -344,6 +395,7 @@ class TaskController extends Controller
         $task->update([
             'file' => ''
         ]);
+
         return $this->success('Xóa tệp đính kèm thành công');
     }
 
@@ -402,11 +454,11 @@ class TaskController extends Controller
         if (!$content) $content = '';
 
         // Tính thời gian delay
-        $time_now = date("Y-m-d");
-        $time_now = strtotime($time_now);
-        $delay_time = ($time_now - $task->end_time);
-        if ($delay_time > 0)
-            $delay_time = $delay_time / (24 * 3600);
+        $time_now = strtotime(date("Y-m-d"));
+        
+        $delay_time = ($task->end_time - $time_now - 24 * 60 * 60);
+        if ($delay_time < 0)
+            $delay_time = -$delay_time / (24 * 3600);
         else 
             $delay_time = 0;
         
@@ -440,6 +492,16 @@ class TaskController extends Controller
         /** Gửi mail cho manager => duyệt task */
         $manager = User::find($project->manager);
         if ($manager) {
+
+            // Thông báo đến manager
+            $this->_sendRealtime([
+                'name' => 'task',
+                'notification' => [
+                    'title' => 'Yêu cấu kiểm duyệt công việc',
+                    'message' => 'Công việc ' . $task->name . ' vừa gửi yêu cầu kiểm duyệt'
+                ]
+            ], 'user' . $manager->id);
+
             $_name = $manager->fullname;
             if (!$_name) $_name = $manager->username;
             $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> vừa hoàn thành, vui lòng kiểm duyệt hoàn thành. Cảm ơn!</div>';
@@ -477,6 +539,17 @@ class TaskController extends Controller
 
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
+
+            // Thông báo cho trưởng phòng
+            $this->_sendRealtime([
+                'name' => 'task',
+                'notification' => [
+                    'title' => 'Phản hồi kiểm duyệt công việc',
+                    'message' => 'Công việc ' . $task->name . ' vừa đã được duyệt hoàn thành'
+                ]
+            ], 'user' . $leader->id);
+
+            // Gửi email
             $_name = $leader->fullname;
             if (!$_name) $_name = $leader->username;
             $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Chúc mừng bạn! Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> đã được duyệt. Cảm ơn!</div>';
@@ -517,6 +590,17 @@ class TaskController extends Controller
             ->where('active_leader', 1)->latest('id')->first();
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
+
+            // Thông báo cho trưởng phòng
+            $this->_sendRealtime([
+                'name' => 'task',
+                'notification' => [
+                    'title' => 'Phản hồi kiểm duyệt công việc',
+                    'message' => 'Công việc ' . $task->name . ' không được duyệt hoàn thành'
+                ]
+            ], 'user' . $leader->id);
+
+            // Gửi email
             $_name = $leader->fullname;
             if (!$_name) $_name = $leader->username;
             $content_mail = '<div>Xin chào ' . $_name . '!</div><div> Công việc <b>' . $task->name . '</b> thuộc dự án <b>' . $project->name . '</b> không được duyệt. Vui lòng kiểm tra lại và thực hiện. Cảm ơn!</div>';
@@ -524,5 +608,12 @@ class TaskController extends Controller
         }
 
         return $this->success('Từ chối duyệt công việc thành công', []);
+    }
+
+    /** Lấy danh sách tên */
+    public function getTaskName(Request $request) {
+        $list = Task::where('name', 'LIKE', '%' . $request->keyword . '%')->select('name')->distinct()->get();
+        
+        return $this->success('Danh sách tên công việc', $list);
     }
 }

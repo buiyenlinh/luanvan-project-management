@@ -50,7 +50,7 @@ class ProjectResource extends JsonResource
                 } else {
                     $time_now = date("Y-m-d");
                     $time_now = strtotime($time_now);
-                    if($time_now - $_task->end_time > 0) { // Trễ hạn
+                    if($_task->end_time - $time_now < 24 * 3600) { // Trễ hạn
                         $task_statistic['overdue']++;
                     }
                 }

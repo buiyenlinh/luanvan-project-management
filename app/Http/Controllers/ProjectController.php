@@ -23,6 +23,15 @@ class ProjectController extends Controller
     use Functions;
 
     /**
+     * Lấy danh sách tên dự án
+     */
+    public function getName(Request $request) {
+        $list = Project::where('name', 'LIKE', '%' . $request->keyword . '%')->get();
+        
+        return $this->success('Danh sách tên dự án', $list);
+    }
+
+    /**
      * Kiểm tra trường tồn tại
      */
     public function checkExist($name, $value, $id = 0) {
@@ -146,6 +155,14 @@ class ProjectController extends Controller
             ]);
 
             if ($check_manager->email) {
+                $this->_sendRealtime([
+                    'name' => 'project',
+                    'notification' => [
+                        'title' => 'Dự án mới',
+                        'message' => 'Bạn vừa được giao dự án ' . $name
+                    ]
+                ], 'user' . $check_manager->id);
+
                 $_name = $check_manager->fullname;
                 if (!$_name) $_name = $check_manager->username;
                 $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Bạn đã được phân công quản lý dự án ' . $name . ', vui lòng kiểm tra. Cảm ơn!</div>';
@@ -182,13 +199,22 @@ class ProjectController extends Controller
             $file = $request->file('file')->store('public/files');
             $file = str_replace('public/', '', $file);
         }
-        
 
-        Project::find($request->id)->update([
+        $project->update([
             'active' => $active,
             'file' => $file,
             'describe' => $describe,
         ]);
+
+        if ($project->manager) {
+            $this->_sendRealtime([
+                'name' => 'project',
+                'notification' => [
+                    'title' => 'Cập nhật dự án',
+                    'message' => 'Dự án ' . $project->name . ' vừa được cập nhật'
+                ]
+            ], 'user' . $project->manager);
+        }
 
         return $this->success('Cập nhật dự án thành công');
     }
@@ -210,7 +236,18 @@ class ProjectController extends Controller
         if ($project->file) {
             Storage::disk('public')->delete($project->file);
         }
-        Project::find($id)->delete();
+
+        if ($project->manager) {
+            $this->_sendRealtime([
+                'name' => 'project',
+                'notification' => [
+                    'title' => 'Xóa dự án',
+                    'message' => 'Dự án ' . $project->name . ' đã bị xóa'
+                ]
+            ], 'user' . $project->manager);
+        }
+        
+        $project->delete();
 
         return $this->success('Xóa dự án thành công');
     }
@@ -269,6 +306,7 @@ class ProjectController extends Controller
         $project->update([
             'file' => ''
         ]);
+
         return $this->success('Xóa tệp đính kèm thành công');
     }
 
@@ -287,7 +325,6 @@ class ProjectController extends Controller
 
         return $this->success('Tiếp nhận dự án thành công', []);
     }
-
 
     /**
      * Hoàn thành dự án
@@ -310,6 +347,19 @@ class ProjectController extends Controller
                 }
             }
         }
+
+        // Tính thời gian delay
+        $time_now = strtotime(date("Y-m-d"));
+        
+        $delay_time = ($project->end_time - $time_now - 24 * 60 * 60);
+        if ($delay_time < 0)
+            $delay_time = -$delay_time / (24 * 3600);
+        else 
+            $delay_time = 0;
+
+        $project->update([
+            'delay_time' => $delay_time
+        ]);
 
         ProjectStatus::create([
             'status' => 9, // Đã hoàn thành

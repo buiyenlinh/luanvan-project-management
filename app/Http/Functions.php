@@ -3,7 +3,9 @@
 namespace App\Http;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use App\Model\User;
 use App\Http\Resources\RoleResource;
 use App\Http\Resources\UserResource;
@@ -45,8 +47,12 @@ trait Functions {
   public function _createAuth($user) {
     $avatar = $user->avatar;
     if (!empty($avatar) && !preg_match('/^https?:/', $avatar)) {
-        $avatar = Storage::url($avatar);
+      $avatar = Storage::url($avatar);
     }
+
+    $department_user = DepartmentUser::where('user_id', $user->id)->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
+    $leader = false;
+    if ($department_user) $leader = true;
 
     return [
       'id' => $user->id,
@@ -60,6 +66,7 @@ trait Functions {
       'avatar' => $avatar,
       'role' => new RoleResource($user->role()->first()),
       'token' => $user->token,
+      'leader' => $leader,
       'created_at' => $user->created_at,
       'updated_at' => $user->updated_at
     ];
@@ -107,19 +114,8 @@ trait Functions {
   /**
    * tạo alias
    */
-  public function to_slug($str) { 
-    $str = trim(mb_strtolower($str));
-    $str = preg_replace('/(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)/', 'a', $str);
-    $str = preg_replace('/(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)/', 'e', $str);
-    $str = preg_replace('/(ì|í|ị|ỉ|ĩ)/', 'i', $str);
-    $str = preg_replace('/(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)/', 'o', $str);
-    $str = preg_replace('/(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)/', 'u', $str);
-    $str = preg_replace('/(ỳ|ý|ỵ|ỷ|ỹ)/', 'y', $str);
-    $str = preg_replace('/(đ)/', 'd', $str);
-    $str = preg_replace('/-/', '', $str);
-    $str = preg_replace('/[^a-z0-9-\s]/', '', $str);
-    $str = preg_replace('/([\s]+)/', '-', $str);
-    return $str;
+  public function to_slug($str) {
+    return Str::slug($str);
   }
 
 
@@ -127,11 +123,35 @@ trait Functions {
    * Gửi email
    */
   public function _sendEmail($to, $subject, $content) {
-    Mail::send([], [], function($message) use ($to, $subject, $content) {
-        $message->to($to)
-            ->subject($subject)
-            ->setBody($content, 'text/html');
-    });
+    // Mail::send([], [], function($message) use ($to, $subject, $content) {
+    //     $message->to($to)
+    //         ->subject($subject)
+    //         ->setBody($content, 'text/html');
+    // });
+  }
+
+  /**
+   * Tạo event
+   * 
+   * @param array $data
+   * @param string|array $rooms
+   * @param boolean $skip
+   * 
+   * @return void
+   */
+  public function _sendRealtime($data, $rooms = []) {
+    $api = 'http://localhost:3000/api';
+    if (is_string($rooms)) {
+      $rooms = !empty($rooms) ? [$rooms] : [];
+    }
+
+    $param = [
+      'event' => 'realtime',
+      'rooms' => $rooms,
+      'data' => $data
+    ];
+
+    Http::post($api, $param);
   }
   
 }

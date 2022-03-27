@@ -85,7 +85,10 @@ export default {
     <m-spinner v-else/>
 
     <template v-if="!loading_get_date">
-      <div id="chart_div" v-if="data && data.length > 0"></div>
+      <div v-if="data && data.length > 0" class="table-responsive">
+        <div id="chart_div"></div>
+      </div>
+
       <div v-else>Chưa có {{ name_route.name == 'du-an' ? ' công việc' : ' nhiệm vụ' }}</div>
     </template>
     <m-spinner v-else/>

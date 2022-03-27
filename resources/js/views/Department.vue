@@ -284,7 +284,7 @@ export default {
         <template v-if="list && list.data.length > 0">
           <li v-for="(item, index) in list.data" :key="index" class="col-md-3 col-sm-6 col-12 mb-2">
             <div class="info bg-fff">
-              <p class="text-info"><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
+              <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
               <p style="font-size: 12px; margin-bottom: 0px">
                 <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
                 <b>Trưởng phòng: </b>{{item.leader.fullname || item.leader.username}} <br>
@@ -316,7 +316,7 @@ export default {
             </div>
           </li>
         </template>
-        <div v-else>Bạn chưa có phòng ban</div>
+        <div v-else class="p-3">Chưa có phòng ban</div>
       </ul>
     </div>
 

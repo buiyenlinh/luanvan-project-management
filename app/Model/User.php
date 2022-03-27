@@ -24,4 +24,8 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class);
     }
+
+    public static function getTableName() {
+        return 'yl_users';
+    }
 }

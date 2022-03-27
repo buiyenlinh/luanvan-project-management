@@ -3,6 +3,7 @@ window._ = require('lodash');
 window.axios = require('axios');
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+import _ from 'lodash';
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router/index';
@@ -11,6 +12,7 @@ Vue.component('m-spinner', require('./components/Spinner.vue').default);
 Vue.component('m-loading', require('./components/Loading.vue').default);
 Vue.component('m-pagination', require('./components/Pagination.vue').default);
 Vue.component('m-select', require('./components/Select.vue').default);
+Vue.component('m-input', require('./components/Input.vue').default);
 
 new Vue({
   router,
@@ -29,23 +31,38 @@ new Vue({
     auth: null,
     page_title: '',
 		avatar_default: '/images/avatar-default.jpg',
+		realtime: '',
+		socket: null,
+		users_online: []
   },
   methods: {
+		setHeaderAPI(name, value) {
+			this.api.defaults.headers.common[name] = value;
+		},
     setAuth(auth) { // Gán thông tin của 1 user
       if (auth) {
         this.auth = auth;
         localStorage.setItem('yl_token', auth.token);
-        this.api.defaults.headers.common['Authorization'] = 'Bearer ' + auth.token;
+				this.setHeaderAPI('Authorization', 'Bearer ' + auth.token);
+
         if (this.$route.meta.guest) {
           this.$router.replace({name: 'dashboard'});
         }
+
+				this.createRealtime();
       } else {
         this.auth = null;
         localStorage.removeItem('yl_token');
-        this.api.defaults.headers.common['Authorization'] = '';
+				this.setHeaderAPI('Authorization', '');
+				
         if (this.$route.meta.auth) {
           this.$router.replace({name: 'login'});
         }
+
+				if (this.socket) {
+					this.socket.emit('logout');
+					this.socket = null;
+				}
       }
     },
     getConfig() {
@@ -67,6 +84,19 @@ new Vue({
         this.loading = false;
       }).catch(err => this.loading = false);
     },
+		getAvatar(avatar) {
+			if (avatar == undefined) {
+				if (!this.auth || !this.auth.avatar) {
+					return this.avatar_default;
+				}
+
+				return this.auth.avatar;
+			} else if (avatar == '') {
+				return this.avatar_default;
+			}
+			
+			return avatar;
+		},
     alert(message, title, type) {
 			return new Promise((resolve, reject) => {
 				if (typeof title == 'undefined') {
@@ -385,17 +415,21 @@ new Vue({
 			if (!this.auth) return false;
 			return (this.auth.role.level == 1 || this.auth.role.level == 2 || this.auth.role.level == 3);
 		},
-		getStatusTaskName($num_status) {
-			if ($num_status == 0) return 'Đã giao';
-			if ($num_status == 1) return 'Đã tiếp nhận';
-			if ($num_status == 2) return 'Chờ duyệt hoàn thành';
-			if ($num_status == 3) return 'Đã duyệt';
-			if ($num_status == 4) return 'Từ chối duyệt';
-			if ($num_status == 5) return 'Từ chối nhận';
-			if ($num_status == 6) return 'Không duyệt từ chối nhận';
-			if ($num_status == 7) return 'Đổi thành viên';
-			if ($num_status == 8) return 'Đổi phòng ban';
-			if ($num_status == 9) return 'Đã hoàn thành';
+		getStatusTaskName(status) {
+			let list = [
+				'Đã giao', // Project, task, job 			- 0
+				'Đã tiếp nhận', // Project, task, job - 1
+				'Chờ duyệt hoàn thành', // task, job 	- 2
+				'Đã duyệt', // task, job 							- 3
+				'Từ chối duyệt', // task, job					- 4
+				'Từ chối nhận', // job								- 5
+				'Không duyệt từ chối nhận', // job		- 6
+				'Đổi thành viên',  // job							- 7
+				'Đổi phòng ban', // task							- 8
+				'Đã hoàn thành', // Project						- 9
+			]
+
+			return list[status];
 		},
 		checkDeadline(_param) {
 			let today = new Date();
@@ -406,7 +440,7 @@ new Vue({
 
 			let check = ((date - end_time_param) / 86400000) + 1;// do hoàn thành trước end_time
 			if (check == 0) {
-				return 'Hôm nay';
+				return 'Tới hạn hôm nay';
 			} else if (check > 0) {
 				if (check < 0.5) check = 1;
 				else check = Math.round(check);
@@ -438,7 +472,7 @@ new Vue({
       data.addRows(_arr);
 
       var options = {
-        height: 500,
+        
         gantt: {
           trackHeight: 40,
 					criticalPathStyle: {
@@ -455,7 +489,108 @@ new Vue({
       google.charts.load('current', {'packages':['gantt']});
       google.charts.setOnLoadCallback(() => { this.drawChart(_arr, _id_html) });
 			
-    }
+    },
+		drawPieChart(_arr, _title, _id_html) {
+			var data = google.visualization.arrayToDataTable(_arr);
+
+			var options = {
+				title: _title,
+				pieHole: 0.3,
+				chartArea:{width:'95%',height:'70%'},
+				titleTextStyle: { fontSize: 16},
+				legend: {position: 'bottom'}
+			};
+
+			var chart = new google.visualization.PieChart(document.getElementById(_id_html));
+			chart.draw(data, options);
+		},
+		pieChart(_arr, _title, _id_html) {
+			google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(() => { this.drawPieChart(_arr, _title, _id_html) });
+		},
+		setRealtimeData(data) {
+			if (this.realtime == data) {
+				this.realtime = '';
+				this.$nextTick(() => {
+					this.realtime = data;
+				});
+			} else {
+				this.realtime = data;
+			}
+		},
+		createRealtime(rooms) {
+			let domain = 'http://localhost:3000';
+			let socket = io(domain);
+			socket.on('connect', () => {
+				this.socket = socket;
+
+				this.socket.emit('login', {
+					uid: this.auth.id,
+					room: 'user' + this.auth.id
+				});
+
+				this.socket.on('logined', users => {
+					this.users_online = users;
+				})
+
+				this.socket.on('online', (uid) => {
+					if (this.users_online.indexOf(uid) >= 0) {
+						return false;
+					}
+
+					this.users_online.push(uid);
+				});
+		
+				this.socket.on('offline', (uid) => {
+					for (let i = 0; i < this.users_online.length; i++) {
+						if (this.users_online[i] == uid) {
+							this.users_online.splice(i, 1);
+							break;
+						}
+					}
+				});
+				
+				this.socket.on('realtime', (data) => {
+					this.setRealtimeData(data);
+
+					if (data.notification) {
+						this.showNotification(data.notification);
+					}
+				});
+			});
+		},
+		sendRealtime(data, option) {
+			if (!this.socket) {
+				return false;
+			}
+
+			let rooms = option.rooms || [];
+			let skip = option.skip || false;
+
+			this.socket.emit('push', {
+				event: 'realtime',
+				rooms,
+				skip,
+				data
+			});
+		},
+		showNotification(data) {
+			if (Notification.permission === 'granted') {
+				new Notification(data.title, {
+						body: data.message
+				});
+			} else {
+				Notification.requestPermission().then((p) => {
+					if (p === 'granted') {
+						this.showNotification(data);
+					} else {
+							console.log('User blocked notifications.');
+					}
+				}).catch(err => {
+						console.error(err);
+				});
+			}
+		}
   },
   created() {
     this.page_title = document.title;
