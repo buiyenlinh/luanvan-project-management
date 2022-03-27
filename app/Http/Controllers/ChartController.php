@@ -69,7 +69,7 @@ class ChartController extends Controller
 
                 // Tính % hoàn thành của mỗi task
                 $task_statistic = [
-                    'finish_percent' => 100,
+                    'finish_percent' => 0,
                     'finish' => 0,
                     'total' => 0
                 ];
@@ -91,6 +91,14 @@ class ChartController extends Controller
                     $task_statistic['finish_percent'] = ceil($task_statistic['finish'] / $task_statistic['total'] * 100);
                 }
                 
+                $_note = '';
+                if ($_task->delay_time > 0) {
+                    if ($task_statistic['finish_percent'] == 100) {
+                        $_note = ' (Hoàn thành trễ ' . $_task->delay_time . ' ngày)';
+                    } else {
+                        $_note = ' (Trễ ' . $_task->delay_time . ' ngày)';
+                    }
+                }
                 
 
                 // Tiên quyết
@@ -104,10 +112,10 @@ class ChartController extends Controller
                         }
                     }
 
-                    $item = array(''.$_task->id.'', $_task->name, $department->name, $start_time, $end_time, null, $task_statistic['finish_percent'], $pre_task_id);
+                    $item = array(''.$_task->id.'', $_task->name . $_note, $department->name, $start_time, $end_time, null, $task_statistic['finish_percent'], $pre_task_id);
                         $data[] = $item;
                 } else {
-                    $item = array(''.$_task->id.'', $_task->name, $department->name, $start_time, $end_time, null, $task_statistic['finish_percent'], null);
+                    $item = array(''.$_task->id.'', $_task->name . $_note, $department->name, $start_time, $end_time, null, $task_statistic['finish_percent'], null);
                     $data[] = $item;
                 }
             }
@@ -153,16 +161,33 @@ class ChartController extends Controller
                     }
                 }
 
+                $_note = '';
+                if ($_job->delay_time > 0) {
+                    if ($finish_percent == 100) {
+                        $_note = ' (hoàn thành trễ ' . $_job->delay_time . ' ngày)';
+                    } else {
+                        $_note = ' (Trễ ' . $_job->delay_time . ' ngày)';
+                    }
+                }
+
                 // Job tiên quyết
                 $pre_job = PreJob::where('job_id', $_job->id);
                 if ($pre_job->count() > 0) {
+                    $pre_job_id = '';
                     foreach ($pre_job->get() as $_pre_job) {
-                        $item = array(''.$_job->id.'', $_job->name, $user, $start_time, $end_time, null, $finish_percent, ''.$_pre_job->pre_job_id.'');
-
-                        $data[] = $item;
+                        if ($pre_job_id == '')
+                            $pre_job_id .= ''.$_pre_job->pre_job_id;
+                        else {
+                            $pre_job_id .= ','.$_pre_job->pre_job_id;
+                        }
                     }
+                    
+
+                    $item = array(''.$_job->id.'', $_job->name . $_note, $user, $start_time, $end_time, null, $finish_percent, ''.$pre_job_id .'');
+
+                    $data[] = $item;
                 } else {
-                    $item = array(''.$_job->id.'', $_job->name, $user, $start_time, $end_time, null, $finish_percent, null);
+                    $item = array(''.$_job->id.'', $_job->name . $_note, $user, $start_time, $end_time, null, $finish_percent, null);
                     $data[] = $item;
                 }
             }

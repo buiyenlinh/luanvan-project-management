@@ -67,6 +67,11 @@ export default {
         label: 'Cá nhân',
         link: "profile",
         icon: "fas fa-user-circle",
+      },
+      {
+        label: 'Chat',
+        link: "chat",
+        icon: "fas fa-comment-dots",
       })
     },
     closeSideBarTablet() {
@@ -116,7 +121,7 @@ export default {
         </div>
       </div>
       
-      <ul class="nav flex-column" role="tablist">
+      <ul class="menu scrollbar" role="tablist">
         <li v-for="(item, index) in menu"
           :key="index"
           :class="[ name_route == item.link ? 'router-link-exact-active' : '' ]"
@@ -143,22 +148,56 @@ export default {
               <div class="dropdown-menu">
                 <div class="pl-2 pr-2">
                   <div>
-                    <b v-if="$root.auth.role.level == 3">Dự án</b>
-                    <b v-else-if="$root.auth.role.level == 4">Nhiệm vụ</b>
-                    <div class="d-flex justify-content-between">
-
-                      <router-link :to="{ name: 'deadline', params: { name: 'tre'} }">
-                        <span>{{ number_deadline.late }} Trễ</span>
+                    <template v-if="$root.auth.role.level == 3">
+                    <b style="font-size: 12px">Dự án</b>
+                    <div class="d-flex justify-content-between mb-1">
+                      <router-link :to="{ name: 'deadline', params: { type: 'du-an', status: 'tre'} }">
+                        <span>{{ number_deadline.project.late }} Trễ</span>
                       </router-link>
 
-                      <router-link :to="{ name: 'deadline', params: { name: 'hom-nay'} }">
-                        <span>{{ number_deadline.today }} Hôm nay</span>
+                      <router-link :to="{ name: 'deadline', params: { type: 'du-an', status: 'toi-han'} }">
+                        <span>{{ number_deadline.project.today }} Tới hạn</span>
                       </router-link>
 
-                      <router-link :to="{ name: 'deadline', params: { name: 'dang-thuc-hien'} }">
-                        <span>{{ number_deadline.working }} Đang thực hiện</span>
+                      <router-link :to="{ name: 'deadline', params: { type: 'du-an', status: 'dang-thuc-hien'} }">
+                        <span>{{ number_deadline.project.working }} Đang thực hiện</span>
                       </router-link>
                     </div>
+                    </template>
+                    
+                    <template v-if="$root.auth.role.level == 3 || ($root.auth.role.level == 4 && $root.auth.leader)">
+                    <b style="font-size: 12px">Công việc</b>
+                    <div class="d-flex justify-content-between mb-1">
+                      <router-link :to="{ name: 'deadline', params: { type: 'cong-viec', status: 'tre'} }">
+                        <span>{{ number_deadline.task.late }} Trễ</span>
+                      </router-link>
+
+                      <router-link :to="{ name: 'deadline', params: { type: 'cong-viec', status: 'toi-han'} }">
+                        <span>{{ number_deadline.task.today }} Tới hạn</span>
+                      </router-link>
+
+                      <router-link :to="{ name: 'deadline', params: { type: 'cong-viec', status: 'dang-thuc-hien'} }">
+                        <span>{{ number_deadline.task.working }} Đang thực hiện</span>
+                      </router-link>
+                    </div>
+                    </template>
+
+                    <template v-if="$root.auth.role.level == 4">
+                    <b style="font-size: 12px">Nhiệm vụ</b>
+                    <div class="d-flex justify-content-between">
+                      <router-link :to="{ name: 'deadline', params: { type: 'nhiem-vu', status: 'tre'} }">
+                        <span>{{ number_deadline.job.late }} Trễ</span>
+                      </router-link>
+
+                      <router-link :to="{ name: 'deadline', params: { type: 'nhiem-vu', status: 'toi-han'} }">
+                        <span>{{ number_deadline.job.today }} Tới hạn</span>
+                      </router-link>
+
+                      <router-link :to="{ name: 'deadline', params: { type: 'nhiem-vu', status: 'dang-thuc-hien'} }">
+                        <span>{{ number_deadline.job.working }} Đang thực hiện</span>
+                      </router-link>
+                    </div>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -177,10 +216,8 @@ export default {
           </div>
         </div>
       </div>
-      <div class="main-relative">
-        <div class="main">
-          <router-view />
-        </div>
+      <div class="main-content scrollbar">
+        <router-view />
       </div>
     </div>
     <m-loading v-if="loading_logout" title="Đang đăng xuất" :full="true" />

@@ -96,12 +96,12 @@ const router = new VueRouter({
           },
         },
         {
-          path: 'toi-han/:name',
+          path: 'danh-sach/:type/:status',
           name: 'deadline',
           component: require('../views/Deadline.vue').default,
           meta: {
             auth: true,
-            title: 'Nhãn'
+            title: 'Danh sách'
           },
         },
         {
@@ -111,6 +111,15 @@ const router = new VueRouter({
           meta: {
             auth: true,
             title: 'Biểu đồ'
+          },
+        },
+        {
+          path: 'chat',
+          name: 'chat',
+          component: require('../views/Chat.vue').default,
+          meta: {
+            auth: true,
+            title: 'Chat'
           },
         },
       ]

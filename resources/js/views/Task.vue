@@ -252,6 +252,8 @@ export default {
         this.select_pre_task.text = '--- Tìm tên công việc --- ';
         return false;
       }
+
+      this.error.start_time = '';
       return true;
     },
     getPreTask(_pre_task) {
@@ -282,9 +284,9 @@ export default {
     checkStartTime() {
       if (this.task.start_time == '') {
         this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
-      } else if (this.task.start_time < this.project.start_time || this.task.start_time > this.project.end_time) {
+      } else if (this.task.start_time < this.project.start_time || this.task.start_time >= this.project.end_time) {
         this.error.start_time = 'Thời gian bắt đầu công việc không phù hợp với thời gian của dự án'
-      } else if (this.task.end_time != '' && this.task.start_time > this.task.end_time) {
+      } else if (this.task.end_time != '' && this.task.start_time >= this.task.end_time) {
         this.error.start_time = 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc'
       } else {
         if (this.error.end_time == 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu') {
@@ -309,7 +311,7 @@ export default {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
       } else if (this.task.end_time < this.project.start_time || end_time_task > end_time_project) {
         this.error.end_time = 'Thời gian kết thúc công việc không phù hợp với thời gian của dự án'
-      } else if (this.task.start_time != '' && this.task.start_time > this.task.end_time) {
+      } else if (this.task.start_time != '' && this.task.start_time >= this.task.end_time) {
         this.error.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu'
       } else {
         if (this.error.start_time == 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc') {
@@ -429,6 +431,9 @@ export default {
           this.loading_reason_not_approval_finish = false;
         })
       }
+    },
+    setTaskName(_name) {
+      this.task.name = _name; 
     }
   },
   created() {
@@ -436,6 +441,9 @@ export default {
   },
   mounted() {
     this.project_id = this.$route.params.id;
+    if (this.$route.query.name) {
+      this.search.name = this.$route.query.name;
+    }
     this.getProject();
     this.getList();
 
@@ -549,7 +557,13 @@ export default {
                           <b>{{ item.job_statistic.overdue }}</b> quá hạn
                         </div>
                         <div v-if="item && item.job_statistic.total != 0" class="progress" style="height: 0.5em">
-                          <div :class="['progress-bar', item.job_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
+                          <div v-if="item.job_statistic.finish_percent >= 80" class="progress-bar bg-success" 
+                            :style="'width:' + item.job_statistic.finish_percent + '%'"></div>
+                      
+                          <div v-else-if="item.job_statistic.finish_percent >= 50" class="progress-bar bg-warning" 
+                            :style="'width:' + item.job_statistic.finish_percent + '%'"></div>
+                      
+                          <div v-else class="progress-bar bg-danger" 
                             :style="'width:' + item.job_statistic.finish_percent + '%'"></div>
                         </div>
                       </td>
@@ -559,7 +573,7 @@ export default {
                         </span>
                         <span v-else-if="item.status.status == 3">
                           <b v-if="item.delay_time == 0"  class="badge badge-success">Hoàn thành đúng hạn</b>
-                          <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                          <b v-else class="badge badge-warning">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
                         </span>
                         <span v-else class="badge badge-info">
                           {{ $root.getStatusTaskName(item.status.status) }}
@@ -568,9 +582,9 @@ export default {
                           {{ $root.checkDeadline(item) }}
                         </span>
                       </td>
-                      <td>{{ item.start_time }}</td>
-                      <td>Trước {{ item.end_time }}</td>
-                      <td>{{ item.created_at }}</td>
+                      <td style="font-size: 13px">{{ item.start_time }}</td>
+                      <td style="font-size: 13px">Trước {{ item.end_time }}</td>
+                      <td style="font-size: 13px">{{ item.created_at }}</td>
                       <td>
                         <button @click="getTaskUpdate(item)" class="mb-1 btn btn-sm btn-secondary"
                           data-toggle="modal"
@@ -593,7 +607,7 @@ export default {
                             data-target="#task_modal_delete">Xóa</button> 
                       
                           <template v-if="item.status.status == 2">
-                            <button class="mb-1 btn btn-sm btn-info" @click="handleApprovalTask(item)">Duyệt</button>
+                            <button class="mb-1 btn btn-sm btn-success" @click="handleApprovalTask(item)">Duyệt</button>
                             <button class="mb-1 btn btn-sm btn-danger"
                               @click="getTaskUpdate(item)"
                               data-toggle="modal"
@@ -615,7 +629,7 @@ export default {
                           </button>
                         </template>
 
-                        <template v-if="project && (project.manager.id == $root.auth.id || $root.auth.id == item.department.leader.id)">
+                        <template v-if="$root.isAdmin() || (project && (project.manager.id == $root.auth.id || $root.auth.id == item.department.leader.id))">
                           <router-link :to="{ name: 'chart', params: { name: 'cong-viec', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                         </template>
                       </td>
@@ -643,7 +657,8 @@ export default {
                     <div class="form-group">
                       <label><b>Tên công việc <span class="text-danger">*</span></b></label>
                       <input type="text" class="form-control form-control-sm" v-model="task.name" v-if="task.id" disabled>
-                      <input type="text" class="form-control form-control-sm" v-model="task.name" v-else>
+                      <m-input v-else :url="`/task/get-name`" :text="task.name" variable="name" @changeValue="setTaskName"/>
+                      
                       <div class="text-danger font-italic error">{{error.name}}</div>
                     </div>
                   </div>

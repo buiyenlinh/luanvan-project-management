@@ -6,6 +6,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use App\Model\User;
 use App\Model\DepartmentUser;
 
+use App\Http\Resources\UserResource;
+
 class DepartmentResource extends JsonResource
 {
     /**
@@ -21,12 +23,12 @@ class DepartmentResource extends JsonResource
             ->where('leader', 0)->get();
         $members = array();
         foreach ($department_user as $_department_user) {
-            $members[] = User::find($_department_user->user_id);
+            $members[] = new UserResource(User::find($_department_user->user_id));
         }
 
         $department_leader = DepartmentUser::where('department_id', $this->id)
             ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
-        $leader = User::find($department_leader->user_id);
+        $leader = new UserResource(User::find($department_leader->user_id));
 
         return [
             'id' => $this->id,

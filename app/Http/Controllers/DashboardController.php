@@ -45,14 +45,14 @@ class DashboardController extends Controller
                         $end_time = strtotime(date("Y-m-d", $_project->end_time));
                         $start_time = strtotime(date("Y-m-d", $_project->start_time));
 
-                        if ($time_now - $end_time > 24 * 60 * 60)   // Do thời gian hết hạn là trước end_time 1 ngày
+                        if ($time_now > $end_time - 24 * 60 * 60)   // Do thời gian hết hạn là trước end_time 1 ngày
                             $data_project['late']++;
                         
 
-                        if ($time_now >= $start_time && $time_now < $end_time - 24 * 60 * 60) 
+                        else if ($time_now >= $start_time && $time_now <= $end_time - 24 * 60 * 60) 
                             $data_project['working']++;
 
-                        if ($time_now <= $start_time)
+                        else if ($time_now <= $start_time)
                             $data_project['future']++;
                     }
                 }
@@ -108,7 +108,7 @@ class DashboardController extends Controller
                             $end_time = strtotime(date("Y-m-d", $_task->end_time));
                             $start_time = strtotime(date("Y-m-d", $_task->start_time));
 
-                            if ($time_now - $end_time > 24 * 60 * 60)   // Do thời gian hết hạn là trước end_time 1 ngày
+                            if ($time_now > $end_time - 24 * 60 * 60)   // Do thời gian hết hạn là trước end_time 1 ngày
                                 $data_task['late']++;
                             
 
@@ -181,13 +181,13 @@ class DashboardController extends Controller
                             
                             $created_at = strtotime($department_user_job_status->created_at->format("Y-m-d"));
 
-                            if ($end_time_job - $created_at > 24 * 3600) { // Hoàn thành đúng hạn
+                            if ($end_time_job - $created_at >= 24 * 3600) { // Hoàn thành đúng hạn
                                 $data_pie_job_chart['data'][2]++;
                             } else { // Hoàn thành trễ hạn
                                 $data_pie_job_chart['data'][3]++;
                             }
                         } else {
-                            if ($time_now - $end_time_job > 24 * 3600) {// Do hạn là trước end time 1 ngày
+                            if ($end_time_job - $time_now < 24 * 3600) {// Do hạn là trước end time 1 ngày
                                 $data_pie_job_chart['data'][0]++;
                             }
 
@@ -217,7 +217,7 @@ class DashboardController extends Controller
                         if ($department_task_status->status == 3) { // Hoàn thành
                             $created_at = strtotime($department_task_status->created_at->format("Y-m-d"));
 
-                            if ($end_time_task - $created_at > 24 * 3600) { // Hoàn thành đúng hạn
+                            if ($end_time_task - $created_at >= 24 * 3600) { // Hoàn thành đúng hạn
                                 $data_pie_task_chart['data'][2]++;
                             } else { // Hoàn thành trễ hạn
                                 $data_pie_task_chart['data'][3]++;

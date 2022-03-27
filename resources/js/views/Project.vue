@@ -127,7 +127,7 @@ export default {
     checkStartTime() {
       if (this.project.start_time == '') {
         this.error.start_time = 'Thời gian bắt đầu là bắt buộc';
-      } else if (this.project.end_time && this.project.start_time > this.project.end_time) {
+      } else if (this.project.end_time && this.project.start_time >= this.project.end_time) {
         this.error.start_time = 'Thời gian bắt đầu phải trước thời gian kết thúc';
       } else {
         this.error.start_time = '';
@@ -138,7 +138,7 @@ export default {
     checkEndTime() {
       if (this.project.end_time == '') {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
-      } else if (this.project.start_time && this.project.start_time > this.project.end_time) {
+      } else if (this.project.start_time && this.project.start_time >= this.project.end_time) {
         this.error.end_time = 'Thời gian kết thúc phải sau thời gian bắt đầu';
       } else {
         this.error.end_time = '';
@@ -279,6 +279,9 @@ export default {
         this.loading_finish_project = false;
         this.$root.showError(err);
       }) 
+    },
+    setProjectName(_name) {
+      this.project.name = _name;
     }
   },
   created() {
@@ -312,6 +315,10 @@ export default {
   },
   mounted() {
     this.current_page = parseInt(this.$route.query.page || 1);
+    if (this.$route.query.name) {
+      this.search.name = this.$route.query.name;
+    }
+    
     $(document).on('hidden.bs.modal', '#project_modal_add, #project_modal_delete, #project_modal_finish, #project_modal_details', () => {
       this.handleCloseModal();
     });
@@ -383,7 +390,13 @@ export default {
                       <b>{{ item.task_statistic.overdue }}</b> quá hạn
                     </div>
                     <div class="progress" style="height: 0.5em" v-if="item && item.task_statistic.total != 0">
-                      <div :class="['progress-bar', item.task_statistic.finish_percent >= 50 ? 'bg-success' : 'bg-danger']" 
+                      <div v-if="item.task_statistic.finish_percent >= 80" class="progress-bar bg-success" 
+                        :style="'width:' + item.task_statistic.finish_percent + '%'"></div>
+                  
+                      <div v-else-if="item.task_statistic.finish_percent >= 50" class="progress-bar bg-warning" 
+                        :style="'width:' + item.task_statistic.finish_percent + '%'"></div>
+                   
+                      <div v-else class="progress-bar bg-danger" 
                         :style="'width:' + item.task_statistic.finish_percent + '%'"></div>
                     </div>
                   </td>
@@ -392,7 +405,7 @@ export default {
                     <template v-else>
                       <span v-if="item.status.status == 9">
                         <b v-if="item.delay_time == 0" class="badge badge-success">Hoàn thành đúng hạn</b>
-                        <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                        <b v-else class="badge badge-warning">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
                       </span>
                       
                       <template v-else>
@@ -404,7 +417,7 @@ export default {
                     </template>
                   </td>
                   <td style="font-size: 13px">{{ item.start_time }}</td>
-                  <td style="font-size: 13px"> Trước{{ item.end_time }}</td>
+                  <td style="font-size: 13px">Trước {{ item.end_time }}</td>
                   <td style="font-size: 13px">{{ item.created_at }}</td>
                   <td>
                     <button class="mb-1 btn btn-secondary btn-sm"
@@ -440,7 +453,7 @@ export default {
                         >Hoàn thành</button>
                       </template>
                     </template>
-                    <template v-if="$root.isAdmin() || $root.isManager()">
+                    <template v-if="$root.isAdmin() || $root.auth.id == item.manager.id">
                       <router-link :to="{ name: 'chart', params: { name: 'du-an', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                     </template>
                   </td>
@@ -470,7 +483,8 @@ export default {
                   <div class="form-group">
                     <label><b>Tên dự án <span class="text-danger">*</span></b></label>
                     <input v-if="project.id" type="text" class="form-control form-control-sm" v-model="project.name" disabled>
-                    <input v-else type="text" class="form-control form-control-sm" v-model="project.name">
+                    <m-input url="project/get-name" :text="project.name" variable="name" @changeValue="setProjectName" v-else />
+                    
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>
@@ -667,6 +681,7 @@ export default {
     </div>
 
     <m-loading v-if="loading_add" :title="this.project.id != null ? 'Đang cập nhật dự án' : 'Đang thêm dự án'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa dự án" :full="true" />
     <m-loading v-if="loading_delete_file" title="Đang xóa tệp đính kèm của dự án" :full="true" />
     <m-loading v-if="loading_take_project" title="Đang tiếp nhận dự án" :full="true" />
     <m-loading v-if="loading_finish_project" title="Đang thực hiện hoàn thành dự án" :full="true" />

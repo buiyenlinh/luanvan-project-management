@@ -17,11 +17,16 @@ class LabelController extends Controller
      */
     public function searchLabel(Request $request) {
         $keyword = $request->keyword;
+        $label = array();
         if (!$keyword) {
-            return $this->success('Danh sách tìm kiếm nhãn', []);
-        }
+            if ($request->callfirst)
+                $labels = Label::where('active', 1)->get();
+            else 
+                return $this->success('Danh sách tìm kiếm nhãn', []);
+        } else 
+            $labels = Label::where('name', 'LIKE', '%' . $keyword . '%')->where('active', 1)->get();
+        
 
-        $labels = Label::where('name', 'LIKE', '%' . $keyword . '%')->where('active', 1)->get();
         return $this->success('Danh sách tìm kiếm nhãn', $labels);
     }
 

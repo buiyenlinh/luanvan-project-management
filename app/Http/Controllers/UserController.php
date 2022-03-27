@@ -9,8 +9,13 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Storage;
 use App\Model\User;
 use App\Model\Role;
+use App\Model\Chat;
 use App\Model\Project;
+use App\Model\ProjectStatus;
 use App\Model\DepartmentUser;
+use App\Model\Task;
+use App\Model\DepartmentTask;
+use App\Model\DepartmentTaskStatus;
 
 class UserController extends Controller
 {
@@ -60,7 +65,7 @@ class UserController extends Controller
             $db->where('active', $active);
         }
 
-        $users = $db->orderby('id', 'desc')->paginate(5);
+        $users = $db->orderby('id', 'desc')->paginate(10);
         $data = UserResource::collection($users)->response()->getData();
         return $this->success('Danh sách người dùng', $data);
     }
@@ -122,6 +127,14 @@ class UserController extends Controller
             'birthday' => $birthday,
             'avatar' => $avatar,
         ]);
+
+        if ($request->email) {
+            $_name = $fullname;
+            if (!$fullname)
+                $_name = $request->username;
+            $content_mail = '<div>Hi ' . $_name . '!</div><div>Bạn vừa được cấp tài khoản vào hệ thống YL Quản lý dự án</div><div>Tên đăng nhập: <b>' . $request->username . '</b></div><div>Mật khẩu: <b>' . $request->password . '</b></div><div>Đừng quên tạo mật khẩu mới cho tài khoản của bạn!</div>';
+            $this->_sendEmail($request->email, 'Cấp quyền vào hệ thống', $content_mail);
+        }
 
         return $this->success('Tạo tài khoản thành công');
     }
@@ -201,6 +214,11 @@ class UserController extends Controller
         return $this->success('Cập nhật thành công', $user);
     }
 
+    public function get_code($a, $b) {
+        if ($a < $b) return $a . '_' . $b;
+        return $b . '_' . $a;
+    }
+
     /**
      * Xóa người dùng
      */
@@ -212,6 +230,9 @@ class UserController extends Controller
         if (!$this->checkUserLogin($user->role_id)) {
             return $this->error('Tài khoản không có quyền');
         }
+
+        $count_chat = Chat::where('sender', $id)->count();
+        if ($count_chat > 0) return $this->error('Người dùng này đã có dữ liệu trong hệ thống! Không thể xóa! Bạn có thể khóa tài khoản người dùng này!');
 
         $count_project = Project::where('manager', $user->id)
             ->orwhere('created_by', $user->id)
@@ -225,6 +246,7 @@ class UserController extends Controller
             return $this->error('Người dùng đã thuộc một phòng ban nào đó. Không thể xóa');
         }
         Storage::delete($user->avatar);
+
         $user->delete();
 
         return $this->success('Xóa người dùng thành công');

@@ -24,7 +24,7 @@ class CreateUsersTable extends Migration
             $table->string('avatar')->default('');
             $table->integer('birthday')->default(0);
             $table->enum('gender', ['N', 'F', 'M'])->default('N');
-            $table->boolean('active')->default(1);
+            $table->boolean('active')->default(true);
             $table->foreignId('role_id')->constrained('yl_roles')->unsigned();
             $table->timestamps();
         });

@@ -30,7 +30,7 @@
             this.arr_pie_task_chart = res.data.data.data_pie_task_chart;
             this.arr_line_chart = res.data.data.data_line_chart;
 
-            var arr_color = [ '#fc2020', '#1e6d53', '#068f25', '#da4452', '#06618f'];
+            var arr_color = [ '#fc2020', '#1e6d53', '#068f25', '#d6a820', '#06618f'];
             this.pieChart(this.arr_pie_job_chart, arr_color, 'pie_chart_job_div');
             this.pieChart(this.arr_pie_task_chart, arr_color, 'pie_chart_task_div');
             this.lineChartTaskJob();
@@ -159,7 +159,7 @@
       </div>
     </div>
 
-    <div class="dashboard-02">
+    <!-- <div class="dashboard-02">
       <div class="row">
         <div class="col-md-3 col-sm-4 col-12">
           <b>Phòng ban có công việc trễ nhiều nhất</b>
@@ -169,6 +169,6 @@
           <b>Thành viên có nhiệm vụ trễ nhiều nhất</b>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>

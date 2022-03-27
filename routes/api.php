@@ -17,9 +17,11 @@ Route::middleware('is-token')->group(function() {
     // Số lượng nhiệm vụ trễ & hôm nay
   Route::get('job/number-job', 'JobController@getNumberJob');
     // Danh sách trễ hạn
-  Route::post('job/late-today-working/{status}', 'JobController@getJobLateOrToday'); // status: late or today or working
+  Route::post('job/get-work/{type}/{status}', 'JobController@getWork');
+    // type: project, task, job 
+    // status: late or today or working
 
-  Route::prefix("/user")->middleware('check-role:1|2')->group(function() {
+  Route::prefix("user")->middleware('check-role:1|2')->group(function() {
     Route::get('list', 'UserController@getUserList')->withoutMiddleware('check-role:1|2');
     Route::post('add', 'UserController@addUser');
     Route::post('update', 'UserController@updateUser');
@@ -36,6 +38,8 @@ Route::middleware('is-token')->group(function() {
     Route::post('update', 'ProjectController@updateProject');
     Route::delete('delete/{id}', 'ProjectController@deleteProject');
     Route::delete('delete-file/{id}', 'ProjectController@deleteFile');
+
+    Route::post('get-name', 'ProjectController@getName');
 
     Route::post('take-project/{id}', 'ProjectController@takeProject')
       ->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
@@ -86,9 +90,11 @@ Route::middleware('is-token')->group(function() {
       Route::post('approval-job/{job_id}', 'JobController@approvalJob');
       Route::post('not-approval-job/{job_id}', 'JobController@notApprovalJob');
       Route::post('not-approval-refuse-job/{job_id}', 'JobController@notApprovalRefuseJob');
-
     });
   });
+
+  Route::post('task/get-name', 'TaskController@getTaskName');  // Lấy danh sách tên task -> gợi ý nhập tên
+  Route::post('job/get-name', 'JobController@getJobName'); // Lấy danh sách tên job -> gợi ý nhập tên
 
   Route::prefix('label')->middleware('check-role:1|2')->group(function() {
     Route::post('search', 'LabelController@searchLabel')->withoutMiddleware('check-role:1|2');
@@ -110,7 +116,14 @@ Route::middleware('is-token')->group(function() {
     Route::get('get-percent-job', 'DashboardController@getPercentJob');
   });
 
-  Route::prefix('/role')->group(function() {
+  Route::prefix('role')->group(function() {
     Route::get('list', 'UserController@getRoleList');
+  });
+
+  Route::prefix('chat')->group(function() {
+    Route::get('user', 'ChatController@getUserChat');
+    Route::get('message', 'ChatController@getMessageChat');
+    Route::post('add', 'ChatController@addMessageChat');
+    Route::post('seen', 'ChatController@seenChat');
   });
 });

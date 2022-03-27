@@ -239,13 +239,21 @@ export default {
         this.error.start_time = 'Thời gian bắt đầu nhiệm vụ không phù hợp với thời gian bắt đầu của công việc';
       } else if (end_time_job > end_time_task) {
         this.error.end_time = 'Thời gian kết thúc nhiệm vụ không phù hợp với thời gian kết thúc của công việc';
-      } else if (this.job.end_time != '' && this.job.start_time > this.job.end_time) {
+      } else if (this.job.end_time != '' && this.job.start_time >= this.job.end_time) {
         this.error.start_time = 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc'
       } else {
         if (this.error.end_time == 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu') {
           this.error.end_time = '';
         }
-        this.error.start_time = '';
+
+        if (this.pre_job_id.show.length > 0) {
+          for (let i in this.pre_job_id.show) {
+            if (!this.checkTimePreJob(this.pre_job_id.show[i], this.job))
+              break;
+          }
+        } else {
+          this.error.start_time = '';
+        }
       }
     },
     checkEndTime() {
@@ -258,7 +266,7 @@ export default {
         this.error.end_time = 'Thời gian kết thúc là bắt buộc';
       } else if (start_time_job < start_time_task || end_time_job > end_time_task) {
         this.error.end_time = 'Thời gian kết thúc nhiệm vụ không phù hợp với thời gian của công việc'
-      } else if (this.job.start_time != '' && this.job.start_time > this.job.end_time) {
+      } else if (this.job.start_time != '' && this.job.start_time >= this.job.end_time) {
         this.error.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu'
       } else {
         if (this.error.start_time == 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc') {
@@ -313,6 +321,7 @@ export default {
         this.select_pre_job.text = '--- Tìm tên nhiệm vụ --- ';
         return false;
       }
+      this.error.start_time = '';
       return true;
     },
     removePreJob() {
@@ -478,6 +487,9 @@ export default {
           this.loading_not_approval_refuse_job = false;
         })
       }
+    },
+    setJobName(_name) {
+      this.job.name = _name;
     }
   },
   created() {
@@ -486,6 +498,10 @@ export default {
   mounted() {
     this.params.project_id = this.$route.params.project_id;
     this.params.task_id = this.$route.params.id;
+    if (this.$route.query.name) {
+      this.search = this.$route.query.name;
+    }
+
     this.getInfo();
     this.getList();
     $(document).on('hidden.bs.modal', 
@@ -598,7 +614,7 @@ export default {
 
                           <span v-else-if="item.status.status == 3">
                             <b v-if="item.delay_time == 0" class="badge badge-success">Hoàn thành đúng hạn</b>
-                            <b v-else class="badge badge-danger">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
+                            <b v-else class="badge badge-warning">Hoàn thành trễ {{ item.delay_time }} ngày</b> 
                           </span>
                           
                           <span class="badge badge-info" v-else>
@@ -610,9 +626,9 @@ export default {
                             <b v-else class="badge badge-danger">{{ $root.checkDeadline(item) }}</b>
                           </span>
                         </td>
-                        <td>{{ item.start_time }}</td>
-                        <td>Trước {{ item.end_time }}</td>
-                        <td>{{ item.created_at }}</td>
+                        <td style="font-size: 13px">{{ item.start_time }}</td>
+                        <td style="font-size: 13px">Trước {{ item.end_time }}</td>
+                        <td style="font-size: 13px">{{ item.created_at }}</td>
                         <td>
                           <button @click="getJobUpdate(item)"
                             data-toggle="modal"
@@ -649,7 +665,7 @@ export default {
                             >Không duyệt từ chối</button>
                           </template>
 
-                          <template v-else-if="item && item.user.id == $root.auth.id">
+                          <template v-if="item && (item.user.id == $root.auth.id)">
                             <span v-if="item.status.status == 0">
                               <button @click="handleTakeJob(item)" class="mb-1 btn btn-info btn-sm">Tiếp nhận</button>
                               <button @click="getJobUpdate(item)" data-toggle="modal" data-target="#job_refuse_modal" class="mb-1 btn btn-sm btn-danger">Từ chối</button>
@@ -686,7 +702,8 @@ export default {
                   <div class="form-group">
                     <label><b>Tên nhiệm vụ <span class="text-danger">*</span></b></label>
                     <input type="text" class="form-control form-control-sm" v-model="job.name" v-if="job.id" disabled>
-                    <input type="text" class="form-control form-control-sm" v-model="job.name" v-else>
+                    <m-input v-else :url="`job/get-name`" :text="job.name" variable="name" @changeValue="setJobName"/>
+
                     <div class="text-danger font-italic error">{{error.name}}</div>
                   </div>
                 </div>

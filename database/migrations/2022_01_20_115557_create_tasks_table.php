@@ -15,7 +15,7 @@ class CreateTasksTable extends Migration
     {
         Schema::create('yl_tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
+            $table->string('name');
             $table->text('describe')->default('');
             $table->string('file')->default('');
             $table->text('result')->default('');

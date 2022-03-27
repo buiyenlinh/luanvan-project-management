@@ -35,14 +35,19 @@ export default {
       keyword: '',
       list: {},
       show: false,
-      loading: false
+      loading: false,
+      callfirst: false,
+      time_out: null
     }
   },
   methods: {
     search() {
-      if (this.keyword != '') {
+      if (this.keyword != '' || this.callfirst) {
         this.loading = true;
-        this.$root.api.post(this.url, {keyword: this.keyword}).then(response => {
+        if (this.keyword) 
+          this.callfirst = false;
+
+        this.$root.api.post(this.url + '?callfirst=' + this.callfirst, {keyword: this.keyword}).then(response => {
           if (response.data.status == "OK") {
             this.list = response.data.data;
           } else {
@@ -70,13 +75,15 @@ export default {
     },
     showDropdown() {
       this.show = !this.show;
+      this.callfirst = this.show;
+      this.search();
     },
     cancel() {
-      this.val = this.text,
-      this.keyword = '',
-      this.list = {},
-      this.show = false,
-      this.loading = false
+      this.val = this.text;
+      this.keyword = '';
+      this.list = {};
+      this.show = false;
+      this.loading = false;
     }
   },
   watch: {
@@ -85,6 +92,16 @@ export default {
     },
     text(newText, oldText) {
       this.val = newText;
+    },
+    keyword() {
+      if (this.time_out) {
+        clearTimeout(this.time_out);
+        this.time_out = null;
+      }
+
+      this.time_out = setTimeout(() => {
+        this.search();
+      }, 800);
     }
   }
 }
@@ -99,9 +116,10 @@ export default {
       <i :class="[this.show ? 'select-icon-transition' : '' , 'select-icon-bottom', 'fas fa-angle-down']"></i>
     </div>
     <div class="select-dropdown" v-if="show">
-      <input type="text" :class="[size == 'sm' ? 'form-control-sm' : '', 'form-control']" v-model="keyword" @input="search()">
+      <!-- <input type="text" :class="[size == 'sm' ? 'form-control-sm' : '', 'form-control']" v-model="keyword" @input="search()"> -->
+      <input type="text" :class="[size == 'sm' ? 'form-control-sm' : '', 'form-control']" v-model="keyword">
       <div v-if="loading" class="loading spinner-border spinner-border-sm"></div>
-      <ul class="mt-2">
+      <ul class="mt-2 scrollbar">
         <li v-for="(item, i) in list" :key="i">
           <a @click="setValue(item)">{{ item[variable.first] || item[variable.second] }}</a>
         </li>
@@ -162,7 +180,7 @@ export default {
 
   ul {
     overflow-y: auto;
-    max-height: 230px;
+    max-height: 100px;
     list-style-type: none;
     padding: 0px;
     margin: 0;
