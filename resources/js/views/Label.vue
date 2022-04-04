@@ -152,7 +152,7 @@ export default {
     this.handleCloseModal();
   },
   mounted() {
-    if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
+    if (!this.$root.isManager()) {
       this.$router.replace({ name: 'dashboard' });
     }
 
@@ -183,7 +183,7 @@ export default {
             <i class="fas fa-search"></i> Tìm
           </button>
         </div>  
-        <div class="col-md-4 col-sm-12 col-12 text-right mb-2" v-if="$root.isManager()">
+        <div class="col-md-4 col-sm-12 col-12 text-right mb-2" v-if="$root.isAdmin()">
           <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#label_add_update">Thêm</button>
         </div>
       </div>
@@ -216,8 +216,8 @@ export default {
             </div>
             <div class="text-right mt-2">
               <button class="btn btn-sm btn-dark" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_details">Xem</button>
-              <button class="btn btn-sm btn-info" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_add_update">Sửa</button>
-              <button class="btn btn-sm btn-danger" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_delete">Xóa</button>
+              <button class="btn btn-sm btn-info" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_add_update" v-if="$root.isAdmin()">Sửa</button>
+              <button class="btn btn-sm btn-danger" @click="getInfoLabel(item)" data-toggle="modal" data-target="#label_delete" v-if="$root.isAdmin()">Xóa</button>
             </div>
           </div>
         </li>
@@ -339,7 +339,7 @@ export default {
           </div>
           <div class="modal-footer">
             <button type="button" @click="onSubmitDelete" class="btn btn-sm btn-danger">Xóa nhãn</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
           </div>
         </div>
       </div>

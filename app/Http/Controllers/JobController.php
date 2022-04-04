@@ -1287,7 +1287,7 @@ class JobController extends Controller
                                 $task = Task::find($_job->task_id);
                                 $project = Project::find($task->project_id);
 
-                                if ($type == 'job' && (($status == 'late' && $_job->end_time - 24 * 3600 < $time_now) || ($status == 'today' && $time_now <= $_job->end_time - 24 * 3600) || ($status == 'working' && $_job->start_time <= $time_now && $time_now < $_job->end_time - 24 * 3600))) {
+                                if ($type == 'job' && (($status == 'late' && $_job->end_time - 24 * 3600 < $time_now) || ($status == 'today' && $time_now == $_job->end_time - 24 * 3600) || ($status == 'working' && $_job->start_time <= $time_now && $time_now < $_job->end_time - 24 * 3600))) {
                                     $list[] = [
                                         'project' => new ProjectResource($project),
                                         'task' => new TaskResource($task),

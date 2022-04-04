@@ -16,7 +16,8 @@ export default {
         code: '',
         email: ''
       },
-      checkForm: false
+      checkForm: false,
+      see_password: false
     }
   },
   methods: {
@@ -113,7 +114,7 @@ export default {
         </div>
         
         <div class="mb-3">
-          <label for="">Email <span class="text-danger font-weight-bold">*</span></label>
+          <label for=""><b>Email</b> <span class="text-danger font-weight-bold">*</span></label>
           <div class="input-group">
             <div class="input-group-prepend">
               <span class="input-group-text"><i class="fas fa-envelope"></i></span>
@@ -141,7 +142,7 @@ export default {
 
         <div>
           <div class="mb-3">
-            <label for="">Tên đăng nhập <span class="text-danger font-weight-bold">*</span></label>
+            <label for=""><b>Tên đăng nhập</b> <span class="text-danger font-weight-bold">*</span></label>
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -152,12 +153,17 @@ export default {
           </div>
 
           <div class="mb-3">
-            <label for="">Mật khẩu <span class="text-danger font-weight-bold">*</span></label>
+            <label for=""><b>Mật khẩu</b> <span class="text-danger font-weight-bold">*</span></label>
             <div class="input-group">
               <div class="input-group-prepend">
                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
               </div>
-              <input type="password" class="form-control" v-model="info.password" />
+              <input :type="see_password ? 'text' : 'password'" class="form-control" v-model="info.password" />
+
+              <div class="eye-icon" style="position: absolute; right: 10px; top: 13px; z-index: 10">
+                <i class="fas fa-eye" v-if="!see_password" style="cursor: pointer" @click="see_password = true"></i>
+                <i class="fas fa-eye-slash" v-else style="cursor: pointer" @click="see_password = false"></i>
+              </div>
             </div>
             <div class="text-danger font-italic error">{{ error.password }}</div>
           </div>
@@ -168,7 +174,7 @@ export default {
             <div class="text-danger font-italic error">{{ error.code }}</div>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="width: 100%">Gửi đến email</button>
+          <button type="submit" class="btn btn-primary" style="width: 100%">Đổi mật khẩu</button>
           <div style="border-top: 1px solid #ddd;" class="mt-4 ml-5 mr-5 mb-1"></div>
           <div class="text-center">
             <router-link :to="{ name: 'login' }">Đăng nhập</router-link>

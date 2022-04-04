@@ -158,7 +158,8 @@ class DepartmentController extends Controller
         $old_leader = DepartmentUser::where('department_id', $id)
             ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
 
-        if ($old_leader->user_id != $leader) {
+        $user_send_email = array();
+        if ($old_leader->user_id != $leader) { // Trưởng phòng mới
             $old_leader->update([
                 'active_leader' => 0
             ]); 
@@ -170,20 +171,19 @@ class DepartmentController extends Controller
                 'department_id' => $id,
                 'leader' => 1   
             ]);
+
+            $this->_sendRealtime([
+                'name' => 'department',
+                'notification' => [
+                    'title' => 'Thêm vào phòng ban',
+                    'message' => 'Bạn vừa được phân làm trưởng phòng ban ' . $department_update->name
+                ]
+            ], 'user' . $leader);
+
+            $user_leader = User::find($leader);
+            if ($user_leader && $user_leader->email)
+                $user_send_email[] = $user_leader->email;
         }
-
-        $user_send_email = array();
-        $user_leader = User::find($leader);
-        if ($user_leader && $user_leader->email)
-            $user_send_email[] = $user_leader->email;
-
-        $this->_sendRealtime([
-            'name' => 'department',
-            'notification' => [
-                'title' => 'Thêm vào phòng ban',
-                'message' => 'Bạn vừa được phân làm trưởng phòng ban ' . $department_update->name
-            ]
-        ], 'user' . $leader);
 
         if ($new_members) {
             foreach ($new_members as $_member) {

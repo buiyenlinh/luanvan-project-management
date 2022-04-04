@@ -165,10 +165,19 @@ class DashboardController extends Controller
         $month_now = getdate()['mon'];
         $date_now = getdate()['mday'];
 
-        $jobs = Job::whereMonth('created_at', $month_now);
+        // $jobs = Job::whereMonth('created_at', $month_now);
+        $job_all = Task::all();
+        $jobs = array();
+        foreach ($job_all as $_job) {
+            $_start_month = date("m", $_job->start_time);
+            $_end_month = date("m", $_job->end_time);
+            if (($_start_month >= $month_now && $_start_month <= $month_now) || ($_end_month >= $month_now && $_end_month <= $month_now)) {
+                $jobs[] = $_job;
+            }
+        }
 
-        if ($jobs->count() > 0) {
-            foreach ($jobs->get() as $_job) {
+        if (count($jobs) > 0) {
+            foreach ($jobs as $_job) {
                 $department_user_job = DepartmentUserJob::where('job_id', $_job->id)->latest('id')->first();
                 if ($department_user_job) {
                     $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $department_user_job->id)->latest('id')->first();
@@ -204,9 +213,19 @@ class DashboardController extends Controller
             }
         }
 
-        $tasks = Task::whereMonth('created_at', $month_now);
-        if ($tasks->count() > 0) {
-            foreach ($tasks->get() as $_task) {
+        // $tasks = Task::whereMonth('created_at', $month_now);
+        $task_all = Task::all();
+        $tasks = array();
+        foreach ($task_all as $_task) {
+            $_start_month = date("m", $_task->start_time);
+            $_end_month = date("m", $_task->end_time);
+            if (($_start_month >= $month_now && $_start_month <= $month_now) || ($_end_month >= $month_now && $_end_month <= $month_now)) {
+                $tasks[] = $_task;
+            }
+        }
+
+        if (count($tasks) > 0) {
+            foreach ($tasks as $_task) {
                 $department_task = DepartmentTask::where('task_id', $_task->id)->latest('id')->first();
                 if ($department_task) {
                     $department_task_status = DepartmentTaskStatus::where('department_task_id', $department_task->id)->latest('id')->first();
@@ -255,7 +274,7 @@ class DashboardController extends Controller
                 'data' => array(),
                 'backgroundColor' => 'rgb(255, 99, 132)',
                 'borderColor' => 'rgb(255, 99, 132)',
-            ]
+            ],
         ];
 
         for($i = 1; $i <= $date_now; $i++) {
@@ -276,7 +295,7 @@ class DashboardController extends Controller
             'data_line_chart' => [
                 'labels' => $labels,
                 'data_label' => $data_label
-            ]
+            ],
         ];
 
         return $this->success('Phần trăm nhiệm vụ', $data);

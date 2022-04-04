@@ -3485,7 +3485,8 @@ __webpack_require__.r(__webpack_exports__);
         code: '',
         email: ''
       },
-      checkForm: false
+      checkForm: false,
+      see_password: false
     };
   },
   methods: {
@@ -3640,6 +3641,9 @@ __webpack_require__.r(__webpack_exports__);
           link: "user",
           icon: "fas fa-users"
         });
+      }
+
+      if (this.$root.isManager()) {
         this.menu.push({
           label: 'Nhãn',
           link: "label",
@@ -4498,7 +4502,7 @@ __webpack_require__.r(__webpack_exports__);
   mounted: function mounted() {
     var _this5 = this;
 
-    if (this.$root.auth.role.level != 1 && this.$root.auth.role.level != 2) {
+    if (!this.$root.isManager()) {
       this.$router.replace({
         name: 'dashboard'
       });
@@ -4536,7 +4540,8 @@ __webpack_require__.r(__webpack_exports__);
       password: '',
       username_error: '',
       password_error: '',
-      loading_login: false
+      loading_login: false,
+      see_password: false
     };
   },
   methods: {
@@ -4638,45 +4643,52 @@ __webpack_require__.r(__webpack_exports__);
     onSubmit: function onSubmit() {
       var _this = this;
 
-      this.loading_update = true;
-      var formData = new FormData();
+      this.checkUserName();
+      this.checkEmail();
+      this.checkPassword();
+      this.checkPhone();
 
-      if (this.user.password) {
-        formData.append("password", this.user.password);
-      }
+      if (this.error.username == '' && this.error.password == '' && this.error.email == '' && this.error.phone == '') {
+        this.loading_update = true;
+        var formData = new FormData();
 
-      if (this.user.avatar) {
-        formData.append("avatar", this.user.avatar);
-      }
-
-      formData.append("username", this.user.username);
-      formData.append("fullname", this.user.fullname);
-      formData.append("gender", this.user.gender);
-      formData.append("birthday", this.user.birthday);
-      formData.append("email", this.user.email);
-      formData.append("phone", this.user.phone);
-      this.$root.api.post('profile', formData).then(function (res) {
-        _this.loading_update = false;
-
-        if (res.data.status == 'OK') {
-          _this.$root.auth.username = res.data.data.username;
-          _this.$root.auth.fullname = res.data.data.fullname;
-          _this.$root.auth.avatar = res.data.data.avatar;
-          _this.$root.auth.gender = res.data.data.gender;
-          _this.$root.auth.birthday = res.data.data.birthday;
-          _this.$root.auth.phone = res.data.data.phone;
-          _this.$root.auth.email = res.data.data.email;
-          _this.avatar_preview = res.data.data.avatar;
-
-          _this.$notify(res.data.message, 'success');
-        } else {
-          _this.$root.showError(res.data.error);
+        if (this.user.password) {
+          formData.append("password", this.user.password);
         }
-      })["catch"](function (err) {
-        _this.$root.showError(err);
 
-        _this.loading_update = false;
-      });
+        if (this.user.avatar) {
+          formData.append("avatar", this.user.avatar);
+        }
+
+        formData.append("username", this.user.username);
+        formData.append("fullname", this.user.fullname);
+        formData.append("gender", this.user.gender);
+        formData.append("birthday", this.user.birthday);
+        formData.append("email", this.user.email);
+        formData.append("phone", this.user.phone);
+        this.$root.api.post('profile', formData).then(function (res) {
+          _this.loading_update = false;
+
+          if (res.data.status == 'OK') {
+            _this.$root.auth.username = res.data.data.username;
+            _this.$root.auth.fullname = res.data.data.fullname;
+            _this.$root.auth.avatar = res.data.data.avatar;
+            _this.$root.auth.gender = res.data.data.gender;
+            _this.$root.auth.birthday = res.data.data.birthday;
+            _this.$root.auth.phone = res.data.data.phone;
+            _this.$root.auth.email = res.data.data.email;
+            _this.avatar_preview = res.data.data.avatar;
+
+            _this.$notify(res.data.message, 'success');
+          } else {
+            _this.$root.showError(res.data.error);
+          }
+        })["catch"](function (err) {
+          _this.$root.showError(err);
+
+          _this.loading_update = false;
+        });
+      }
     },
     handleChangeAvatar: function handleChangeAvatar(image) {
       if ((image === null || image === void 0 ? void 0 : image.target.files[0].type) != "image/jpeg" && (image === null || image === void 0 ? void 0 : image.target.files[0].type) != "image/png" && (image === null || image === void 0 ? void 0 : image.target.files[0].type) != "image/jpg") {
@@ -4707,6 +4719,62 @@ __webpack_require__.r(__webpack_exports__);
 
         _this2.loading_update = false;
       });
+    },
+    checkUserName: function checkUserName() {
+      if (this.user.username == '') {
+        this.error.username = 'Tên đăng nhập là bắt buộc';
+      } else {
+        this.error.username = '';
+      }
+    },
+    checkPassword: function checkPassword() {
+      if (this.user.password) {
+        if (this.user.password.length < 6) {
+          this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
+        } else {
+          this.error.password = '';
+        }
+      }
+    },
+    checkEmail: function checkEmail() {
+      if (this.user.email == '') {
+        this.error.email = 'Email là bắt buộc';
+      } else {
+        if (!this.$root.checkEmail(this.user.email)) {
+          this.error.email = 'Email không hợp lệ';
+        } else {
+          this.error.email = '';
+        }
+      }
+    },
+    checkPhone: function checkPhone() {
+      if (this.user.phone == '') {
+        this.error.phone = 'Số điện thoại là bắt buộc';
+      } else {
+        var _this$user$phone;
+
+        if (((_this$user$phone = this.user.phone) === null || _this$user$phone === void 0 ? void 0 : _this$user$phone.length) < 10) {
+          this.error.phone = 'Số điện thoại độ dài không hợp lệ';
+        } else if (!this.$root.checkPhone(this.user.phone)) {
+          this.error.phone = 'Số điện thoại không hợp lệ';
+        } else {
+          this.error.phone = '';
+        }
+      }
+    }
+  },
+  watch: {
+    'user.username': function userUsername() {
+      this.checkUserName();
+    },
+    'user.password': function userPassword() {
+      this.checkPassword();
+    },
+    'user.email': function userEmail() {
+      this.checkEmail();
+    },
+    'user.phone': function userPhone() {
+      this.checkPhone();
     }
   }
 });
@@ -25551,7 +25619,9 @@ var render = function () {
               _vm.loading_chart
                 ? _c("m-spinner")
                 : _c("b", [
-                    _vm._v("Số lượng công việc, nhiệm vụ tháng hiện tại"),
+                    _vm._v(
+                      "Số lượng công việc, nhiệm vụ được tạo tháng hiện tại"
+                    ),
                   ]),
               _vm._v(" "),
               _c("canvas", { attrs: { id: "line_chart_div" } }),
@@ -26119,7 +26189,7 @@ var render = function () {
     "div",
     { attrs: { id: "department" } },
     [
-      _vm.$root.isAdmin()
+      _vm.$root.isManager()
         ? _c(
             "form",
             {
@@ -26156,26 +26226,28 @@ var render = function () {
                   }),
                 ]),
                 _vm._v(" "),
-                _c(
-                  "div",
-                  { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
-                  [
-                    _c("m-select", {
-                      attrs: {
-                        size: "sm",
-                        text: "-- Tìm theo trưởng phòng --",
-                        url: "user/search-user",
-                        statusReset: false,
-                        variable: { first: "fullname", second: "username" },
-                      },
-                      on: {
-                        changeValue: _vm.getLeaderSearch,
-                        remove: _vm.removeLeaderSearch,
-                      },
-                    }),
-                  ],
-                  1
-                ),
+                _vm.$root.isAdmin()
+                  ? _c(
+                      "div",
+                      { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                      [
+                        _c("m-select", {
+                          attrs: {
+                            size: "sm",
+                            text: "-- Tìm theo trưởng phòng --",
+                            url: "user/search-user",
+                            statusReset: false,
+                            variable: { first: "fullname", second: "username" },
+                          },
+                          on: {
+                            changeValue: _vm.getLeaderSearch,
+                            remove: _vm.removeLeaderSearch,
+                          },
+                        }),
+                      ],
+                      1
+                    )
+                  : _vm._e(),
                 _vm._v(" "),
                 _vm._m(0),
                 _vm._v(" "),
@@ -27533,27 +27605,136 @@ var render = function () {
                     _c("div", { staticClass: "input-group" }, [
                       _vm._m(7),
                       _vm._v(" "),
-                      _c("input", {
-                        directives: [
-                          {
-                            name: "model",
-                            rawName: "v-model",
-                            value: _vm.info.password,
-                            expression: "info.password",
-                          },
-                        ],
-                        staticClass: "form-control",
-                        attrs: { type: "password" },
-                        domProps: { value: _vm.info.password },
-                        on: {
-                          input: function ($event) {
-                            if ($event.target.composing) {
-                              return
-                            }
-                            _vm.$set(_vm.info, "password", $event.target.value)
+                      (_vm.see_password ? "text" : "password") === "checkbox"
+                        ? _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.info.password,
+                                expression: "info.password",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { type: "checkbox" },
+                            domProps: {
+                              checked: Array.isArray(_vm.info.password)
+                                ? _vm._i(_vm.info.password, null) > -1
+                                : _vm.info.password,
+                            },
+                            on: {
+                              change: function ($event) {
+                                var $$a = _vm.info.password,
+                                  $$el = $event.target,
+                                  $$c = $$el.checked ? true : false
+                                if (Array.isArray($$a)) {
+                                  var $$v = null,
+                                    $$i = _vm._i($$a, $$v)
+                                  if ($$el.checked) {
+                                    $$i < 0 &&
+                                      _vm.$set(
+                                        _vm.info,
+                                        "password",
+                                        $$a.concat([$$v])
+                                      )
+                                  } else {
+                                    $$i > -1 &&
+                                      _vm.$set(
+                                        _vm.info,
+                                        "password",
+                                        $$a
+                                          .slice(0, $$i)
+                                          .concat($$a.slice($$i + 1))
+                                      )
+                                  }
+                                } else {
+                                  _vm.$set(_vm.info, "password", $$c)
+                                }
+                              },
+                            },
+                          })
+                        : (_vm.see_password ? "text" : "password") === "radio"
+                        ? _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.info.password,
+                                expression: "info.password",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: { type: "radio" },
+                            domProps: {
+                              checked: _vm._q(_vm.info.password, null),
+                            },
+                            on: {
+                              change: function ($event) {
+                                return _vm.$set(_vm.info, "password", null)
+                              },
+                            },
+                          })
+                        : _c("input", {
+                            directives: [
+                              {
+                                name: "model",
+                                rawName: "v-model",
+                                value: _vm.info.password,
+                                expression: "info.password",
+                              },
+                            ],
+                            staticClass: "form-control",
+                            attrs: {
+                              type: _vm.see_password ? "text" : "password",
+                            },
+                            domProps: { value: _vm.info.password },
+                            on: {
+                              input: function ($event) {
+                                if ($event.target.composing) {
+                                  return
+                                }
+                                _vm.$set(
+                                  _vm.info,
+                                  "password",
+                                  $event.target.value
+                                )
+                              },
+                            },
+                          }),
+                      _vm._v(" "),
+                      _c(
+                        "div",
+                        {
+                          staticClass: "eye-icon",
+                          staticStyle: {
+                            position: "absolute",
+                            right: "10px",
+                            top: "13px",
+                            "z-index": "10",
                           },
                         },
-                      }),
+                        [
+                          !_vm.see_password
+                            ? _c("i", {
+                                staticClass: "fas fa-eye",
+                                staticStyle: { cursor: "pointer" },
+                                on: {
+                                  click: function ($event) {
+                                    _vm.see_password = true
+                                  },
+                                },
+                              })
+                            : _c("i", {
+                                staticClass: "fas fa-eye-slash",
+                                staticStyle: { cursor: "pointer" },
+                                on: {
+                                  click: function ($event) {
+                                    _vm.see_password = false
+                                  },
+                                },
+                              }),
+                        ]
+                      ),
                     ]),
                     _vm._v(" "),
                     _c(
@@ -27602,7 +27783,7 @@ var render = function () {
                       staticStyle: { width: "100%" },
                       attrs: { type: "submit" },
                     },
-                    [_vm._v("Gửi đến email")]
+                    [_vm._v("Đổi mật khẩu")]
                   ),
                   _vm._v(" "),
                   _c("div", {
@@ -27657,7 +27838,8 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", { attrs: { for: "" } }, [
-      _vm._v("Email "),
+      _c("b", [_vm._v("Email")]),
+      _vm._v(" "),
       _c("span", { staticClass: "text-danger font-weight-bold" }, [
         _vm._v("*"),
       ]),
@@ -27692,7 +27874,8 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", { attrs: { for: "" } }, [
-      _vm._v("Tên đăng nhập "),
+      _c("b", [_vm._v("Tên đăng nhập")]),
+      _vm._v(" "),
       _c("span", { staticClass: "text-danger font-weight-bold" }, [
         _vm._v("*"),
       ]),
@@ -27713,7 +27896,8 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("label", { attrs: { for: "" } }, [
-      _vm._v("Mật khẩu "),
+      _c("b", [_vm._v("Mật khẩu")]),
+      _vm._v(" "),
       _c("span", { staticClass: "text-danger font-weight-bold" }, [
         _vm._v("*"),
       ]),
@@ -29468,7 +29652,7 @@ var render = function () {
                     staticClass: "btn btn-secondary btn-sm",
                     attrs: { type: "button", "data-dismiss": "modal" },
                   },
-                  [_vm._v("Đóng")]
+                  [_vm._v("Hủy")]
                 ),
               ]),
             ]),
@@ -30329,7 +30513,7 @@ var render = function () {
             _vm._v(" "),
             _vm._m(0),
             _vm._v(" "),
-            _vm.$root.isManager()
+            _vm.$root.isAdmin()
               ? _c(
                   "div",
                   { staticClass: "col-md-4 col-sm-12 col-12 text-right mb-2" },
@@ -30443,39 +30627,43 @@ var render = function () {
                               [_vm._v("Xem")]
                             ),
                             _vm._v(" "),
-                            _c(
-                              "button",
-                              {
-                                staticClass: "btn btn-sm btn-info",
-                                attrs: {
-                                  "data-toggle": "modal",
-                                  "data-target": "#label_add_update",
-                                },
-                                on: {
-                                  click: function ($event) {
-                                    return _vm.getInfoLabel(item)
+                            _vm.$root.isAdmin()
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-sm btn-info",
+                                    attrs: {
+                                      "data-toggle": "modal",
+                                      "data-target": "#label_add_update",
+                                    },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.getInfoLabel(item)
+                                      },
+                                    },
                                   },
-                                },
-                              },
-                              [_vm._v("Sửa")]
-                            ),
+                                  [_vm._v("Sửa")]
+                                )
+                              : _vm._e(),
                             _vm._v(" "),
-                            _c(
-                              "button",
-                              {
-                                staticClass: "btn btn-sm btn-danger",
-                                attrs: {
-                                  "data-toggle": "modal",
-                                  "data-target": "#label_delete",
-                                },
-                                on: {
-                                  click: function ($event) {
-                                    return _vm.getInfoLabel(item)
+                            _vm.$root.isAdmin()
+                              ? _c(
+                                  "button",
+                                  {
+                                    staticClass: "btn btn-sm btn-danger",
+                                    attrs: {
+                                      "data-toggle": "modal",
+                                      "data-target": "#label_delete",
+                                    },
+                                    on: {
+                                      click: function ($event) {
+                                        return _vm.getInfoLabel(item)
+                                      },
+                                    },
                                   },
-                                },
-                              },
-                              [_vm._v("Xóa")]
-                            ),
+                                  [_vm._v("Xóa")]
+                                )
+                              : _vm._e(),
                           ]),
                         ]),
                       ]
@@ -30803,7 +30991,7 @@ var render = function () {
                   staticClass: "btn btn-secondary btn-sm",
                   attrs: { type: "button", "data-dismiss": "modal" },
                 },
-                [_vm._v("Đóng")]
+                [_vm._v("Hủy")]
               ),
             ]),
           ]),
@@ -31016,27 +31204,119 @@ var render = function () {
               _c("div", { staticClass: "input-group" }, [
                 _vm._m(4),
                 _vm._v(" "),
-                _c("input", {
-                  directives: [
-                    {
-                      name: "model",
-                      rawName: "v-model",
-                      value: _vm.password,
-                      expression: "password",
-                    },
-                  ],
-                  staticClass: "form-control",
-                  attrs: { type: "password" },
-                  domProps: { value: _vm.password },
-                  on: {
-                    input: function ($event) {
-                      if ($event.target.composing) {
-                        return
-                      }
-                      _vm.password = $event.target.value
+                (_vm.see_password ? "text" : "password") === "checkbox"
+                  ? _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.password,
+                          expression: "password",
+                        },
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "checkbox" },
+                      domProps: {
+                        checked: Array.isArray(_vm.password)
+                          ? _vm._i(_vm.password, null) > -1
+                          : _vm.password,
+                      },
+                      on: {
+                        change: function ($event) {
+                          var $$a = _vm.password,
+                            $$el = $event.target,
+                            $$c = $$el.checked ? true : false
+                          if (Array.isArray($$a)) {
+                            var $$v = null,
+                              $$i = _vm._i($$a, $$v)
+                            if ($$el.checked) {
+                              $$i < 0 && (_vm.password = $$a.concat([$$v]))
+                            } else {
+                              $$i > -1 &&
+                                (_vm.password = $$a
+                                  .slice(0, $$i)
+                                  .concat($$a.slice($$i + 1)))
+                            }
+                          } else {
+                            _vm.password = $$c
+                          }
+                        },
+                      },
+                    })
+                  : (_vm.see_password ? "text" : "password") === "radio"
+                  ? _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.password,
+                          expression: "password",
+                        },
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: "radio" },
+                      domProps: { checked: _vm._q(_vm.password, null) },
+                      on: {
+                        change: function ($event) {
+                          _vm.password = null
+                        },
+                      },
+                    })
+                  : _c("input", {
+                      directives: [
+                        {
+                          name: "model",
+                          rawName: "v-model",
+                          value: _vm.password,
+                          expression: "password",
+                        },
+                      ],
+                      staticClass: "form-control",
+                      attrs: { type: _vm.see_password ? "text" : "password" },
+                      domProps: { value: _vm.password },
+                      on: {
+                        input: function ($event) {
+                          if ($event.target.composing) {
+                            return
+                          }
+                          _vm.password = $event.target.value
+                        },
+                      },
+                    }),
+                _vm._v(" "),
+                _c(
+                  "div",
+                  {
+                    staticClass: "eye-icon",
+                    staticStyle: {
+                      position: "absolute",
+                      right: "10px",
+                      top: "13px",
+                      "z-index": "10",
                     },
                   },
-                }),
+                  [
+                    !_vm.see_password
+                      ? _c("i", {
+                          staticClass: "fas fa-eye",
+                          staticStyle: { cursor: "pointer" },
+                          on: {
+                            click: function ($event) {
+                              _vm.see_password = true
+                            },
+                          },
+                        })
+                      : _c("i", {
+                          staticClass: "fas fa-eye-slash",
+                          staticStyle: { cursor: "pointer" },
+                          on: {
+                            click: function ($event) {
+                              _vm.see_password = false
+                            },
+                          },
+                        }),
+                  ]
+                ),
               ]),
               _vm._v(" "),
               _c("div", { staticClass: "text-danger" }, [
@@ -31271,7 +31551,7 @@ var render = function () {
                           expression: "user.fullname",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "text" },
                       domProps: { value: _vm.user.fullname },
                       on: {
@@ -31299,7 +31579,7 @@ var render = function () {
                           expression: "user.username",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "text" },
                       domProps: { value: _vm.user.username },
                       on: {
@@ -31333,7 +31613,7 @@ var render = function () {
                           expression: "user.password",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "password" },
                       domProps: { value: _vm.user.password },
                       on: {
@@ -31367,7 +31647,7 @@ var render = function () {
                           expression: "user.email",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "email" },
                       domProps: { value: _vm.user.email },
                       on: {
@@ -31401,7 +31681,7 @@ var render = function () {
                           expression: "user.phone",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "tel" },
                       domProps: { value: _vm.user.phone },
                       on: {
@@ -31435,7 +31715,7 @@ var render = function () {
                           expression: "user.birthday",
                         },
                       ],
-                      staticClass: "form-control",
+                      staticClass: "form-control form-control-sm",
                       attrs: { type: "date" },
                       domProps: { value: _vm.user.birthday },
                       on: {
@@ -34660,7 +34940,7 @@ var render = function () {
                                 "data-dismiss": "modal",
                               },
                             },
-                            [_vm._v("Đóng")]
+                            [_vm._v("Hủy")]
                           ),
                         ]),
                       ]),
@@ -52590,10 +52870,12 @@ new vue__WEBPACK_IMPORTED_MODULE_1___default.a({
     },
     checkDeadline: function checkDeadline(_param) {
       var today = new Date();
-      var date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-' + today.getDate();
+      var date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-0' + today.getDate();
       date = new Date(date).getTime();
       var end_time_param = new Date(_param.end_time).getTime();
       var check = (date - end_time_param) / 86400000 + 1; // do hoàn thành trước end_time
+
+      console.log(check);
 
       if (check == 0) {
         return 'Tới hạn hôm nay';

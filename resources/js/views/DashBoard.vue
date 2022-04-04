@@ -153,7 +153,7 @@
         </div>
         <div class="col-md-6 col-sm-12 col-12 mb-2">
           <m-spinner v-if="loading_chart" />
-          <b v-else>Số lượng công việc, nhiệm vụ tháng hiện tại</b>
+          <b v-else>Số lượng công việc, nhiệm vụ được tạo tháng hiện tại</b>
           <canvas id="line_chart_div"></canvas>
         </div>
       </div>

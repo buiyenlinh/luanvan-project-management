@@ -880,7 +880,7 @@ export default {
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-danger btn-sm" @click="onSubmitDelete">Xóa</button>
-                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Hủy</button>
               </div>
           </div>
         </div>

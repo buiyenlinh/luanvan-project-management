@@ -7,6 +7,7 @@ export default {
       username_error: '',
       password_error: '',
       loading_login: false,
+      see_password: false
     }
   },
   methods: {
@@ -81,7 +82,11 @@ export default {
             <div class="input-group-prepend">
               <span class="input-group-text"><i class="fas fa-lock"></i></span>
             </div>
-            <input type="password" class="form-control" v-model="password" />
+            <input :type="see_password ? 'text' : 'password'" class="form-control" v-model="password" />
+            <div class="eye-icon" style="position: absolute; right: 10px; top: 13px; z-index: 10">
+              <i class="fas fa-eye" v-if="!see_password" style="cursor: pointer" @click="see_password = true"></i>
+              <i class="fas fa-eye-slash" v-else style="cursor: pointer" @click="see_password = false"></i>
+            </div>
           </div>
           <div class="text-danger">{{ password_error }}</div>
         </div>

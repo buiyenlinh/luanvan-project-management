@@ -96,7 +96,7 @@ Route::middleware('is-token')->group(function() {
   Route::post('task/get-name', 'TaskController@getTaskName');  // Lấy danh sách tên task -> gợi ý nhập tên
   Route::post('job/get-name', 'JobController@getJobName'); // Lấy danh sách tên job -> gợi ý nhập tên
 
-  Route::prefix('label')->middleware('check-role:1|2')->group(function() {
+  Route::prefix('label')->middleware('check-role:1|2|3')->group(function() {
     Route::post('search', 'LabelController@searchLabel')->withoutMiddleware('check-role:1|2');
     Route::get('list', 'LabelController@getList');
     Route::post('add', 'LabelController@add');
