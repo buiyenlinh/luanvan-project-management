@@ -20,6 +20,7 @@ use App\Model\DepartmentTaskStatus;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\TaskResource;
 use App\Http\Resources\JobResource;
+use App\Http\Resources\StatusJobResource;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -1310,5 +1311,43 @@ class JobController extends Controller
         $list = Job::where('name', 'LIKE', '%' . $request->keyword . '%')->select('name')->distinct()->get();
 
         return $this->success('Danh sách tên nhiệm vụ', $list);
+    }
+
+    /**
+     * Lịch sử nhiệm vụ
+     */
+    public function history(Request $request, $id, $task_id, $job_id) {
+        $project = Project::find($id);
+        if (!$project)  return $this->error('Dự án không tồn tại');
+
+        $task = Task::find($task_id);
+        if (!$task)  return $this->error('Công việc không tồn tại');
+
+        if ($project->id != $task->project_id)  return $this->error('Công việc không thuộc dự án');
+
+        $job = Job::find($job_id);
+        if (!$job)  return $this->error('Nhiệm vụ không tồn tại');
+        
+        if ($job->task_id != $task->id) return $this->error('Nhiệm vụ không thuộc công việc');
+        
+        $status = array();
+        $department_user_job = DepartmentUserJob::where('job_id', $job_id);
+        if ($department_user_job->count() > 0) {
+            foreach ($department_user_job->get() as $_dep_user_job) {
+                $list = DepartmentUserJobStatus::where('department_user_job_id', $_dep_user_job->id)->get();
+                foreach ($list as $_list) {
+                    $status[] = new StatusJobResource($_list);
+                }
+            }
+        }
+
+        $data = [
+            'job' => new JobResource($job),
+            'task' => $task,
+            'project' => $project,
+            'status' => $status
+        ];
+
+        return $this->success('Lịch sử nhiệm vụ', $data);
     }
 }

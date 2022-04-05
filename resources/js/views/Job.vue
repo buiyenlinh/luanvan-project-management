@@ -490,7 +490,7 @@ export default {
     },
     setJobName(_name) {
       this.job.name = _name;
-    }
+    },
   },
   created() {
     this.closeModal();
@@ -675,6 +675,10 @@ export default {
                                 class="mb-1 btn btn-sm btn-success">Hoàn thành</button>
                             </span>
                           </template>
+
+                          <router-link 
+                            :to="{ name: 'job_history', params: { project_id: info.project.id, task_id: info.task.id, job_id: item.id } }"
+                            class="btn btn-primary btn-sm mb-1">Lịch sử</router-link>
                         </td>
                       </tr>
                     </template>
@@ -992,7 +996,6 @@ export default {
         </div>
       </div>
     </div>
-
 
     <div class="modal fade" id="job_not_approval_refuse_modal">
       <div class="modal-dialog modal-dialog-scrollable">

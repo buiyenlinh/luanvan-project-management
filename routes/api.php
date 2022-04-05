@@ -61,6 +61,7 @@ Route::middleware('is-token')->group(function() {
   });
 
   Route::prefix('project/{id}')->group(function(){
+
     Route::prefix('task')->middleware('check-role:1|2|3')->group(function() {
       Route::get('list', 'TaskController@taskInProject')->withoutMiddleware('check-role:1|2|3');
       Route::post('search', 'TaskController@searchTaskName')->withoutMiddleware('check-role:1|2|3');
@@ -72,6 +73,8 @@ Route::middleware('is-token')->group(function() {
       Route::post('finish-task/{task_id}', 'TaskController@finishTask')->withoutMiddleware('check-role:1|2|3');
       Route::post('approval-finish-task/{task_id}', 'TaskController@approvalFinishTask')->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
       Route::post('not-approval-finish-task/{task_id}', 'TaskController@notApprovalFinishTask')->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
+
+      Route::post('history/{task_id}', 'TaskController@history')->withoutMiddleware('check-role:1|2|3'); // Lịch sử của công việc
     });
 
     // Nhiệm vụ
@@ -90,6 +93,8 @@ Route::middleware('is-token')->group(function() {
       Route::post('approval-job/{job_id}', 'JobController@approvalJob');
       Route::post('not-approval-job/{job_id}', 'JobController@notApprovalJob');
       Route::post('not-approval-refuse-job/{job_id}', 'JobController@notApprovalRefuseJob');
+
+      Route::post('history/{job_id}', 'JobController@history'); // Lịch sử của nhiệm vụ
     });
   });
 
