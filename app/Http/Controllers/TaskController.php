@@ -616,4 +616,32 @@ class TaskController extends Controller
         
         return $this->success('Danh sách tên công việc', $list);
     }
+
+
+    /**
+     * Lịch sử công việc
+     */
+    public function history(Request $request, $project_id, $task_id) {
+        $project = Project::find($project_id);
+        if (!$project)  return $this->error('Dự án không tồn tại');
+
+        $task = Task::find($task_id);
+        if (!$task)  return $this->error('Công việc không tồn tại');
+
+        if ($task->project_id != $project->id)  return $this->error('Công việc không thuộc dự án');
+
+        $status = array();
+        $department_task = DepartmentTask::where('task_id', $task_id)->latest('id')->first();
+        if ($department_task) {
+            $status = DepartmentTaskStatus::where('department_task_id', $department_task->id)->get();
+        }
+
+        $data = [
+            'status' => $status,
+            'task' => new TaskResource($task),
+            'project' => $project
+        ];
+
+        return $this->success('Lịch sử công việc', $data);
+    }
 }

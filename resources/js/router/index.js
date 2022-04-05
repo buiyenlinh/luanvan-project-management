@@ -60,6 +60,15 @@ const router = new VueRouter({
           },
         },
         {
+          path: 'du-an/:project_id/cong-viec/:task_id/nhiem-vu/:job_id',
+          name: 'job_history',
+          component: require('../views/History.vue').default,
+          meta: {
+            auth: true,
+            title: 'Nhiệm vụ'
+          },
+        },
+        {
           path: 'phong-ban',
           name: 'department',
           component: require('../views/Department.vue').default,

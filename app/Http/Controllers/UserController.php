@@ -168,7 +168,7 @@ class UserController extends Controller
         $avatar = $user->avatar;
         $birthday = $user->birthday;
         $fullname = $user->fullname;
-        if ($request->has('password')) $password = $request->password;
+        if ($request->has('password')) $password = bcrypt($request->password);
 
         if ($request->fullname) $fullname = $request->fullname;
 
@@ -201,7 +201,7 @@ class UserController extends Controller
         $user->update([
             'username' => $request->username,
             'fullname' => $fullname,
-            'password' => bcrypt($password),
+            'password' => $password,
             'gender' => $request->gender,
             'active' => $request->active,
             'avatar' => $avatar,

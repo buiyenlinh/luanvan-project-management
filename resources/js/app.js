@@ -433,12 +433,13 @@ new Vue({
 		},
 		checkDeadline(_param) {
 			let today = new Date();
-			let date = today.getFullYear() +'-0'+(today.getMonth()+1)+'-'+today.getDate();
-
+			let date = today.getFullYear() +'-0'+(today.getMonth()+1)+'-0'+today.getDate();
+			
 			date = new Date(date).getTime();
 			let end_time_param = new Date(_param.end_time).getTime();
 
 			let check = ((date - end_time_param) / 86400000) + 1;// do hoàn thành trước end_time
+			console.log(check);
 			if (check == 0) {
 				return 'Tới hạn hôm nay';
 			} else if (check > 0) {
