@@ -3585,11 +3585,12 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       params_route: '',
-      data: null
+      data: null,
+      history_name: ''
     };
   },
   methods: {
-    getHistory: function getHistory() {
+    getHistoryJob: function getHistoryJob() {
       var _this = this;
 
       this.$root.api.post("project/".concat(this.params_route.project_id, "/task/").concat(this.params_route.task_id, "/history/").concat(this.params_route.job_id)).then(function (res) {
@@ -3597,6 +3598,51 @@ __webpack_require__.r(__webpack_exports__);
           _this.data = res.data.data;
         } else {
           _this.$root.notify(res.data.error, 'error');
+
+          _this.$router.replace({
+            name: 'job',
+            params: {
+              'project_id': _this.params_route.project_id,
+              'id': _this.params_route.task_id
+            }
+          });
+        }
+      })["catch"](function (err) {
+        console.log(err);
+      });
+    },
+    getHistoryTask: function getHistoryTask() {
+      var _this2 = this;
+
+      this.$root.api.post("project/".concat(this.params_route.project_id, "/task/history/").concat(this.params_route.task_id)).then(function (res) {
+        if (res.data.status == "OK") {
+          _this2.data = res.data.data;
+        } else {
+          _this2.$root.notify(res.data.error, 'error');
+
+          _this2.$router.replace({
+            name: 'task',
+            params: {
+              'id': _this2.params_route.project_id
+            }
+          });
+        }
+      })["catch"](function (err) {
+        console.log(err);
+      });
+    },
+    getHistoryProject: function getHistoryProject() {
+      var _this3 = this;
+
+      this.$root.api.post("project/history/".concat(this.params_route.project_id)).then(function (res) {
+        if (res.data.status == "OK") {
+          _this3.data = res.data.data;
+        } else {
+          _this3.$root.notify(res.data.error, 'error');
+
+          _this3.$router.replace({
+            name: 'project'
+          });
         }
       })["catch"](function (err) {
         console.log(err);
@@ -3605,7 +3651,17 @@ __webpack_require__.r(__webpack_exports__);
   },
   mounted: function mounted() {
     this.params_route = this.$route.params;
-    this.getHistory();
+
+    if (this.params_route.job_id) {
+      this.getHistoryJob();
+      this.history_name = 'job';
+    } else if (this.params_route.task_id) {
+      this.getHistoryTask();
+      this.history_name = 'task';
+    } else if (this.params_route.project_id) {
+      this.getHistoryProject();
+      this.history_name = 'project';
+    }
   }
 });
 
@@ -27985,162 +28041,433 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _c("div", { attrs: { id: "history" } }, [
-    _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
-      _c("ol", { staticClass: "breadcrumb" }, [
-        _c(
-          "li",
-          { staticClass: "breadcrumb-item" },
-          [
-            _c("router-link", { attrs: { to: { name: "project" } } }, [
-              _vm._v("Dự án"),
-            ]),
-          ],
-          1
-        ),
-        _vm._v(" "),
-        _c(
-          "li",
-          { staticClass: "breadcrumb-item" },
-          [
-            _c(
-              "router-link",
-              {
-                attrs: {
-                  to: { name: "task", params: { id: _vm.data.project.id } },
-                },
-              },
-              [_vm._v(_vm._s(_vm.data.project.name))]
-            ),
-          ],
-          1
-        ),
-        _vm._v(" "),
-        _c(
-          "li",
-          {
-            staticClass: "breadcrumb-item active",
-            attrs: { "aria-current": "page" },
-          },
-          [_vm._v("Lịch sử " + _vm._s(_vm.data.job.name))]
-        ),
-      ]),
-    ]),
-    _vm._v(" "),
-    _c("div", { staticClass: "list" }, [
-      _c("div", { staticClass: "card" }, [
-        _c("div", { staticClass: "card-header bg-info text-white" }, [
-          _vm._v(
-            "Lịch sử: Thời gian thực hiện: " +
-              _vm._s(_vm.data.job.start_time) +
-              " - " +
-              _vm._s(_vm.data.job.end_time)
-          ),
-        ]),
-        _vm._v(" "),
-        _c("div", { staticClass: "table-responsive" }, [
-          _c(
-            "table",
-            { staticClass: "table table-bordered table-stripped mb-0" },
-            [
-              _vm._m(0),
+  return _c(
+    "div",
+    { attrs: { id: "history" } },
+    [
+      _vm.data
+        ? _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
+            _c("ol", { staticClass: "breadcrumb" }, [
+              _c(
+                "li",
+                { staticClass: "breadcrumb-item" },
+                [
+                  _c("router-link", { attrs: { to: { name: "project" } } }, [
+                    _vm._v("Dự án"),
+                  ]),
+                ],
+                1
+              ),
               _vm._v(" "),
               _c(
-                "tbody",
-                _vm._l(_vm.data.status, function (item, index) {
-                  return _c("tr", { key: index }, [
-                    _c("td", [_vm._v(_vm._s(item.created_at))]),
-                    _vm._v(" "),
-                    _c("td", [
-                      item.status == 3
-                        ? _c("span", { staticClass: "badge badge-success" }, [
-                            _vm._v(
-                              "\n                    " +
-                                _vm._s(
-                                  _vm.$root.getStatusTaskName(item.status)
-                                ) +
-                                "\n                  "
-                            ),
-                          ])
-                        : item.status == 7
-                        ? _c("span", { staticClass: "badge badge-warning" }, [
-                            _vm._v(
-                              "\n                    " +
-                                _vm._s(
-                                  _vm.$root.getStatusTaskName(item.status)
-                                ) +
-                                "\n                  "
-                            ),
-                          ])
-                        : _c("span", [
-                            _vm._v(
-                              "\n                    " +
-                                _vm._s(
-                                  _vm.$root.getStatusTaskName(item.status)
-                                ) +
-                                "\n                  "
-                            ),
-                          ]),
+                "li",
+                { staticClass: "breadcrumb-item" },
+                [
+                  _vm.history_name == "job" || _vm.history_name == "task"
+                    ? _c(
+                        "router-link",
+                        {
+                          attrs: {
+                            to: {
+                              name: "task",
+                              params: { id: _vm.data.project.id },
+                            },
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.data.project.name) +
+                              "\n        "
+                          ),
+                        ]
+                      )
+                    : _vm.history_name == "project"
+                    ? _c(
+                        "span",
+                        {
+                          staticClass: "breadcrumb-item active",
+                          attrs: { "aria-current": "page" },
+                        },
+                        [
+                          _vm._v(
+                            "\n          Lịch sử dự án " +
+                              _vm._s(_vm.data.project.name) +
+                              "\n        "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "li",
+                { staticClass: "breadcrumb-item" },
+                [
+                  _vm.history_name == "job"
+                    ? _c(
+                        "router-link",
+                        {
+                          attrs: {
+                            to: {
+                              name: "job",
+                              params: {
+                                project_id: _vm.data.project.id,
+                                id: _vm.data.task.id,
+                              },
+                            },
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.data.task.name) +
+                              "\n        "
+                          ),
+                        ]
+                      )
+                    : _vm.history_name == "task"
+                    ? _c(
+                        "span",
+                        {
+                          staticClass: "breadcrumb-item active",
+                          attrs: { "aria-current": "page" },
+                        },
+                        [
+                          _vm._v(
+                            "\n          Lịch sử công việc " +
+                              _vm._s(_vm.data.task.name) +
+                              "\n        "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm.history_name == "job"
+                ? _c(
+                    "li",
+                    {
+                      staticClass: "breadcrumb-item active",
+                      attrs: { "aria-current": "page" },
+                    },
+                    [_vm._v("Lịch sử nhiệm vụ " + _vm._s(_vm.data.job.name))]
+                  )
+                : _vm._e(),
+            ]),
+          ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.data && _vm.data.status.length > 0
+        ? _c("div", { staticClass: "list" }, [
+            _c("div", { staticClass: "card" }, [
+              _c("div", { staticClass: "card-header bg-info text-white" }, [
+                _vm._v("\n        Lịch sử: Thời gian thực hiện: \n        "),
+                _vm.history_name == "job"
+                  ? _c("span", [
+                      _vm._v(
+                        _vm._s(_vm.data.job.start_time) +
+                          " - " +
+                          _vm._s(_vm.data.job.end_time)
+                      ),
+                    ])
+                  : _vm.history_name == "task"
+                  ? _c("span", [
+                      _vm._v(
+                        _vm._s(_vm.data.task.start_time) +
+                          " - " +
+                          _vm._s(_vm.data.task.end_time)
+                      ),
+                    ])
+                  : _vm.history_name == "project"
+                  ? _c("span", [
+                      _vm._v(
+                        "\n          " +
+                          _vm._s(_vm.data.project.start_time) +
+                          " - " +
+                          _vm._s(_vm.data.project.end_time) +
+                          "\n          - Tạo dự án: " +
+                          _vm._s(
+                            _vm.data.created_by.fullname ||
+                              _vm.data.created_by.username
+                          ) +
+                          "\n        "
+                      ),
+                    ])
+                  : _vm._e(),
+              ]),
+              _vm._v(" "),
+              _c("div", { staticClass: "table-responsive" }, [
+                _c(
+                  "table",
+                  { staticClass: "table table-bordered table-stripped mb-0" },
+                  [
+                    _c("thead", [
+                      _c("tr", [
+                        _vm._m(0),
+                        _vm._v(" "),
+                        _vm._m(1),
+                        _vm._v(" "),
+                        _vm._m(2),
+                        _vm._v(" "),
+                        _vm.history_name == "task"
+                          ? _c("td", [_c("b", [_vm._v("Phòng ban")])])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm._m(3),
+                        _vm._v(" "),
+                        _vm._m(4),
+                      ]),
                     ]),
                     _vm._v(" "),
-                    _c("td", [
-                      _vm._v(_vm._s(item.user.fullname || item.user.username)),
-                    ]),
-                    _vm._v(" "),
-                    _c("td", [_vm._v(_vm._s(item.content))]),
-                    _vm._v(" "),
-                    _c("td", [
-                      item.status == 3
-                        ? _c("span", [
-                            _vm.data.job.delay_time == 0
+                    _c(
+                      "tbody",
+                      _vm._l(_vm.data.status, function (item, index) {
+                        return _c("tr", { key: index }, [
+                          _c("td", [_vm._v(_vm._s(item.created_at))]),
+                          _vm._v(" "),
+                          _c("td", [
+                            item.status == 3
                               ? _c(
-                                  "b",
+                                  "span",
                                   { staticClass: "badge badge-success" },
-                                  [_vm._v("Hoàn thành đúng hạn")]
+                                  [
+                                    _vm._v(
+                                      "\n                  " +
+                                        _vm._s(
+                                          _vm.$root.getStatusTaskName(
+                                            item.status
+                                          )
+                                        ) +
+                                        "\n                "
+                                    ),
+                                  ]
                                 )
-                              : _c(
-                                  "b",
+                              : item.status == 7
+                              ? _c(
+                                  "span",
                                   { staticClass: "badge badge-warning" },
                                   [
                                     _vm._v(
-                                      "Hoàn thành trễ " +
-                                        _vm._s(_vm.data.job.delay_time) +
-                                        " ngày"
+                                      "\n                  " +
+                                        _vm._s(
+                                          _vm.$root.getStatusTaskName(
+                                            item.status
+                                          )
+                                        ) +
+                                        "\n                "
                                     ),
                                   ]
-                                ),
-                          ])
-                        : _vm._e(),
-                    ]),
-                  ])
-                }),
-                0
-              ),
-            ]
-          ),
-        ]),
-      ]),
-    ]),
-  ])
+                                )
+                              : _c("span", [
+                                  _vm._v(
+                                    "\n                  " +
+                                      _vm._s(
+                                        _vm.$root.getStatusTaskName(item.status)
+                                      ) +
+                                      "\n                "
+                                  ),
+                                ]),
+                          ]),
+                          _vm._v(" "),
+                          _c("td", [
+                            _vm.history_name == "job" ||
+                            _vm.history_name == "task"
+                              ? _c("span", [
+                                  _vm._v(
+                                    "\n                  " +
+                                      _vm._s(
+                                        item.user.info.fullname ||
+                                          item.user.info.username
+                                      ) +
+                                      "\n                "
+                                  ),
+                                ])
+                              : _vm.history_name == "project"
+                              ? _c(
+                                  "span",
+                                  [
+                                    item.status == "0"
+                                      ? [
+                                          _vm._v(
+                                            "\n                    " +
+                                              _vm._s(
+                                                _vm.data.created_by.fullname ||
+                                                  _vm.data.created_by.username
+                                              ) +
+                                              "  \n                  "
+                                          ),
+                                        ]
+                                      : [
+                                          _vm._v(
+                                            "\n                    " +
+                                              _vm._s(
+                                                _vm.data.manager.fullname ||
+                                                  _vm.data.manager.username
+                                              ) +
+                                              "\n                  "
+                                          ),
+                                        ],
+                                  ],
+                                  2
+                                )
+                              : _vm._e(),
+                          ]),
+                          _vm._v(" "),
+                          _vm.history_name == "task"
+                            ? _c("td", [_vm._v(_vm._s(item.department.name))])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _c("td", [_vm._v(_vm._s(item.content))]),
+                          _vm._v(" "),
+                          _c("td", [
+                            _vm.history_name != "project"
+                              ? _c("span", [_vm._v(_vm._s(item.user.position))])
+                              : _vm._e(),
+                            _vm._v(" "),
+                            item.status == 3
+                              ? _c(
+                                  "span",
+                                  [
+                                    _vm.history_name == "job"
+                                      ? [
+                                          _vm.data.job.delay_time == 0
+                                            ? _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-success",
+                                                },
+                                                [_vm._v("Hoàn thành đúng hạn")]
+                                              )
+                                            : _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-warning",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    "Hoàn thành trễ " +
+                                                      _vm._s(
+                                                        _vm.data.job.delay_time
+                                                      ) +
+                                                      " ngày"
+                                                  ),
+                                                ]
+                                              ),
+                                        ]
+                                      : _vm.history_name == "task"
+                                      ? [
+                                          _vm.data.task.delay_time == 0
+                                            ? _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-success",
+                                                },
+                                                [_vm._v("Hoàn thành đúng hạn")]
+                                              )
+                                            : _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-warning",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    "Hoàn thành trễ " +
+                                                      _vm._s(
+                                                        _vm.data.task.delay_time
+                                                      ) +
+                                                      " ngày"
+                                                  ),
+                                                ]
+                                              ),
+                                        ]
+                                      : _vm.history_name == "project"
+                                      ? [
+                                          _vm.data.project.delay_time == 0
+                                            ? _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-success",
+                                                },
+                                                [_vm._v("Hoàn thành đúng hạn")]
+                                              )
+                                            : _c(
+                                                "b",
+                                                {
+                                                  staticClass:
+                                                    "badge badge-warning",
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    "Hoàn thành trễ " +
+                                                      _vm._s(
+                                                        _vm.data.project
+                                                          .delay_time
+                                                      ) +
+                                                      " ngày"
+                                                  ),
+                                                ]
+                                              ),
+                                        ]
+                                      : _vm._e(),
+                                  ],
+                                  2
+                                )
+                              : _vm._e(),
+                          ]),
+                        ])
+                      }),
+                      0
+                    ),
+                  ]
+                ),
+              ]),
+            ]),
+          ])
+        : _c("m-spinner", { staticClass: "mb-2" }),
+    ],
+    1
+  )
 }
 var staticRenderFns = [
   function () {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("thead", [
-      _c("tr", [
-        _c("td", [_c("b", [_vm._v("Thời gian")])]),
-        _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Trạng thái")])]),
-        _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Người thực hiện")])]),
-        _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Phản hồi")])]),
-        _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Ghi chú")])]),
-      ]),
-    ])
+    return _c("td", [_c("b", [_vm._v("Thời gian")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", [_c("b", [_vm._v("Trạng thái")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", [_c("b", [_vm._v("Người thực hiện")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", [_c("b", [_vm._v("Phản hồi")])])
+  },
+  function () {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("td", [_c("b", [_vm._v("Ghi chú")])])
   },
 ]
 render._withStripped = true
@@ -32624,6 +32951,20 @@ var render = function () {
                                       ),
                                     ]
                                   : _vm._e(),
+                                _vm._v(" "),
+                                _c(
+                                  "router-link",
+                                  {
+                                    staticClass: "btn btn-primary btn-sm",
+                                    attrs: {
+                                      to: {
+                                        name: "project_history",
+                                        params: { project_id: item.id },
+                                      },
+                                    },
+                                  },
+                                  [_vm._v("Lịch sử")]
+                                ),
                               ],
                               2
                             ),
@@ -34302,6 +34643,25 @@ var render = function () {
                                                     ),
                                                   ]
                                                 : _vm._e(),
+                                              _vm._v(" "),
+                                              _c(
+                                                "router-link",
+                                                {
+                                                  staticClass:
+                                                    "btn btn-primary btn-sm",
+                                                  attrs: {
+                                                    to: {
+                                                      name: "task_history",
+                                                      params: {
+                                                        project_id:
+                                                          _vm.project.id,
+                                                        task_id: item.id,
+                                                      },
+                                                    },
+                                                  },
+                                                },
+                                                [_vm._v("Lịch sử")]
+                                              ),
                                             ],
                                             2
                                           ),
@@ -53923,12 +54283,28 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
         title: 'Nhiệm vụ'
       }
     }, {
-      path: 'du-an/:project_id/cong-viec/:task_id/nhiem-vu/:job_id',
+      path: 'du-an/:project_id/cong-viec/:task_id/nhiem-vu/:job_id/lich-su',
       name: 'job_history',
       component: __webpack_require__(/*! ../views/History.vue */ "./resources/js/views/History.vue")["default"],
       meta: {
         auth: true,
-        title: 'Nhiệm vụ'
+        title: 'Lịch sử nhiệm vụ'
+      }
+    }, {
+      path: 'du-an/:project_id/cong-viec/:task_id/lich-su',
+      name: 'task_history',
+      component: __webpack_require__(/*! ../views/History.vue */ "./resources/js/views/History.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Lịch sử công việc'
+      }
+    }, {
+      path: 'du-an/:project_id/lich-su',
+      name: 'project_history',
+      component: __webpack_require__(/*! ../views/History.vue */ "./resources/js/views/History.vue")["default"],
+      meta: {
+        auth: true,
+        title: 'Lịch sử dự án'
       }
     }, {
       path: 'phong-ban',

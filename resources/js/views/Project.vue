@@ -456,6 +456,10 @@ export default {
                     <template v-if="$root.isAdmin() || $root.auth.id == item.manager.id">
                       <router-link :to="{ name: 'chart', params: { name: 'du-an', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                     </template>
+
+                    <router-link 
+                      :to="{ name: 'project_history', params: { 'project_id' : item.id } }"
+                      class="btn btn-primary btn-sm">Lịch sử</router-link>
                   </td>
                 </tr>
               </template>

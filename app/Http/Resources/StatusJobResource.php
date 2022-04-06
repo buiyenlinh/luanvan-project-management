@@ -22,7 +22,23 @@ class StatusJobResource extends JsonResource
         if ($department_user_job) {
             $department_user = DepartmentUser::find($department_user_job->department_user_id);
             if ($department_user) {
-                $user = User::find($department_user->user_id);
+                if ($this->status == 0 || $this->status == 3 || $this->status == 4 || $this->status == 6 || $this->status == 7) {
+                    $leader = DepartmentUser::where('leader', 1)
+                        ->where('department_id', $department_user->department_id)
+                        ->where('active_leader', 1)
+                        ->latest('id')
+                        ->first();
+                    
+                    $user = [
+                        'position' => 'Trưởng phòng',
+                        'info' => User::find($leader->user_id)
+                    ];
+                } else {
+                    $user = [
+                        'position' => 'Thành viên',
+                        'info' => User::find($department_user->user_id)
+                    ];
+                }
             }
         }
         return [

@@ -17,6 +17,7 @@ use App\Model\DepartmentUser;
 use App\Model\DepartmentUserJob;
 use App\Model\DepartmentUserJobStatus;
 use App\Http\Resources\TaskResource;
+use App\Http\Resources\StatusTaskResource;
 
 use Illuminate\Support\Facades\Storage;
 
@@ -633,7 +634,10 @@ class TaskController extends Controller
         $status = array();
         $department_task = DepartmentTask::where('task_id', $task_id)->latest('id')->first();
         if ($department_task) {
-            $status = DepartmentTaskStatus::where('department_task_id', $department_task->id)->get();
+            $status_list = DepartmentTaskStatus::where('department_task_id', $department_task->id)->get();
+            foreach ($status_list as $_status) {
+                $status[] = new StatusTaskResource($_status);
+            }
         }
 
         $data = [

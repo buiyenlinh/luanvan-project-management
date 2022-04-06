@@ -14,6 +14,7 @@ use App\Model\DepartmentUserJobStatus;
 use App\Model\ProjectStatus;
 use App\Model\User;
 use App\Http\Resources\ProjectResource;
+use App\Http\Resources\StatusProjectResource;
 use Illuminate\Http\Request;
 use Mail;
 
@@ -368,5 +369,32 @@ class ProjectController extends Controller
         ]);
 
         return $this->success('Chọn hoàn thành dự án thành công', []);
+    }
+
+    /**
+     * Lịch sử dự án
+     */
+    public function history(Request $request, $project_id) {
+        $status = [];
+        $project = Project::find($project_id);
+        if (!$project) {
+            return $this->error('Dự án không tồn tại');
+        }
+
+        $manager = User::find($project->manager);
+        $created_by = User::find($project->created_by);
+
+        $status_list = ProjectStatus::where('project_id', $project_id)->get();
+        foreach ($status_list as $_list) {
+            $status[] = new StatusProjectResource($_list);
+        }
+
+        $data = [
+            'status' => $status,
+            'project' => new ProjectResource($project),
+            'manager' => $manager,
+            'created_by' => $created_by
+        ];
+        return $this->success('Lịch sử dự án', $data);
     }
 }
