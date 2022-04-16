@@ -98,7 +98,7 @@ class AppController extends Controller
     public function forgetPassword(Request $request) {
         $random_code = Str::random(6);
         $user = User::where('email', $request->email)->latest('id')->first();
-        if (!$user) return $this->error('Email không tồn tại trong hệ thống');
+        if (!$user) return $this->error('Email không tồn tại trong website');
 
         $name = $user->fullname;
         if (!$name) $name = $user->username;

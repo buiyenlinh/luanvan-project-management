@@ -907,6 +907,22 @@ body textarea {
 
 /* Profile page*/
 
+.profile .avatar div {
+  position: relative;
+  display: inline-block;
+}
+
+.profile .avatar div .avatar-icon-remove {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 5px;
+  color: red;
+  background: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
 .profile .avatar img {
   width: 100%;
   height: auto;
@@ -1400,6 +1416,21 @@ body textarea {
 #chart_div {
   height: 1500px;
   min-width: 1000px;
+}
+
+#user .wrap-avt {
+  position: relative;
+  display: inline-block;
+}
+
+#user .wrap-avt .icon-delete-avt {
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: red;
+  background: #ccc;
+  padding: 4px;
+  cursor: pointer;
 }
 
 @media (min-width: 768px) {

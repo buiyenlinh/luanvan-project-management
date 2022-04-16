@@ -67,6 +67,11 @@ export default {
         this.user.avatar = image?.target.files[0];
       }
     },
+    removeAvatar() {
+      this.avatar_preview = '';
+      this.user.avatar = '';
+      $('#ref_avatar').val('');
+    },
     onSubmit() {
       this.checkUserName();
       if (this.user.id == null) {
@@ -318,7 +323,7 @@ export default {
 </script>
 
 <template>
-  <div class="user">
+  <div id="user">
     <form @submit.prevent="handleSearch">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
@@ -497,7 +502,8 @@ export default {
                     <div class="error text-danger font-italic">{{ error.active }}</div>
                   </div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-12" v-if="user.id == null || (user.role > 2 && user.id > 0)">
+
+                <div class="col-md-6 col-sm-12 col-12" v-if="user.id == null">
                   <div class="form-group">
                     <label><b>Phân quyền <span class="text-danger">*</span></b></label>
                     <select class="form-control" v-model="user.role">
@@ -505,7 +511,7 @@ export default {
                       <template v-for="(item, index) in role_list">
                       <option
                         :key="index"
-                        v-if="item.level > $root.auth.role.level && item.level > 2"
+                        v-if="(item.level > $root.auth.role.level && item.level > 1)"
                         :value="item.id">{{item.name}}</option>
                       </template>
                     </select>
@@ -514,15 +520,27 @@ export default {
                 </div>
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Ảnh đại diện</b></label><br>
-                    <button type="button" class="btn btn-info btn-sm" @click="$refs.RefAvatar.click()">Chọn ảnh</button>
+                    <label><b>Ảnh đại diện</b></label>
+                    <button
+                      style="padding: 2px 5px; font-size: 13px;"
+                      type="button"
+                      class="btn btn-info btn-sm"
+                      @click="$refs.RefAvatar.click()">
+                      Chọn ảnh
+                    </button>
+
                     <input
+                      id="ref_avatar"
                       type="file"
                       ref="RefAvatar"
                       style="display: none"
                       @change="handleChangeAvatar"
                     />
-                    <img v-if="avatar_preview" :src="avatar_preview" alt="" class="pl-2" style="width: 150px; height: auto;"><br>
+                    <br>
+                    <div class="wrap-avt" v-if="avatar_preview">
+                      <img :src="avatar_preview" alt="" style="width: 150px; height: auto;"><br>
+                      <i class="fas fa-times icon-delete-avt" @click="removeAvatar"></i>
+                    </div>
                     <div class="error text-danger font-italic">{{ error.avatar }}</div>
                   </div>
                 </div>

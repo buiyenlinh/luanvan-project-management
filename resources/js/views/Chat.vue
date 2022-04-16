@@ -85,19 +85,23 @@ export default {
       })
     },
     sendMessage() {
-      this.$root.api.post('chat/add', {
-        type: 'text',
-        content: this.text_message.trim()
-      }).then(res => {
-        if (res.data.status == 'OK') {
-          this.appendMessage(res.data.data.chat);
-          this.setMessageLastest(res.data.data.code, res.data.data.lastest);
-        } else {
-          this.$alert(res.data.error, '', 'error');
-        }
-      }).catch(err => this.$root.showError(err));
+      if (this.text_message) {
+        this.$root.api.post('chat/add', {
+          type: 'text',
+          content: this.text_message.trim()
+        }).then(res => {
+          if (res.data.status == 'OK') {
+            this.appendMessage(res.data.data.chat);
+            this.setMessageLastest(res.data.data.code, res.data.data.lastest);
+          } else {
+            this.$alert(res.data.error, '', 'error');
+          }
+        }).catch(err => this.$root.showError(err));
 
-      this.text_message = '';
+        this.text_message = '';
+      } else {
+        this.$root.notify('Vui lòng nhập tin nhắn', 'error');
+      }
     },
     seenMessage() {
       this.$root.api.post('chat/seen').then(res => {

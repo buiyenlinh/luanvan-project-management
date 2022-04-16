@@ -456,6 +456,10 @@ export default {
                     <template v-if="$root.isAdmin() || $root.auth.id == item.manager.id">
                       <router-link :to="{ name: 'chart', params: { name: 'du-an', id: item.id } }" class="btn btn-info btn-sm mb-1">Gantt</router-link>
                     </template>
+
+                    <router-link 
+                      :to="{ name: 'project_history', params: { 'project_id' : item.id } }"
+                      class="btn btn-primary btn-sm">Lịch sử</router-link>
                   </td>
                 </tr>
               </template>
@@ -652,7 +656,7 @@ export default {
       <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h4 class="modal-title">Hoàn thành công việc</h4>
+            <h4 class="modal-title">Hoàn thành dự án</h4>
             <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body">

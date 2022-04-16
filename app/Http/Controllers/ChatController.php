@@ -54,17 +54,24 @@ class ChatController extends Controller
      * @param integer $uid
      * @return array|null
      */
-    public function _getLastestMessage($uid) {
+    public function _getLastestMessage($uid, $check = '') {
         $code = $this->_getCodeChat($uid);
         $data = null;
 
         $chat = Chat::where('code', $code)->orderBy('id', 'desc')->first();
         if ($chat) {
+            $me = $chat->sender == $this->auth->id;
+            if ($check == 'via-realtime') {
+                $me = $chat->sender == $uid;
+            }
+
             $data = [
-                'me' => $chat->sender == $this->auth->id,
+                // 'me' => $chat->sender == $this->auth->id,
+                'me' => $me,
                 'type' => $chat->type,
                 'message' => $chat->content,
-                'timestamp' => $chat->created_at->timestamp * 1000
+                'timestamp' => $chat->created_at->timestamp * 1000,
+                'test' => $uid
             ];
         }
 
@@ -95,7 +102,7 @@ class ChatController extends Controller
      * @param integer $uid
      * @return array
      */
-    public function _getLastestAndNew($uid) {
+    public function _getLastestAndNew($uid) { // id user khác user login
         $data = [
             'lastest' => $this->_getLastestMessage($uid),
             'new' => $this->_getNewMessage($uid)
@@ -194,7 +201,7 @@ class ChatController extends Controller
             'code' => $new_message->code,
             'chat' => $chat,
             'new' => $this->_getNewMessage($this->receiver->id),
-            'lastest' => $this->_getLastestMessage($this->receiver->id)
+            'lastest' => $this->_getLastestMessage($this->receiver->id, 'via-realtime')
         ], 'user' . $this->receiver->id);
 
         $data = [

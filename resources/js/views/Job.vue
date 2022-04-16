@@ -865,8 +865,14 @@ export default {
             </div> 
 
             <div class="form-group">
-              <b v-if="$root.checkDeadline(job) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(job) }}</b>
-              <b v-else class="badge badge-danger">{{ $root.checkDeadline(job) }}</b>
+              <template v-if="job && job.status && job.status.status != 3">
+                <b v-if="$root.checkDeadline(job) == 'Chưa tới hạn'" class="badge badge-info">{{ $root.checkDeadline(job) }}</b>
+                <b v-else class="badge badge-danger">{{ $root.checkDeadline(job) }}</b>
+              </template>
+              <template v-else >
+                <b class="badge badge-warning" v-if="job.delay_time > 0">Hoàn thành trễ {{ job.delay_time }} ngày</b>
+                <b class="badge badge-success" v-else>Hoàn thành đúng hạn</b>
+              </template>
             </div>
           </div>
           <div class="modal-footer">

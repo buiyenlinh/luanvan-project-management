@@ -60,12 +60,30 @@ const router = new VueRouter({
           },
         },
         {
-          path: 'du-an/:project_id/cong-viec/:task_id/nhiem-vu/:job_id',
+          path: 'du-an/:project_id/cong-viec/:task_id/nhiem-vu/:job_id/lich-su',
           name: 'job_history',
           component: require('../views/History.vue').default,
           meta: {
             auth: true,
-            title: 'Nhiệm vụ'
+            title: 'Lịch sử nhiệm vụ'
+          },
+        },
+        {
+          path: 'du-an/:project_id/cong-viec/:task_id/lich-su',
+          name: 'task_history',
+          component: require('../views/History.vue').default,
+          meta: {
+            auth: true,
+            title: 'Lịch sử công việc'
+          },
+        },
+        {
+          path: 'du-an/:project_id/lich-su',
+          name: 'project_history',
+          component: require('../views/History.vue').default,
+          meta: {
+            auth: true,
+            title: 'Lịch sử dự án'
           },
         },
         {

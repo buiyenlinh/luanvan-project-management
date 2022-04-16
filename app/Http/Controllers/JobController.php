@@ -1022,9 +1022,9 @@ class JobController extends Controller
                         }
                     }
                 } else { // thành viên
-                    $department_user_job = DepartmentUserJob::where('department_user_id', $department_user->id)->get();
-                    if ($department_user_job) {
-                        foreach ($department_user_job as $dep_user_job) {
+                    $department_user_job = DepartmentUserJob::where('department_user_id', $department_user->id);
+                    if ($department_user_job->count() > 0) {
+                        foreach ($department_user_job->get() as $dep_user_job) {
                             $department_user_job_status = DepartmentUserJobStatus::where('department_user_job_id', $dep_user_job->id)->latest('id')->first();
 
                             if ($department_user_job_status && $department_user_job_status->status != 7 && $department_user_job_status->status != 3) { // Do status == 7 là đã đc đổi thành viên, 3 hoàn thành

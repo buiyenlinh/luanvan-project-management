@@ -816,12 +816,29 @@ body textarea { font-size: 14px; }
 
 /* Profile page*/
 .profile {
-    .avatar img {
-        width: 100%;
-        height: auto;
-        max-height: 300px;
-        object-fit: cover;
-        border: 1px solid #ddd; 
+    .avatar {
+        div {
+            position: relative;
+            display: inline-block;
+            .avatar-icon-remove {
+                position: absolute;
+                right: 0;
+                top: 0;
+                padding: 5px;
+                color: red;
+                background: rgb(255, 255, 255);
+                border: 1px solid #ccc;
+                cursor: pointer;
+            }
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: cover;
+            border: 1px solid #ddd; 
+        }
     }
 }
 
@@ -1293,6 +1310,22 @@ $width_left: 200px;
 #chart_div {
     height: 1500px;
     min-width: 1000px;
+}
+
+#user {
+    .wrap-avt {
+        position: relative;
+        display: inline-block;
+        .icon-delete-avt {
+            position: absolute;
+            right: 0;
+            top: 0;
+            color: red;
+            background: #ccc;
+            padding: 4px;
+            cursor: pointer;
+        }
+    }
 }
 
 @media (min-width: 768px) {

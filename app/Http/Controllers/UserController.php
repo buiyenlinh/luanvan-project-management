@@ -78,6 +78,18 @@ class UserController extends Controller
             return $this->error('Tài khoản không có quyền');
         }
 
+        if (!$request->username) {
+            return $this->error('Tên đăng nhập là bắt buộc');
+        } elseif (!$request->password) {
+            return $this->error('Mật khẩu là bắt buộc');
+        } elseif (!$request->email) {
+            return $this->error('Email là bắt buộc');
+        } elseif ($request->active != 0 && $request->active != 1) {
+            return $this->error('Trạng thái là bắt buộc');
+        } elseif ($request->role <= 0) {
+            return $this->error('Quyền tài khoản là bắt buộc');
+        }
+
         if ($this->checkExist('username', $request->username)) {
             return $this->error('Tên đăng nhập đã tồn tại');
         }
@@ -90,17 +102,6 @@ class UserController extends Controller
             return $this->error('Số điện thoại đã tồn tại');
         }
 
-        if (!$request->username) {
-            return $this->error('Tên đăng nhập là bắt buộc');
-        } elseif (!$request->password) {
-            return $this->error('Mật khẩu là bắt buộc');
-        } elseif (!$request->email) {
-            return $this->error('Email là bắt buộc');
-        } elseif ($request->active != 0 && $request->active != 1) {
-            return $this->error('Trạng thái là bắt buộc');
-        } elseif ($request->role <= 0) {
-            return $this->error('Quyền tài khoản là bắt buộc');
-        }
         $birthday = 0;
         if ($request->has('birthday')) {
             $birthday = strtotime($request->birthday);
@@ -232,7 +233,7 @@ class UserController extends Controller
         }
 
         $count_chat = Chat::where('sender', $id)->count();
-        if ($count_chat > 0) return $this->error('Người dùng này đã có dữ liệu trong hệ thống! Không thể xóa! Bạn có thể khóa tài khoản người dùng này!');
+        if ($count_chat > 0) return $this->error('Người dùng này đã có dữ liệu trong website! Không thể xóa! Bạn có thể khóa tài khoản người dùng này!');
 
         $count_project = Project::where('manager', $user->id)
             ->orwhere('created_by', $user->id)

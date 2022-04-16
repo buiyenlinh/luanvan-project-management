@@ -27,7 +27,7 @@ Route::middleware('is-token')->group(function() {
     Route::post('update', 'UserController@updateUser');
     Route::delete('delete/{id}', 'UserController@deleteUser');
     Route::post('search-manager', 'UserController@searchManager');
-    Route::post('search-user', 'UserController@searchUser');
+    Route::post('search-user', 'UserController@searchUser')->withoutMiddleware('check-role:1|2')->middleware('check-role:1|2|3');
     Route::post('search-user-not-deparment', 'UserController@searchUserNotDepartment');
   });
 
@@ -46,6 +46,8 @@ Route::middleware('is-token')->group(function() {
 
     Route::post('finish-project/{id}', 'ProjectController@finishProject')
     ->withoutMiddleware('check-role:1|2|3')->middleware('check-role:3');
+
+    Route::post('history/{project_id}', 'ProjectController@history')->withoutMiddleware('check-role:1|2|3');
   });
 
   Route::prefix('department')->middleware('check-role:1|2')->group(function() {

@@ -433,8 +433,17 @@ new Vue({
 		},
 		checkDeadline(_param) {
 			let today = new Date();
-			let date = today.getFullYear() +'-0'+(today.getMonth()+1)+'-0'+today.getDate();
-			
+			let month = today.getMonth()+1;
+			let day = today.getDate();
+			if (month < 10) {
+				month = '0' + month;
+			}
+
+			if (day < 10) {
+				day = '0' + day;
+			}
+			let date = today.getFullYear() + '-' + month + '-' + day;
+			console.log(date);
 			date = new Date(date).getTime();
 			let end_time_param = new Date(_param.end_time).getTime();
 
