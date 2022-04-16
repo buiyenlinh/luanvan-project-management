@@ -71,8 +71,13 @@ export default {
     checkNewPass() {
       if (this.info.password == '')
         this.error.password = 'Mật khẩu mới là bắt buộc'
-      else 
-        this.error.password = ''
+      else {
+        if(this.info.password.length < 6) {
+          this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
+        } else {
+          this.error.password = '';
+        }
+      }
     },
     checkCode() {
       if (this.info.code == '')

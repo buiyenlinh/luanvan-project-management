@@ -254,7 +254,7 @@ export default {
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <input type="text" class="form-control form-control-sm" placeholder="Tên phòng ban..." v-model="search.name">
         </div>
-        <div class="col-md-3 col-sm-5 col-12 mb-2" v-if="$root.isAdmin()">
+        <div class="col-md-3 col-sm-5 col-12 mb-2">
           <m-select
             :size="'sm'"
             text="-- Tìm theo trưởng phòng --"

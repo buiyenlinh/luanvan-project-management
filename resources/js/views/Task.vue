@@ -635,7 +635,7 @@ export default {
 
                         <router-link 
                           :to="{ name: 'task_history', params: { 'project_id' : project.id, 'task_id': item.id } }"
-                          class="btn btn-primary btn-sm">Lịch sử</router-link>
+                          class="btn btn-primary btn-sm mb-1">Lịch sử</router-link>
                       </td>
                     </tr>
                   </template>

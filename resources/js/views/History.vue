@@ -126,6 +126,11 @@ export default {
                   <span v-if="item.status == 3" class="badge badge-success">
                     {{ $root.getStatusTaskName(item.status) }}
                   </span>
+
+                  <span v-if="(item.status == 4) && (history_name == 'job' || history_name == 'task')" class="badge badge-danger">
+                    {{ $root.getStatusTaskName(item.status) }}
+                  </span>
+
                   <span v-else-if="item.status == 7" class="badge badge-warning">
                     {{ $root.getStatusTaskName(item.status) }}
                   </span>
@@ -139,7 +144,7 @@ export default {
                   </span>
 
                   <span v-else-if="history_name == 'project'">
-                    <template v-if="item.status == '0'">
+                    <template v-if="item.status == 0">
                       {{ data.created_by.fullname || data.created_by.username }}  
                     </template>
                     <template v-else>

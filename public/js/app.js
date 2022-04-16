@@ -2674,21 +2674,25 @@ __webpack_require__.r(__webpack_exports__);
     sendMessage: function sendMessage() {
       var _this3 = this;
 
-      this.$root.api.post('chat/add', {
-        type: 'text',
-        content: this.text_message.trim()
-      }).then(function (res) {
-        if (res.data.status == 'OK') {
-          _this3.appendMessage(res.data.data.chat);
+      if (this.text_message) {
+        this.$root.api.post('chat/add', {
+          type: 'text',
+          content: this.text_message.trim()
+        }).then(function (res) {
+          if (res.data.status == 'OK') {
+            _this3.appendMessage(res.data.data.chat);
 
-          _this3.setMessageLastest(res.data.data.code, res.data.data.lastest);
-        } else {
-          _this3.$alert(res.data.error, '', 'error');
-        }
-      })["catch"](function (err) {
-        return _this3.$root.showError(err);
-      });
-      this.text_message = '';
+            _this3.setMessageLastest(res.data.data.code, res.data.data.lastest);
+          } else {
+            _this3.$alert(res.data.error, '', 'error');
+          }
+        })["catch"](function (err) {
+          return _this3.$root.showError(err);
+        });
+        this.text_message = '';
+      } else {
+        this.$root.notify('Vui lòng nhập tin nhắn', 'error');
+      }
     },
     seenMessage: function seenMessage() {
       this.$root.api.post('chat/seen').then(function (res) {})["catch"](function (err) {});
@@ -3548,7 +3552,13 @@ __webpack_require__.r(__webpack_exports__);
       if (this.info.username == '') this.error.username = 'Tên đăng nhập là bắt buộc';else this.error.username = '';
     },
     checkNewPass: function checkNewPass() {
-      if (this.info.password == '') this.error.password = 'Mật khẩu mới là bắt buộc';else this.error.password = '';
+      if (this.info.password == '') this.error.password = 'Mật khẩu mới là bắt buộc';else {
+        if (this.info.password.length < 6) {
+          this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
+        } else {
+          this.error.password = '';
+        }
+      }
     },
     checkCode: function checkCode() {
       if (this.info.code == '') this.error.code = 'Mã là bắt buộc';else this.error.code = '';
@@ -4856,6 +4866,11 @@ __webpack_require__.r(__webpack_exports__);
           this.error.phone = '';
         }
       }
+    },
+    handleRemoveAvt: function handleRemoveAvt() {
+      $('#profile_ref_avatar').val('');
+      this.avatar_preview = '';
+      this.user.avatar = '';
     }
   },
   watch: {
@@ -5889,6 +5904,11 @@ __webpack_require__.r(__webpack_exports__);
         this.avatar_preview = URL.createObjectURL(image === null || image === void 0 ? void 0 : image.target.files[0]);
         this.user.avatar = image === null || image === void 0 ? void 0 : image.target.files[0];
       }
+    },
+    removeAvatar: function removeAvatar() {
+      this.avatar_preview = '';
+      this.user.avatar = '';
+      $('#ref_avatar').val('');
     },
     onSubmit: function onSubmit() {
       var _this3 = this;
@@ -26321,28 +26341,26 @@ var render = function () {
                   }),
                 ]),
                 _vm._v(" "),
-                _vm.$root.isAdmin()
-                  ? _c(
-                      "div",
-                      { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
-                      [
-                        _c("m-select", {
-                          attrs: {
-                            size: "sm",
-                            text: "-- Tìm theo trưởng phòng --",
-                            url: "user/search-user",
-                            statusReset: false,
-                            variable: { first: "fullname", second: "username" },
-                          },
-                          on: {
-                            changeValue: _vm.getLeaderSearch,
-                            remove: _vm.removeLeaderSearch,
-                          },
-                        }),
-                      ],
-                      1
-                    )
-                  : _vm._e(),
+                _c(
+                  "div",
+                  { staticClass: "col-md-3 col-sm-5 col-12 mb-2" },
+                  [
+                    _c("m-select", {
+                      attrs: {
+                        size: "sm",
+                        text: "-- Tìm theo trưởng phòng --",
+                        url: "user/search-user",
+                        statusReset: false,
+                        variable: { first: "fullname", second: "username" },
+                      },
+                      on: {
+                        changeValue: _vm.getLeaderSearch,
+                        remove: _vm.removeLeaderSearch,
+                      },
+                    }),
+                  ],
+                  1
+                ),
                 _vm._v(" "),
                 _vm._m(0),
                 _vm._v(" "),
@@ -28247,6 +28265,26 @@ var render = function () {
                                     ),
                                   ]
                                 )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            item.status == 4 &&
+                            (_vm.history_name == "job" ||
+                              _vm.history_name == "task")
+                              ? _c(
+                                  "span",
+                                  { staticClass: "badge badge-danger" },
+                                  [
+                                    _vm._v(
+                                      "\n                  " +
+                                        _vm._s(
+                                          _vm.$root.getStatusTaskName(
+                                            item.status
+                                          )
+                                        ) +
+                                        "\n                "
+                                    ),
+                                  ]
+                                )
                               : item.status == 7
                               ? _c(
                                   "span",
@@ -28291,7 +28329,7 @@ var render = function () {
                               ? _c(
                                   "span",
                                   [
-                                    item.status == "0"
+                                    item.status == 0
                                       ? [
                                           _vm._v(
                                             "\n                    " +
@@ -30158,15 +30196,50 @@ var render = function () {
                         ])
                       : _vm._e(),
                     _vm._v(" "),
-                    _c("div", { staticClass: "form-group" }, [
-                      _vm.$root.checkDeadline(_vm.job) == "Chưa tới hạn"
-                        ? _c("b", { staticClass: "badge badge-info" }, [
-                            _vm._v(_vm._s(_vm.$root.checkDeadline(_vm.job))),
-                          ])
-                        : _c("b", { staticClass: "badge badge-danger" }, [
-                            _vm._v(_vm._s(_vm.$root.checkDeadline(_vm.job))),
-                          ]),
-                    ]),
+                    _c(
+                      "div",
+                      { staticClass: "form-group" },
+                      [
+                        _vm.job && _vm.job.status && _vm.job.status.status != 3
+                          ? [
+                              _vm.$root.checkDeadline(_vm.job) == "Chưa tới hạn"
+                                ? _c("b", { staticClass: "badge badge-info" }, [
+                                    _vm._v(
+                                      _vm._s(_vm.$root.checkDeadline(_vm.job))
+                                    ),
+                                  ])
+                                : _c(
+                                    "b",
+                                    { staticClass: "badge badge-danger" },
+                                    [
+                                      _vm._v(
+                                        _vm._s(_vm.$root.checkDeadline(_vm.job))
+                                      ),
+                                    ]
+                                  ),
+                            ]
+                          : [
+                              _vm.job.delay_time > 0
+                                ? _c(
+                                    "b",
+                                    { staticClass: "badge badge-warning" },
+                                    [
+                                      _vm._v(
+                                        "Hoàn thành trễ " +
+                                          _vm._s(_vm.job.delay_time) +
+                                          " ngày"
+                                      ),
+                                    ]
+                                  )
+                                : _c(
+                                    "b",
+                                    { staticClass: "badge badge-success" },
+                                    [_vm._v("Hoàn thành đúng hạn")]
+                                  ),
+                            ],
+                      ],
+                      2
+                    ),
                   ])
                 : _vm._e(),
               _vm._v(" "),
@@ -32049,7 +32122,16 @@ var render = function () {
         _c("div", { staticClass: "col-md-3 col-sm-4 col-12 text-center" }, [
           _c("div", { staticClass: "avatar mb-3" }, [
             _vm.avatar_preview
-              ? _c("img", { attrs: { src: _vm.avatar_preview, alt: "" } })
+              ? _c("div", [
+                  _c("img", {
+                    attrs: { src: _vm.avatar_preview, alt: "Ảnh đại diện" },
+                  }),
+                  _vm._v(" "),
+                  _c("i", {
+                    staticClass: "fas fa-times avatar-icon-remove",
+                    on: { click: _vm.handleRemoveAvt },
+                  }),
+                ])
               : _c("img", {
                   attrs: { src: _vm.$root.avatar_default, alt: "" },
                 }),
@@ -32076,7 +32158,7 @@ var render = function () {
           _c("input", {
             ref: "RefAvatar",
             staticStyle: { display: "none" },
-            attrs: { type: "file" },
+            attrs: { id: "profile_ref_avatar", type: "file" },
             on: { change: _vm.handleChangeAvatar },
           }),
           _vm._v(" "),
@@ -33931,9 +34013,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "modal-header" }, [
-      _c("h4", { staticClass: "modal-title" }, [
-        _vm._v("Hoàn thành công việc"),
-      ]),
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Hoàn thành dự án")]),
       _vm._v(" "),
       _c(
         "button",
@@ -34648,7 +34728,7 @@ var render = function () {
                                                 "router-link",
                                                 {
                                                   staticClass:
-                                                    "btn btn-primary btn-sm",
+                                                    "btn btn-primary btn-sm mb-1",
                                                   attrs: {
                                                     to: {
                                                       name: "task_history",
@@ -36153,7 +36233,7 @@ var render = function () {
   var _c = _vm._self._c || _h
   return _c(
     "div",
-    { staticClass: "user" },
+    { attrs: { id: "user" } },
     [
       _c(
         "form",
@@ -36925,8 +37005,7 @@ var render = function () {
                             ]
                           ),
                           _vm._v(" "),
-                          _vm.user.id == null ||
-                          (_vm.user.role > 2 && _vm.user.id > 0)
+                          _vm.user.id == null
                             ? _c(
                                 "div",
                                 { staticClass: "col-md-6 col-sm-12 col-12" },
@@ -36984,7 +37063,7 @@ var render = function () {
                                             return [
                                               item.level >
                                                 _vm.$root.auth.role.level &&
-                                              item.level > 2
+                                              item.level > 1
                                                 ? _c(
                                                     "option",
                                                     {
@@ -37022,12 +37101,15 @@ var render = function () {
                             [
                               _c("div", { staticClass: "form-group" }, [
                                 _vm._m(12),
-                                _c("br"),
                                 _vm._v(" "),
                                 _c(
                                   "button",
                                   {
                                     staticClass: "btn btn-info btn-sm",
+                                    staticStyle: {
+                                      padding: "2px 5px",
+                                      "font-size": "13px",
+                                    },
                                     attrs: { type: "button" },
                                     on: {
                                       click: function ($event) {
@@ -37035,30 +37117,43 @@ var render = function () {
                                       },
                                     },
                                   },
-                                  [_vm._v("Chọn ảnh")]
+                                  [
+                                    _vm._v(
+                                      "\n                    Chọn ảnh\n                  "
+                                    ),
+                                  ]
                                 ),
                                 _vm._v(" "),
                                 _c("input", {
                                   ref: "RefAvatar",
                                   staticStyle: { display: "none" },
-                                  attrs: { type: "file" },
+                                  attrs: { id: "ref_avatar", type: "file" },
                                   on: { change: _vm.handleChangeAvatar },
                                 }),
                                 _vm._v(" "),
-                                _vm.avatar_preview
-                                  ? _c("img", {
-                                      staticClass: "pl-2",
-                                      staticStyle: {
-                                        width: "150px",
-                                        height: "auto",
-                                      },
-                                      attrs: {
-                                        src: _vm.avatar_preview,
-                                        alt: "",
-                                      },
-                                    })
-                                  : _vm._e(),
                                 _c("br"),
+                                _vm._v(" "),
+                                _vm.avatar_preview
+                                  ? _c("div", { staticClass: "wrap-avt" }, [
+                                      _c("img", {
+                                        staticStyle: {
+                                          width: "150px",
+                                          height: "auto",
+                                        },
+                                        attrs: {
+                                          src: _vm.avatar_preview,
+                                          alt: "",
+                                        },
+                                      }),
+                                      _c("br"),
+                                      _vm._v(" "),
+                                      _c("i", {
+                                        staticClass:
+                                          "fas fa-times icon-delete-avt",
+                                        on: { click: _vm.removeAvatar },
+                                      }),
+                                    ])
+                                  : _vm._e(),
                                 _vm._v(" "),
                                 _c(
                                   "div",
@@ -53468,7 +53563,19 @@ new vue__WEBPACK_IMPORTED_MODULE_1___default.a({
     },
     checkDeadline: function checkDeadline(_param) {
       var today = new Date();
-      var date = today.getFullYear() + '-0' + (today.getMonth() + 1) + '-0' + today.getDate();
+      var month = today.getMonth() + 1;
+      var day = today.getDate();
+
+      if (month < 10) {
+        month = '0' + month;
+      }
+
+      if (day < 10) {
+        day = '0' + day;
+      }
+
+      var date = today.getFullYear() + '-' + month + '-' + day;
+      console.log(date);
       date = new Date(date).getTime();
       var end_time_param = new Date(_param.end_time).getTime();
       var check = (date - end_time_param) / 86400000 + 1; // do hoàn thành trước end_time

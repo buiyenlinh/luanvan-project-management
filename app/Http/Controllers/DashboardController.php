@@ -166,7 +166,8 @@ class DashboardController extends Controller
         $date_now = getdate()['mday'];
 
         // $jobs = Job::whereMonth('created_at', $month_now);
-        $job_all = Task::all();
+        $job_all = Job::all();
+        
         $jobs = array();
         foreach ($job_all as $_job) {
             $_start_month = date("m", $_job->start_time);

@@ -126,6 +126,11 @@ export default {
         }
       }
     },
+    handleRemoveAvt() {
+      $('#profile_ref_avatar').val('');
+      this.avatar_preview = '';
+      this.user.avatar = '';
+    }
   },
   watch: {
     'user.username'() {
@@ -146,23 +151,28 @@ export default {
 
 <template>
   <div class="profile">
-     <div class="row">
-       <div class="col-md-3 col-sm-4 col-12 text-center">
-         <div class="avatar mb-3">
-          <img v-if="avatar_preview" :src="avatar_preview" alt="">
+    <div class="row">
+      <div class="col-md-3 col-sm-4 col-12 text-center">
+        <div class="avatar mb-3">
+          <div v-if="avatar_preview">
+            <img :src="avatar_preview" alt="Ảnh đại diện">
+            <i class="fas fa-times avatar-icon-remove" @click="handleRemoveAvt"></i>
+          </div>
+
           <img v-else :src="$root.avatar_default" alt="">
           <div class="text-danger">{{error.avatar}}</div>
-         </div>
-         <button type="button" class="btn btn-info btn-sm mb-1" @click="$refs.RefAvatar.click()">Đổi ảnh</button>
-          <input
-            type="file"
-            ref="RefAvatar"
-            style="display: none"
-            @change="handleChangeAvatar"
-          />
-          <button class="btn btn-danger btn-sm" @click="handleDeleteAvatar">Xóa ảnh</button>
-       </div>
-       <div class="col-md-9 col-sm-8 col-12">
+        </div>
+        <button type="button" class="btn btn-info btn-sm mb-1" @click="$refs.RefAvatar.click()">Đổi ảnh</button>
+        <input
+          id="profile_ref_avatar"
+          type="file"
+          ref="RefAvatar"
+          style="display: none"
+          @change="handleChangeAvatar"
+        />
+        <button class="btn btn-danger btn-sm" @click="handleDeleteAvatar">Xóa ảnh</button>
+      </div>
+      <div class="col-md-9 col-sm-8 col-12">
          <form @submit.prevent="onSubmit">
           <div class="row">
             <div class="col-md-6 col-sm-12 col-12">

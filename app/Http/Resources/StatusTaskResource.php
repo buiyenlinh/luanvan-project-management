@@ -27,7 +27,7 @@ class StatusTaskResource extends JsonResource
         if ($department_task) {
 
             // Tìm quản lý
-            if ($this->status == 0) {
+            if ($this->status == 0 || $this->status == 3 || $this->status == 4) {
                 $task = Task::find($department_task->task_id);
                 if ($task) {
                     $project = Project::find($task->project_id);
