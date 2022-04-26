@@ -963,7 +963,7 @@ export default {
             </div>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-danger btn-sm" @click="handleFinishJob">Gửi</button>
+            <button type="submit" class="btn btn-success btn-sm" @click="handleFinishJob">Hoàn thành</button>
             <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Đóng</button>
           </div>
         </div>

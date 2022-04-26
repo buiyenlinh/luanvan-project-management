@@ -25957,6 +25957,16 @@ var render = function () {
                                   _vm._v(
                                     _vm._s(
                                       item.task
+                                        ? item.task.end_time
+                                        : item.project.end_time
+                                    )
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(
+                                      item.task
                                         ? item.task.created_at
                                         : item.project.created_at
                                     )
@@ -26174,6 +26184,16 @@ var render = function () {
                                   _vm._v(
                                     _vm._s(
                                       item.job
+                                        ? item.job.end_time
+                                        : item.task.end_time
+                                    )
+                                  ),
+                                ]),
+                                _vm._v(" "),
+                                _c("td", [
+                                  _vm._v(
+                                    _vm._s(
+                                      item.job
                                         ? item.job.created_at
                                         : item.task.created_at
                                     )
@@ -26263,6 +26283,8 @@ var staticRenderFns = [
         _c("td", [_c("b", [_vm._v("Trạng thái")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Bắt đầu")])]),
+        _vm._v(" "),
+        _c("td", [_c("b", [_vm._v("Hoàn thành trước")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Ngày tạo")])]),
         _vm._v(" "),
@@ -30473,11 +30495,11 @@ var render = function () {
                 _c(
                   "button",
                   {
-                    staticClass: "btn btn-danger btn-sm",
+                    staticClass: "btn btn-success btn-sm",
                     attrs: { type: "submit" },
                     on: { click: _vm.handleFinishJob },
                   },
-                  [_vm._v("Gửi")]
+                  [_vm._v("Hoàn thành")]
                 ),
                 _vm._v(" "),
                 _c(

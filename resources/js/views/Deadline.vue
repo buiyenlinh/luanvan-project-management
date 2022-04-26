@@ -72,6 +72,7 @@ export default {
                 <td><b>Tên</b></td>
                 <td><b>Trạng thái</b></td>
                 <td><b>Bắt đầu</b></td>
+                <td><b>Hoàn thành trước</b></td>
                 <td><b>Ngày tạo</b></td>
                 <td></td>
               </tr>
@@ -106,6 +107,7 @@ export default {
                       </template>
                     </td>
                     <td>{{ item.task ? item.task.start_time : item.project.start_time }}</td>
+                    <td>{{ item.task ? item.task.end_time : item.project.end_time }}</td>
                     <td>{{ item.task ? item.task.created_at : item.project.created_at }}</td>
                     <td>
                       <router-link v-if="item.task" :to="{name: 'task', params: { 'id': item.project.id }, query: { 'name' : item.task.name }}">
@@ -144,6 +146,7 @@ export default {
                       </template>
                     </td>
                     <td>{{ item.job ? item.job.start_time : item.task.start_time }}</td>
+                    <td>{{ item.job ? item.job.end_time : item.task.end_time }}</td>
                     <td>{{ item.job ? item.job.created_at : item.task.created_at }}</td>
                     <td>
                       <router-link v-if="item.job" :to="{name: 'job', params: { 'project_id': item.project.id, 'id' : item.task.id }, query: { 'name' : item.job.name }}">
