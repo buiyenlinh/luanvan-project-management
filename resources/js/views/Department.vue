@@ -156,7 +156,7 @@ export default {
     checkLeader() {
       if (this.error.leader == '') {
         if (!this.department.leader) {
-          this.error.leader = 'Trưởng phòng ban là bắt buộc';
+          this.error.leader = 'Trưởng nhóm là bắt buộc';
         } else {
           this.error.leader = '';
         }
@@ -164,7 +164,7 @@ export default {
     },
     getMember(_member) {
       if (this.department.leader == _member.id) { 
-        this.error.members = 'Thành viên này đã được chọn làm trưởng phòng ban';
+        this.error.members = 'Thành viên này đã được chọn làm trưởng nhóm làm việc';
         this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
         this.select_members.status = !this.select_members.status;
       } else if (!this.members_id.includes(_member.id)) {
@@ -180,13 +180,13 @@ export default {
         this.department.leader = _leader.id;
         this.error.leader = '';
       } else {
-        this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
+        this.error.leader = 'Thành viên này đã được chọn vào nhóm làm việc';
         this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
         this.select_leader.status = !this.select_leader.status;
       }
     },
     removeLeader() {
-      if (this.error.members == 'Thành viên này đã được chọn làm trưởng phòng ban') {
+      if (this.error.members == 'Thành viên này đã được chọn làm trưởng nhóm làm việc') {
         this.error.members = '';
       }
       this.department.leader = null;
@@ -252,12 +252,12 @@ export default {
     <form @submit.prevent="handleSearch" v-if="$root.isManager()">
       <div class="row">
         <div class="col-md-3 col-sm-5 col-12 mb-2">
-          <input type="text" class="form-control form-control-sm" placeholder="Tên phòng ban..." v-model="search.name">
+          <input type="text" class="form-control form-control-sm" placeholder="Tên nhóm làm việc..." v-model="search.name">
         </div>
         <div class="col-md-3 col-sm-5 col-12 mb-2">
           <m-select
             :size="'sm'"
-            text="-- Tìm theo trưởng phòng --"
+            text="-- Tìm theo trưởng nhóm --"
             url="user/search-user"
             :statusReset="false"
             @changeValue="getLeaderSearch"
@@ -316,7 +316,7 @@ export default {
             </div>
           </li>
         </template>
-        <div v-else class="p-3">Chưa có phòng ban</div>
+        <div v-else class="p-3">Chưa có nhóm làm việc</div>
       </ul>
     </div>
 
@@ -328,7 +328,7 @@ export default {
       <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
-            <h4 class="modal-title">Phòng ban</h4>
+            <h4 class="modal-title">Nhóm làm việc</h4>
             <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body">
@@ -336,7 +336,7 @@ export default {
               <div class="row">
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Tên phòng ban <span class="text-danger">*</span></b></label>
+                    <label><b>Tên nhóm làm việc <span class="text-danger">*</span></b></label>
                     <input v-if="department.id" type="text" class="form-control form-control-sm" v-model="department.name" disabled>
                     <input v-else type="text" class="form-control form-control-sm" v-model="department.name">
                     <div class="text-danger font-italic error">{{error.name}}</div>
@@ -345,7 +345,7 @@ export default {
 
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Trưởng phòng ban <span class="text-danger">*</span></b></label>
+                    <label><b>Trưởng nhóm <span class="text-danger">*</span></b></label>
                     
                     <m-select
                       :size="'sm'"
@@ -406,14 +406,14 @@ export default {
         <div class="modal-content">
           <form @submit.prevent="onSubmitDelete">
             <div class="modal-header">
-              <h4 class="modal-title">Xóa phòng ban</h4>
+              <h4 class="modal-title">Xóa nhóm làm việc</h4>
               <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body" v-if="$root.isAdmin()">
               <div v-if="department.name" class="d-flex justify-content-start">
                 <i class="fas fa-exclamation-triangle text-danger icon-warm-delete"></i>
                 <span>
-                  Bạn có muốn xóa phòng ban <b>{{ department.name }}</b> không?
+                  Bạn có muốn xóa nhóm làm việc <b>{{ department.name }}</b> không?
                 </span>
               </div>
             </div>
@@ -426,8 +426,8 @@ export default {
       </div>
     </div>
 
-    <m-loading v-if="loading_update_add" :title="department.id != null ? 'Đang cập nhật phòng ban' : 'Đang thêm phòng ban'" :full="true" />
-    <m-loading v-if="loading_delete" title="Đang xóa phòng ban" :full="true" />
+    <m-loading v-if="loading_update_add" :title="department.id != null ? 'Đang cập nhật nhóm làm việc' : 'Đang thêm nhóm làm việc'" :full="true" />
+    <m-loading v-if="loading_delete" title="Đang xóa nhóm làm việc" :full="true" />
   
   </div>
 </template>

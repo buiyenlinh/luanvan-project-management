@@ -96,11 +96,13 @@ export default {
     },
     checkPassword() {
       if (this.user.password) {
-        if(this.user.password.length < 6) {
+        if(this.user.password.length > 0 && this.user.password.length < 6) {
           this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
         } else {
           this.error.password = '';
         }
+      } else {
+        this.error.password = '';
       }
     },checkEmail() {
       if (this.user.email == '') {
