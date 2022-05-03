@@ -3187,7 +3187,7 @@ __webpack_require__.r(__webpack_exports__);
     checkLeader: function checkLeader() {
       if (this.error.leader == '') {
         if (!this.department.leader) {
-          this.error.leader = 'Trưởng phòng ban là bắt buộc';
+          this.error.leader = 'Trưởng nhóm là bắt buộc';
         } else {
           this.error.leader = '';
         }
@@ -3195,7 +3195,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     getMember: function getMember(_member) {
       if (this.department.leader == _member.id) {
-        this.error.members = 'Thành viên này đã được chọn làm trưởng phòng ban';
+        this.error.members = 'Thành viên này đã được chọn làm trưởng nhóm làm việc';
         this.select_members.text = '-- Tìm họ tên hoặc tên đăng nhập --';
         this.select_members.status = !this.select_members.status;
       } else if (!this.members_id.includes(_member.id)) {
@@ -3211,13 +3211,13 @@ __webpack_require__.r(__webpack_exports__);
         this.department.leader = _leader.id;
         this.error.leader = '';
       } else {
-        this.error.leader = 'Thành viên này đã được chọn vào phòng ban';
+        this.error.leader = 'Thành viên này đã được chọn vào nhóm làm việc';
         this.select_leader.text = '-- Tìm họ tên hoặc tên đăng nhập --';
         this.select_leader.status = !this.select_leader.status;
       }
     },
     removeLeader: function removeLeader() {
-      if (this.error.members == 'Thành viên này đã được chọn làm trưởng phòng ban') {
+      if (this.error.members == 'Thành viên này đã được chọn làm trưởng nhóm làm việc') {
         this.error.members = '';
       }
 
@@ -3735,7 +3735,7 @@ __webpack_require__.r(__webpack_exports__);
         link: "project",
         icon: "fas fa-folder"
       }, {
-        label: 'Phòng ban',
+        label: 'Nhóm làm việc',
         link: "department",
         icon: "fas fa-folder"
       }];
@@ -4834,11 +4834,13 @@ __webpack_require__.r(__webpack_exports__);
     },
     checkPassword: function checkPassword() {
       if (this.user.password) {
-        if (this.user.password.length < 6) {
+        if (this.user.password.length > 0 && this.user.password.length < 6) {
           this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
         } else {
           this.error.password = '';
         }
+      } else {
+        this.error.password = '';
       }
     },
     checkEmail: function checkEmail() {
@@ -26350,7 +26352,10 @@ var render = function () {
                       },
                     ],
                     staticClass: "form-control form-control-sm",
-                    attrs: { type: "text", placeholder: "Tên phòng ban..." },
+                    attrs: {
+                      type: "text",
+                      placeholder: "Tên nhóm làm việc...",
+                    },
                     domProps: { value: _vm.search.name },
                     on: {
                       input: function ($event) {
@@ -26370,7 +26375,7 @@ var render = function () {
                     _c("m-select", {
                       attrs: {
                         size: "sm",
-                        text: "-- Tìm theo trưởng phòng --",
+                        text: "-- Tìm theo trưởng nhóm --",
                         url: "user/search-user",
                         statusReset: false,
                         variable: { first: "fullname", second: "username" },
@@ -26590,7 +26595,7 @@ var render = function () {
                       )
                     })
                   : _c("div", { staticClass: "p-3" }, [
-                      _vm._v("Chưa có phòng ban"),
+                      _vm._v("Chưa có nhóm làm việc"),
                     ]),
               ],
               2
@@ -26903,7 +26908,7 @@ var render = function () {
                                 _vm._v(" "),
                                 _c("span", [
                                   _vm._v(
-                                    "\n                Bạn có muốn xóa phòng ban "
+                                    "\n                Bạn có muốn xóa nhóm làm việc "
                                   ),
                                   _c("b", [
                                     _vm._v(_vm._s(_vm.department.name)),
@@ -26929,8 +26934,8 @@ var render = function () {
             attrs: {
               title:
                 _vm.department.id != null
-                  ? "Đang cập nhật phòng ban"
-                  : "Đang thêm phòng ban",
+                  ? "Đang cập nhật nhóm làm việc"
+                  : "Đang thêm nhóm làm việc",
               full: true,
             },
           })
@@ -26938,7 +26943,7 @@ var render = function () {
       _vm._v(" "),
       _vm.loading_delete
         ? _c("m-loading", {
-            attrs: { title: "Đang xóa phòng ban", full: true },
+            attrs: { title: "Đang xóa nhóm làm việc", full: true },
           })
         : _vm._e(),
     ],
@@ -26963,7 +26968,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "modal-header" }, [
-      _c("h4", { staticClass: "modal-title" }, [_vm._v("Phòng ban")]),
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Nhóm làm việc")]),
       _vm._v(" "),
       _c(
         "button",
@@ -26981,7 +26986,7 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("label", [
       _c("b", [
-        _vm._v("Tên phòng ban "),
+        _vm._v("Tên nhóm làm việc "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])
@@ -26992,7 +26997,7 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("label", [
       _c("b", [
-        _vm._v("Trưởng phòng ban "),
+        _vm._v("Trưởng nhóm "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])
@@ -27008,7 +27013,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "modal-header" }, [
-      _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa phòng ban")]),
+      _c("h4", { staticClass: "modal-title" }, [_vm._v("Xóa nhóm làm việc")]),
       _vm._v(" "),
       _c(
         "button",
@@ -27078,7 +27083,7 @@ var render = function () {
                     _c(
                       "router-link",
                       { attrs: { to: { name: "department" } } },
-                      [_vm._v("Phòng ban")]
+                      [_vm._v("Nhóm làm việc")]
                     ),
                   ],
                   1
@@ -27209,7 +27214,7 @@ var render = function () {
                                               staticClass:
                                                 "badge badge-success",
                                             },
-                                            [_vm._v("Trưởng phòng")]
+                                            [_vm._v("Trưởng nhóm")]
                                           )
                                         : _c(
                                             "span",

@@ -1192,7 +1192,7 @@ class JobController extends Controller
                     $project_status = ProjectStatus::where('project_id', $_project->id)->latest('id')->first();
                     if ($_project && $_project->active == 1 && $project_status && $project_status->status != 9) {
 
-                        if ($type == 'project' && ($status == 'late' && $_project->end_time - 24 * 3600 < $time_now) || ($status == 'today' && $time_now == $_project->end_time - 24 * 3600) || ($status == 'working' && $_project->start_time <= $time_now && $time_now < $_project->end_time - 24 * 3600)) {
+                        if ($type == 'project' && (($status == 'late' && $_project->end_time - 24 * 3600 < $time_now) || ($status == 'today' && $time_now == $_project->end_time - 24 * 3600) || ($status == 'working' && $_project->start_time <= $time_now && $time_now < $_project->end_time - 24 * 3600))) {
                             $list[] = [
                                 'project' => new ProjectResource($_project),
                                 'task' => null

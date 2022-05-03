@@ -45,7 +45,7 @@ export default {
           icon: "fas fa-folder",
         },
         {
-          label: 'Phòng ban',
+          label: 'Nhóm làm việc',
           link: "department",
           icon: "fas fa-folder",
         },

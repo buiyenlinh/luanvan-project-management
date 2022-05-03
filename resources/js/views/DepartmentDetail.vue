@@ -148,7 +148,7 @@ export default {
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'department' }">Phòng ban</router-link>  
+            <router-link :to="{ name: 'department' }">Nhóm làm việc</router-link>  
           </li>
           <li class="breadcrumb-item active" aria-current="page">{{ department.name }}</li>
         </ol>
@@ -196,7 +196,7 @@ export default {
                       <td>{{ index + 1 }}</td>
                       <td>{{ item.fullname || item.username }}</td>
                       <td>
-                        <span class="badge badge-success" v-if="list && list.leader == item.id">Trưởng phòng</span>
+                        <span class="badge badge-success" v-if="list && list.leader == item.id">Trưởng nhóm</span>
                         <span class="badge badge-info" v-else>thành viên</span>
                       </td>
                       <td>

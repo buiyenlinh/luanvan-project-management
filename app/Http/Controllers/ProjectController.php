@@ -120,7 +120,7 @@ class ProjectController extends Controller
         } else if ($start_time > $end_time) {
             return $this->error('Thời gian bắt đầu phải trước thời gian kết thúc');
         } else if ($active != 1 && $active != 0) {
-            return $this->error('Trạng thái là bắt buộc');
+            return $this->error('Trạng thái không hợp lệ');
         }
         
         if ($this->checkExist('name', $name)) {
