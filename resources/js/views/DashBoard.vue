@@ -111,7 +111,7 @@
 
         <div class="col-md-3 col-sm-4 col-xs-12 mb-2">
           <div class="item">
-            <div class="top"><b>PHÒNG BAN</b></div>
+            <div class="top"><b>NHÓM LÀM VIỆC</b></div>
            <div class="bottom d-flex justify-content-start" v-if="data && data.department">
               <h3>{{ data.department.total }}</h3>
               <ul>
@@ -158,17 +158,5 @@
         </div>
       </div>
     </div>
-
-    <!-- <div class="dashboard-02">
-      <div class="row">
-        <div class="col-md-3 col-sm-4 col-12">
-          <b>Phòng ban có công việc trễ nhiều nhất</b>
-        </div>
-
-        <div class="col-md-3 col-sm-4 col-12">
-          <b>Thành viên có nhiệm vụ trễ nhiều nhất</b>
-        </div>
-      </div>
-    </div> -->
   </div>
 </template>
