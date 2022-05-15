@@ -92,7 +92,7 @@ const router = new VueRouter({
           component: require('../views/Department.vue').default,
           meta: {
             auth: true,
-            title: 'Phòng ban'
+            title: 'Nhóm làm việc'
           },
         },
         {
@@ -101,7 +101,7 @@ const router = new VueRouter({
           component: require('../views/DepartmentDetail.vue').default,
           meta: {
             auth: true,
-            title: 'Chi tiết phòng ban'
+            title: 'Chi tiết nhóm làm việc'
           },
         },
         {

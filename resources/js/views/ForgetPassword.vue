@@ -32,11 +32,11 @@ export default {
             this.$root.notify(res.data.message, 'success');
             this.checkForm = true;
           } else {
-            this.$root.notify(res.data.error, 'error');
+            this.$root.showError(res.data.error, 'error');
           }
         }).catch(err => {
           this.loading = false;
-          this.$root.notify(err, 'error');
+          this.$root.showError(err, 'error');
         })
       }
     },
@@ -53,11 +53,11 @@ export default {
             this.$root.notify(res.data.message, 'success');
             this.$router.replace({ name: 'login' })
           } else {
-            this.$root.notify(res.data.error, 'error');
+            this.$root.showError(res.data.error, 'error');
           }
         }).catch(err => {
           this.loading_change = false;
-          this.$root.notify(err, 'error');
+          this.$root.showError(err, 'error');
         })
       }
       

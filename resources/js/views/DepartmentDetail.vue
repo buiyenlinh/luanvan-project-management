@@ -28,14 +28,14 @@ export default {
         if (res.data.status == "OK") {
           this.list = res.data.data;
 
-          // Kiểm tra user login có thuộc phòng ban này không
+          // Kiểm tra user login có thuộc nhóm làm việc này không
           let ids = [];
           for (let i in res.data.data.list.data) {
             ids.push(res.data.data.list.data[i].id);
           }
           if (!ids.includes(this.$root.auth.id) && !this.$root.isAdmin()) {
             this.$router.replace({ name: 'department' });
-            this.$root.$notify('Bạn không thuộc phòng ban này', 'error');
+            this.$root.$notify('Bạn không thuộc nhóm làm việc này', 'error');
           }
         } else {
           this.$root.$notify(res.data.error, 'error');

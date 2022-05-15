@@ -217,13 +217,13 @@ class JobController extends Controller
 
         // Department User
         $department_user = DepartmentUser::where('user_id', $user_id)->latest('id')->first();
-        if (!$department_user) return $this->error('Thành viên chưa có phòng ban');
+        if (!$department_user) return $this->error('Thành viên chưa có nhóm làm việc');
 
         $department_task = DepartmentTask::where('task_id', $task_id)->first();
         if (!$department_task) return $this->error('Vui lòng thử lại');
 
         if ($department_user->department_id != $department_task->department_id)
-            return $this->error('Thành viên không thuộc phòng ban được phân công');
+            return $this->error('Thành viên không thuộc nhóm làm việc được phân công');
 
         if (is_array($pre_job_ids)) {
             foreach ($pre_job_ids as $_pre_job_id) {
@@ -318,13 +318,13 @@ class JobController extends Controller
 
         // Department User
         $department_user = DepartmentUser::where('user_id', $user_id)->latest('id')->first();
-        if (!$department_user) return $this->error('Thành viên chưa có phòng ban');
+        if (!$department_user) return $this->error('Thành viên chưa có nhóm làm việc');
 
         $department_task = DepartmentTask::where('task_id', $task_id)->first();
         if (!$department_task) return $this->error('Vui lòng thử lại');
 
         if ($department_user->department_id != $department_task->department_id)
-            return $this->error('Thành viên không thuộc phòng ban được phân công');
+            return $this->error('Thành viên không thuộc nhóm làm việc được phân công');
 
         // File đính kèm
         $file = $job->file;
@@ -968,7 +968,7 @@ class JobController extends Controller
             if ($department_user) {
                 if ($department_user->leader == 1 && $department_user->active_leader == 1) { // trưởng phòng
 
-                    /** Lấy task phòng ban thực hiện */
+                    /** Lấy task nhóm làm việc thực hiện */
                     $department_task = DepartmentTask::where('department_id', $department_user->department_id)->get();
                     if ($department_task) {
 
@@ -1228,7 +1228,7 @@ class JobController extends Controller
             if ($department_user) {
                 if ($department_user->leader == 1 && $department_user->active_leader == 1) { // trưởng phòng
 
-                    /** Lấy task phòng ban thực hiện */
+                    /** Lấy task nhóm làm việc thực hiện */
                     $department_task = DepartmentTask::where('department_id', $department_user->department_id)->get();
                     if ($department_task) {
 

@@ -182,7 +182,7 @@ class TaskController extends Controller
 
         $department_check = Department::find($department_id);
         if (!$department_check) 
-            return $this->error('Phòng ban không tồn tại');
+            return $this->error('Nhóm làm việc không tồn tại');
 
         $file = '';
         if ($request->file('file')) {
@@ -223,7 +223,7 @@ class TaskController extends Controller
             'department_task_id' => $department_task->id
         ]);
 
-        // Gửi email cho trưởng phòng ban
+        // Gửi email cho trưởng nhóm làm việc
         $leader_department = DepartmentUser::where('leader', 1)->where('active_leader', 1)
             ->where('department_id', $department_check->id)->latest('id')->first();
         $leader_user = User::find($leader_department->user_id);
@@ -242,7 +242,7 @@ class TaskController extends Controller
             // Gửi mail
             $_name = $leader_user->fullname;
             if (!$_name) $_name = $leader_user->username;
-            $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Phòng ban của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án <b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
+            $content_mail = '<div>Xin chào ' . $_name . '!</div><div>Nhóm làm việc của bạn được phân công công việc <b>' . $name . '</b> thuộc dự án <b>' . $project->name . '</b>, vui lòng kiểm tra. Cảm ơn!</div>';
             $this->_sendEmail($leader_user->email, $name, $content_mail);
         }
 
@@ -307,7 +307,7 @@ class TaskController extends Controller
             'file' => $file
         ]);
 
-        // Tìm trưởng phòng
+        // Tìm trưởng nhóm
         $department_task = DepartmentTask::where('task_id', $task->id)->latest('id')->first();
         if ($department_task) {
             $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)->where('leader', 1)
@@ -343,7 +343,7 @@ class TaskController extends Controller
         if ($jobs > 0) return $this->error('Công việc này đã phân công nhiệm vụ. Không thể xóa');
 
 
-        // Thông báo cho leader phòng ban thực hiện task này
+        // Thông báo cho leader nhóm làm việc thực hiện task này
         $department_task = DepartmentTask::where('task_id', $task->id)->latest('id')->first();
         if ($department_task) {
             $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
@@ -534,14 +534,14 @@ class TaskController extends Controller
             ]);
         }
 
-        /** Gửi mail cho trưởng phòng ban của task khi được manager duyệt task */
+        /** Gửi mail cho trưởng nhóm làm việc của task khi được manager duyệt task */
         $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
             ->where('active_leader', 1)->latest('id')->first();
 
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
 
-            // Thông báo cho trưởng phòng
+            // Thông báo cho trưởng nhóm
             $this->_sendRealtime([
                 'name' => 'task',
                 'notification' => [
@@ -585,14 +585,14 @@ class TaskController extends Controller
         }
 
         /**
-         * Gửi mail cho trưởng phòng ban tiếp nhận task => bị manager từ chối
+         * Gửi mail cho trưởng nhóm làm việc tiếp nhận task => bị manager từ chối
          */
         $department_user_leader = DepartmentUser::where('department_id', $department_task->department_id)
             ->where('active_leader', 1)->latest('id')->first();
         $leader = User::find($department_user_leader->user_id);
         if ($leader) {
 
-            // Thông báo cho trưởng phòng
+            // Thông báo cho trưởng nhóm
             $this->_sendRealtime([
                 'name' => 'task',
                 'notification' => [

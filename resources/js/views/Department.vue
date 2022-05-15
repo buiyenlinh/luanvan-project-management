@@ -148,7 +148,7 @@ export default {
     },
     checkName() {
       if (this.department.name == '') {
-        this.error.name = 'Tên dự án là bắt buộc';
+        this.error.name = 'Tên nhóm làm việc là bắt buộc';
       } else {
         this.error.name = '';
       }
@@ -362,7 +362,7 @@ export default {
 
                 <div class="col-md-12 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Thành viên</b></label>
+                    <label><b>Thành viên<span class="text-danger">*</span></b></label>
                     <m-select
                       :size="'sm'"
                       :text="select_members.text"
