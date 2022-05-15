@@ -54,7 +54,6 @@ class LabelController extends Controller
         $active = $request->active;
 
         if (!$name) return $this->error('Tên nhãn là bắt buộc');
-        if (!$active) return $this->error('Trạng thái nhãn là bắt buộc');
         if ($active != 1 && $active != 0) return $this->error('Trạng thái nhãn không hợp lệ');
 
         $check_name = Label::where('name', $name)->count();

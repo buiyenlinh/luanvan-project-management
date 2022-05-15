@@ -146,7 +146,7 @@ export default {
         this.$root.showError(err);
         this.loading_delete = false;
       })
-    }
+    },
   },
   created() {
     this.handleCloseModal();
@@ -157,7 +157,7 @@ export default {
     }
 
     this.current_page = 1;  
-    $(document).on('hidden.bs.modal', '#label_details, #label_add_update', () => {
+    $(document).on('hidden.bs.modal', '#label_details, #label_add_update, #label_delete', () => {
       this.handleCloseModal();
     });
 

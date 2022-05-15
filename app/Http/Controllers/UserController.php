@@ -195,7 +195,7 @@ class UserController extends Controller
             $department_user = DepartmentUser::where('user_id', $request->id)
                 ->where('leader', 1)->count();
             if ($department_user > 0) {
-                return $this->error('Tài khoản này hiện là trưởng phòng của phòng ban nào đó. Vui lòng đổi trưởng phòng ban trước khi thay đổi quyền của tài khoản này');
+                return $this->error('Tài khoản này hiện là trưởng nhóm. Vui lòng đổi trưởng nhóm trước khi thay đổi quyền của tài khoản này');
             }
         }
 
@@ -244,7 +244,7 @@ class UserController extends Controller
 
         $count_department_user = DepartmentUser::where('user_id', $user->id)->count();
         if ($count_department_user > 0) {
-            return $this->error('Người dùng đã thuộc một phòng ban nào đó. Không thể xóa');
+            return $this->error('Người dùng đã thuộc một nhóm làm việc nào đó. Không thể xóa');
         }
         Storage::delete($user->avatar);
 
@@ -286,7 +286,7 @@ class UserController extends Controller
     }
 
     /**
-     * Tìm kiếm user chưa có phòng ban
+     * Tìm kiếm user chưa có nhóm
      */
     public function searchUserNotDepartment(Request $request) {
         $role = Role::where('level', 4)->first();   
@@ -303,6 +303,10 @@ class UserController extends Controller
             $department_user_old_leader = DepartmentUser::where('user_id', $_list->id)->count();
             $department_user = DepartmentUser::where('user_id', $_list->id)->where('leader', 0)->count();
             if ($department_user == 0 && $department_user_old_leader == 0) {
+                $avatar = $_list->avatar;
+                if (!empty($avatar) && !preg_match('/^https?:/', $avatar)) {
+                    $_list['avatar'] = Storage::url($_list->avatar);
+                }
                 $data[] = $_list;
             }
         }

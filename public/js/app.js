@@ -3179,7 +3179,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     checkName: function checkName() {
       if (this.department.name == '') {
-        this.error.name = 'Tên dự án là bắt buộc';
+        this.error.name = 'Tên nhóm làm việc là bắt buộc';
       } else {
         this.error.name = '';
       }
@@ -3327,7 +3327,7 @@ __webpack_require__.r(__webpack_exports__);
         _this.loading_list = false;
 
         if (res.data.status == "OK") {
-          _this.list = res.data.data; // Kiểm tra user login có thuộc phòng ban này không
+          _this.list = res.data.data; // Kiểm tra user login có thuộc nhóm làm việc này không
 
           var ids = [];
 
@@ -3340,7 +3340,7 @@ __webpack_require__.r(__webpack_exports__);
               name: 'department'
             });
 
-            _this.$root.$notify('Bạn không thuộc phòng ban này', 'error');
+            _this.$root.$notify('Bạn không thuộc nhóm làm việc này', 'error');
           }
         } else {
           _this.$root.$notify(res.data.error, 'error');
@@ -3511,12 +3511,12 @@ __webpack_require__.r(__webpack_exports__);
 
             _this.checkForm = true;
           } else {
-            _this.$root.notify(res.data.error, 'error');
+            _this.$root.showError(res.data.error, 'error');
           }
         })["catch"](function (err) {
           _this.loading = false;
 
-          _this.$root.notify(err, 'error');
+          _this.$root.showError(err, 'error');
         });
       }
     },
@@ -3539,12 +3539,12 @@ __webpack_require__.r(__webpack_exports__);
               name: 'login'
             });
           } else {
-            _this2.$root.notify(res.data.error, 'error');
+            _this2.$root.showError(res.data.error, 'error');
           }
         })["catch"](function (err) {
           _this2.loading_change = false;
 
-          _this2.$root.notify(err, 'error');
+          _this2.$root.showError(err, 'error');
         });
       }
     },
@@ -4614,7 +4614,7 @@ __webpack_require__.r(__webpack_exports__);
     }
 
     this.current_page = 1;
-    $(document).on('hidden.bs.modal', '#label_details, #label_add_update', function () {
+    $(document).on('hidden.bs.modal', '#label_details, #label_add_update, #label_delete', function () {
       _this5.handleCloseModal();
     });
     this.getList();
@@ -5303,7 +5303,7 @@ __webpack_require__.r(__webpack_exports__);
       error: null,
       validate_form: false,
       select_department: {
-        text: '--- Tìm phòng ban ---',
+        text: '--- Tìm nhóm làm việc ---',
         status: false
       },
       select_label: {
@@ -5490,7 +5490,7 @@ __webpack_require__.r(__webpack_exports__);
       this.pre_task_id_check = [];
       this.response_finish = '';
       this.select_department = {
-        text: '--- Tìm phòng ban ---',
+        text: '--- Tìm nhóm làm việc ---',
         status: !this.select_department.status
       };
       this.select_label = {
@@ -5511,7 +5511,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     removeDepartment: function removeDepartment() {
       this.task.department_id = null;
-      this.select_department.text = '--- Tìm phòng ban ---';
+      this.select_department.text = '--- Tìm nhóm làm việc ---';
     },
     getLabel: function getLabel(_label) {
       this.task.label_id = _label.id;
@@ -5632,7 +5632,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     checkDepartment: function checkDepartment() {
       if (this.task.department_id == null || this.task.department_id < 0) {
-        this.error.department = 'Phân công cho phòng ban là bắt buộc';
+        this.error.department = 'Phân công cho nhóm làm việc là bắt buộc';
       } else {
         this.error.department = '';
       }
@@ -27008,7 +27008,12 @@ var staticRenderFns = [
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("label", [_c("b", [_vm._v("Thành viên")])])
+    return _c("label", [
+      _c("b", [
+        _vm._v("Thành viên"),
+        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
+      ]),
+    ])
   },
   function () {
     var _vm = this
@@ -28262,7 +28267,7 @@ var render = function () {
                         _vm._m(2),
                         _vm._v(" "),
                         _vm.history_name == "task"
-                          ? _c("td", [_c("b", [_vm._v("Phòng ban")])])
+                          ? _c("td", [_c("b", [_vm._v("Nhóm làm việc")])])
                           : _vm._e(),
                         _vm._v(" "),
                         _vm._m(3),
@@ -34192,7 +34197,7 @@ var render = function () {
                               _c("m-select", {
                                 attrs: {
                                   size: "sm",
-                                  text: "--Tìm theo phòng ban--",
+                                  text: "--Tìm theo nhóm làm việc--",
                                   url: "department/search",
                                   statusReset: false,
                                   variable: { first: "name" },
@@ -36005,7 +36010,7 @@ var staticRenderFns = [
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Tên")])]),
         _vm._v(" "),
-        _c("td", [_c("b", [_vm._v("Phòng ban")])]),
+        _c("td", [_c("b", [_vm._v("Nhóm làm việc")])]),
         _vm._v(" "),
         _c("td", [_c("b", [_vm._v("Thống kê")])]),
         _vm._v(" "),
@@ -36077,7 +36082,7 @@ var staticRenderFns = [
     var _c = _vm._self._c || _h
     return _c("label", [
       _c("b", [
-        _vm._v("Phân công cho phòng ban "),
+        _vm._v("Phân công cho nhóm làm việc "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])
@@ -53585,7 +53590,7 @@ new vue__WEBPACK_IMPORTED_MODULE_1___default.a({
       'Từ chối nhận', // job								- 5
       'Không duyệt từ chối nhận', // job		- 6
       'Đổi thành viên', // job							- 7
-      'Đổi phòng ban', // task							- 8
+      'Đổi nhóm làm việc', // task							- 8
       'Đã hoàn thành' // Project						- 9
       ];
       return list[status];
@@ -54448,7 +54453,7 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
       component: __webpack_require__(/*! ../views/Department.vue */ "./resources/js/views/Department.vue")["default"],
       meta: {
         auth: true,
-        title: 'Phòng ban'
+        title: 'Nhóm làm việc'
       }
     }, {
       path: 'phong-ban/:department_id',
@@ -54456,7 +54461,7 @@ var router = new vue_router__WEBPACK_IMPORTED_MODULE_2__["default"]({
       component: __webpack_require__(/*! ../views/DepartmentDetail.vue */ "./resources/js/views/DepartmentDetail.vue")["default"],
       meta: {
         auth: true,
-        title: 'Chi tiết phòng ban'
+        title: 'Chi tiết nhóm làm việc'
       }
     }, {
       path: 'ca-nhan',

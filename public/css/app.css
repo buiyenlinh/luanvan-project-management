@@ -953,7 +953,7 @@ body textarea {
   border-radius: 0px 0px 0px 10px;
 }
 
-/* Phòng ban */
+/* nhóm làm việc */
 
 #department .list ul {
   padding: 0;
@@ -1026,7 +1026,7 @@ body textarea {
   top: 10px;
 }
 
-/* Chi tiết phòng ban */
+/* Chi tiết nhóm làm việc */
 
 #department-detail .new-members {
   margin-top: 10px;

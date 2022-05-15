@@ -16,7 +16,7 @@ export default {
       error: null,
       validate_form: false,
       select_department: {
-        text: '--- Tìm phòng ban ---',
+        text: '--- Tìm nhóm làm việc ---',
         status: false
       },
       select_label: {
@@ -183,7 +183,7 @@ export default {
       this.response_finish = '';
 
       this.select_department = {
-        text: '--- Tìm phòng ban ---',
+        text: '--- Tìm nhóm làm việc ---',
         status: !this.select_department.status
       }
 
@@ -207,7 +207,7 @@ export default {
     },
     removeDepartment() {
       this.task.department_id= null;
-      this.select_department.text = '--- Tìm phòng ban ---';
+      this.select_department.text = '--- Tìm nhóm làm việc ---';
     },
     getLabel(_label) {
       this.task.label_id= _label.id;
@@ -322,7 +322,7 @@ export default {
     },
     checkDepartment() {
       if (this.task.department_id == null || this.task.department_id < 0) {
-        this.error.department = 'Phân công cho phòng ban là bắt buộc';
+        this.error.department = 'Phân công cho nhóm làm việc là bắt buộc';
       } else {
         this.error.department = '';
       }
@@ -504,7 +504,7 @@ export default {
             <div class="col-md-3 col-sm-5 col-12 mb-2">
               <m-select
                 :size="'sm'"
-                text="--Tìm theo phòng ban--"
+                text="--Tìm theo nhóm làm việc--"
                 url="department/search"
                 :statusReset="false"
                 @changeValue="getDepartmentSearch"
@@ -531,7 +531,7 @@ export default {
                   <tr>
                     <td><b>STT</b></td>
                     <td><b>Tên</b></td>
-                    <td><b>Phòng ban</b></td>
+                    <td><b>Nhóm làm việc</b></td>
                     <td><b>Thống kê</b></td>
                     <td><b>Trạng thái</b></td>
                     <td><b>Bắt đầu</b></td>
@@ -685,7 +685,7 @@ export default {
 
                   <div class="col-md-6 col-sm-12 col-12" v-if="!task.id">
                     <div class="form-group">
-                      <label><b>Phân công cho phòng ban <span class="text-danger">*</span></b></label>
+                      <label><b>Phân công cho nhóm làm việc <span class="text-danger">*</span></b></label>
                       <m-select
                         :size="'sm'"
                         :text="select_department.text"

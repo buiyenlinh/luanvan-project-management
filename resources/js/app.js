@@ -425,7 +425,7 @@ new Vue({
 				'Từ chối nhận', // job								- 5
 				'Không duyệt từ chối nhận', // job		- 6
 				'Đổi thành viên',  // job							- 7
-				'Đổi phòng ban', // task							- 8
+				'Đổi nhóm làm việc', // task							- 8
 				'Đã hoàn thành', // Project						- 9
 			]
 

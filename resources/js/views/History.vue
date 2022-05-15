@@ -114,7 +114,7 @@ export default {
                 <td><b>Thời gian</b></td>
                 <td><b>Trạng thái</b></td>
                 <td><b>Người thực hiện</b></td>
-                <td v-if="history_name == 'task'"><b>Phòng ban</b></td>
+                <td v-if="history_name == 'task'"><b>Nhóm làm việc</b></td>
                 <td><b>Phản hồi</b></td>
                 <td><b>Ghi chú</b></td>
               </tr>

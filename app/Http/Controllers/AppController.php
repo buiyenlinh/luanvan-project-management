@@ -132,9 +132,9 @@ class AppController extends Controller
             return $this->error('Mã xác thực đã hết hạn');
         }
 
-        $user = User::where('username', $request->username)->latest('id')->first();
+        $user = User::where('username', $request->username)->where('email', $request->email)->latest('id')->first();
         if (!$user)
-            return $this->error('Tài khoản không tồn tại');
+            return $this->error('Tên đăng nhập và email không khớp');
         
         $user->update([
             'password' => bcrypt($request->password)

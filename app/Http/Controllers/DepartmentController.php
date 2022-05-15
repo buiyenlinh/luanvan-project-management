@@ -37,7 +37,7 @@ class DepartmentController extends Controller
         $department = $request->department;
         $db = Department::select('*');
         
-        if (!empty($department)) { // Tìm theo tên phòng ban
+        if (!empty($department)) { // Tìm theo tên nhóm làm việc
             $db->whereRaw('name LIKE "%' . $department . '%"');
         }
 
@@ -63,11 +63,11 @@ class DepartmentController extends Controller
 
         $list = $db->orderBy('id','desc')->paginate(8);
         $data = DepartmentResource::collection($list)->response()->getData();
-        return $this->success('Danh sách phòng ban', $data);
+        return $this->success('Danh sách nhóm làm việc', $data);
     }
 
     /**
-     * Tạo phòng ban
+     * Tạo nhóm làm việc
      */
     public function create(Request $request) {
         $name = $request->name;
@@ -75,9 +75,14 @@ class DepartmentController extends Controller
         $leader = $request->leader;
         $members = $request->members;
         if (!$name) {
-            return $this->error('Tên phòng ban là bắt buộc');
+            return $this->error('Tên nhóm làm việc là bắt buộc');
         } else if ($created_by <= 0) {
             return $this->error('Vui lòng thử lại');
+        }
+
+        $department_check = Department::where('name', $name)->first();
+        if ($department_check) {
+            return $this->error("Tên nhóm làm việc đã tồn tại");
         }
 
         $department = Department::create([
@@ -96,8 +101,8 @@ class DepartmentController extends Controller
         $this->_sendRealtime([
             'name' => 'department',
             'notification' => [
-                'title' => 'Thêm vào phòng ban',
-                'message' => 'Bạn vừa được phân làm trưởng phòng ban ' . $name
+                'title' => 'Thêm vào nhóm làm việc',
+                'message' => 'Bạn vừa được phân làm trưởng nhóm ' . $name
             ]
         ], 'user' . $leader);
 
@@ -109,7 +114,7 @@ class DepartmentController extends Controller
             foreach($members as $_member) {
                 $department_user_count = DepartmentUser::where('user_id', $_member)->count();
                 if ($department_user_count > 0) {
-                    return $this->error('Thành viên đã có phòng ban');
+                    return $this->error('Thành viên đã thuộc nhóm làm việc');
                 }
                 DepartmentUser::create([
                     'user_id' => $_member,
@@ -118,12 +123,12 @@ class DepartmentController extends Controller
                     'active_leader' => 0
                 ]);
 
-                // gửi thông báo cho các thành viên được thêm vào phòng ban
+                // gửi thông báo cho các thành viên được thêm vào nhóm làm việc
                 $this->_sendRealtime([
                     'name' => 'department',
                     'notification' => [
-                        'title' => 'Thêm vào phòng ban',
-                        'message' => 'Bạn vừa được thêm vào phòng ban ' . $name
+                        'title' => 'Thêm vào nhóm làm việc',
+                        'message' => 'Bạn vừa được thêm vào nhóm làm việc ' . $name
                     ]
                 ], 'user' . $_member);
 
@@ -134,15 +139,15 @@ class DepartmentController extends Controller
         }
 
         /** Thông báo email cho leader & thành viên */
-        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào phòng ban <b>'
+        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào nhóm làm việc <b>'
         . $name . '</b></div><div>Cảm ơn!</div>';
-        $this->_sendEmail($mem_emails, 'Được thêm vào phòng ban', $content_mail);
+        $this->_sendEmail($mem_emails, 'Được thêm vào nhóm làm việc', $content_mail);
 
-        return $this->success('Tạo phòng ban thành công', $request);
+        return $this->success('Tạo nhóm làm việc thành công', $request);
     }
 
     /**
-     * Cập nhật phòng ban
+     * Cập nhật nhóm làm việc
      */
     public function update(Request $request) {
         $leader = $request->leader;
@@ -150,21 +155,21 @@ class DepartmentController extends Controller
         $new_members = $request->members;
 
         $department_update = Department::find($id);
-        if (!$department_update) return $this->error('Phòng ban không tồn tại.');
+        if (!$department_update) return $this->error('Nhóm làm việc không tồn tại.');
 
-        if (!$leader) return $this->error('Trưởng phòng ban là bắt buộc');
+        if (!$leader) return $this->error('Trưởng nhóm làm việc là bắt buộc');
 
-        /* Trưởng phòng */
+        /* Trưởng nhóm */
         $old_leader = DepartmentUser::where('department_id', $id)
             ->where('leader', 1)->where('active_leader', 1)->latest('id')->first();
 
         $user_send_email = array();
-        if ($old_leader->user_id != $leader) { // Trưởng phòng mới
+        if ($old_leader->user_id != $leader) { // Trưởng nhóm mới
             $old_leader->update([
                 'active_leader' => 0
             ]); 
 
-            // Tạo department_user cho trưởng phòng mới
+            // Tạo department_user cho trưởng nhóm mới
             DepartmentUser::create([
                 'user_id' => $leader,
                 'active_leader' => 1,
@@ -175,8 +180,8 @@ class DepartmentController extends Controller
             $this->_sendRealtime([
                 'name' => 'department',
                 'notification' => [
-                    'title' => 'Thêm vào phòng ban',
-                    'message' => 'Bạn vừa được phân làm trưởng phòng ban ' . $department_update->name
+                    'title' => 'Thêm vào nhóm làm việc',
+                    'message' => 'Bạn vừa được phân làm trưởng nhóm làm việc ' . $department_update->name
                 ]
             ], 'user' . $leader);
 
@@ -199,8 +204,8 @@ class DepartmentController extends Controller
                     $this->_sendRealtime([
                         'name' => 'department',
                         'notification' => [
-                            'title' => 'Thêm vào phòng ban',
-                            'message' => 'Bạn vừa được thêm vào phòng ban ' . $department_update->name
+                            'title' => 'Thêm vào nhóm làm việc',
+                            'message' => 'Bạn vừa được thêm vào nhóm làm việc ' . $department_update->name
                         ]
                     ], 'user' . $_member);
 
@@ -209,12 +214,12 @@ class DepartmentController extends Controller
             }
         }
 
-        /** Gửi email cho trưởng phòng mới & thành viên mới */
-        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào phòng ban <b>'
+        /** Gửi email cho trưởng nhóm mới & thành viên mới */
+        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào nhóm làm việc <b>'
         . $department_update->name . '</b></div><div>Cảm ơn!</div>';
-        $this->_sendEmail($user_send_email, 'Được thêm vào phòng ban', $content_mail);
+        $this->_sendEmail($user_send_email, 'Được thêm vào nhóm làm việc', $content_mail);
 
-        return $this->success('Cập nhật phòng ban thành công');
+        return $this->success('Cập nhật nhóm làm việc thành công');
     }
 
 
@@ -223,7 +228,7 @@ class DepartmentController extends Controller
      */
     public function addNewMember(Request $request, $department_id) {
         $department = Department::find($department_id);
-        if (!$department) return $this->error('Phòng ban không tồn tại');
+        if (!$department) return $this->error('Nhóm làm việc không tồn tại');
 
         $new_members = $request->new_members;
         if (!$new_members)
@@ -242,8 +247,8 @@ class DepartmentController extends Controller
                 $this->_sendRealtime([
                     'name' => 'department',
                     'notification' => [
-                        'title' => 'Thêm vào phòng ban',
-                        'message' => 'Bạn vừa được thêm vào phòng ban ' . $department->name
+                        'title' => 'Thêm vào nhóm làm việc',
+                        'message' => 'Bạn vừa được thêm vào nhóm làm việc ' . $department->name
                     ]
                 ], 'user' . $_new_member);
 
@@ -254,16 +259,16 @@ class DepartmentController extends Controller
         }
 
         /** Thông báo email cho leader & thành viên */
-        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào phòng ban <b>'
+        $content_mail = '<div>Chào bạn!</div><div>Bạn vừa được thêm vào nhóm làm việc <b>'
         . $department->name . '</b></div><div>Cảm ơn!</div>';
-        $this->_sendEmail($mem_emails, 'Được thêm vào phòng ban', $content_mail);
+        $this->_sendEmail($mem_emails, 'Được thêm vào nhóm làm việc', $content_mail);
 
         return $this->success('Thêm thành viên mới thành công', []);
     }
 
 
     /**
-     * Xóa phòng ban
+     * Xóa nhóm làm việc
      */
     public function delete(Request $request) {
         $department = Department::find($request->id);
@@ -272,19 +277,19 @@ class DepartmentController extends Controller
         }
         $department_task = DepartmentTask::where('department_id', $request->id)->count();
         if ($department_task > 0) {
-            return $this->error('Phòng ban đã được phân công công việc. Không được xóa');
+            return $this->error('Nhóm làm việc đã được phân công công việc. Không được xóa');
         }
 
-        // Xóa các thành viên trong phòng ban
+        // Xóa các thành viên trong nhóm làm việc
         $department_user = DepartmentUser::where('department_id', $department->id)->delete();
         $department->delete();
 
-        return $this->success('Xóa phòng ban thành công');
+        return $this->success('Xóa nhóm làm việc thành công');
     }
 
 
     /**
-     * Tìm kiếm phòng ban
+     * Tìm kiếm nhóm làm việc
      */
     public function searchDepartment(Request $request) {
         $keyword = $request->keyword;
@@ -293,11 +298,11 @@ class DepartmentController extends Controller
             if ($request->callfirst == true)
                 $department = Department::all();
             else
-            return $this->success('Danh sách tìm kiếm phòng ban', []);
+            return $this->success('Danh sách tìm kiếm nhóm làm việc', []);
         } else {
             $department = Department::where('name', 'LIKE', '%' . $keyword . '%')->get();
         }
-        return $this->success('Danh sách tìm kiếm phòng ban', $department);
+        return $this->success('Danh sách tìm kiếm nhóm làm việc', $department);
     }
 
     /**
@@ -305,7 +310,7 @@ class DepartmentController extends Controller
      */
     public function members(Request $request, $department_id) {
         $department = Department::find($department_id);
-        if (!$department) return $this->error('Phòng ban không tồn tại');
+        if (!$department) return $this->error('Nhóm làm việc không tồn tại');
 
         $department_user = DepartmentUser::where('department_id', $department_id);
         $ids = [];
@@ -334,18 +339,18 @@ class DepartmentController extends Controller
         $list = UserResource::collection($users->orderby('id', 'desc')->get())->response()->getData();
         $data['list'] = $list;
         
-        return $this->success('Danh sách thành viên phòng ban', $data);
+        return $this->success('Danh sách thành viên nhóm làm việc', $data);
     }
 
     /**
-     * Lấy thông tin phòng ban
+     * Lấy thông tin nhóm làm việc
      */
     public function getInfoDepartment(Request $request, $department_id) {
         $department = Department::find($department_id);
 
         if (!$department)
-            return $this->error('Phòng ban không tồn tại');
+            return $this->error('Nhóm làm việc không tồn tại');
         
-        return $this->success('Thông tin phòng ban', $department);
+        return $this->success('Thông tin nhóm làm việc', $department);
     }
 }
