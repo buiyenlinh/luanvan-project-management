@@ -5927,7 +5927,6 @@ __webpack_require__.r(__webpack_exports__);
       this.checkPhone();
 
       if (this.user.username && this.user.phone && this.user.email && this.error.active == '' && this.error.role == '') {
-        this.loading_add = true;
         var formData = new FormData();
         formData.append('username', this.user.username);
         formData.append('fullname', this.user.fullname);
@@ -5939,6 +5938,8 @@ __webpack_require__.r(__webpack_exports__);
         formData.append('birthday', this.user.birthday); // Tạo user
 
         if (this.user.id == null) {
+          this.loading_add = true;
+
           if (this.user.password) {
             formData.append('password', this.user.password);
             formData.append('avatar', this.user.avatar);
@@ -5961,33 +5962,37 @@ __webpack_require__.r(__webpack_exports__);
             });
           }
         } else {
-          if (this.user.password) {
-            formData.append('password', this.user.password);
-          }
+          if (this.user.password.length == 0 || this.user.password.length >= 6) {
+            this.loading_add = true;
 
-          if (this.user.avatar) {
-            formData.append('avatar', this.user.avatar);
-          }
-
-          formData.append('id', this.user.id);
-          this.loading_add = true;
-          this.$root.api.post('user/update', formData).then(function (res) {
-            _this3.loading_add = false;
-
-            if (res.data.status == "OK") {
-              _this3.$notify(res.data.message, 'success');
-
-              $('#user_modal').modal('hide');
-
-              _this3.changePage(_this3.current_page);
-            } else {
-              _this3.$alert(res.data.error, '', 'error');
+            if (this.user.password.length >= 6) {
+              formData.append('password', this.user.password);
             }
-          })["catch"](function (err) {
-            _this3.loading_add = false;
 
-            _this3.$root.showError(err);
-          });
+            if (this.user.avatar) {
+              formData.append('avatar', this.user.avatar);
+            }
+
+            formData.append('id', this.user.id);
+            this.loading_add = true;
+            this.$root.api.post('user/update', formData).then(function (res) {
+              _this3.loading_add = false;
+
+              if (res.data.status == "OK") {
+                _this3.$notify(res.data.message, 'success');
+
+                $('#user_modal').modal('hide');
+
+                _this3.changePage(_this3.current_page);
+              } else {
+                _this3.$alert(res.data.error, '', 'error');
+              }
+            })["catch"](function (err) {
+              _this3.loading_add = false;
+
+              _this3.$root.showError(err);
+            });
+          }
         }
       }
     },
@@ -6025,10 +6030,10 @@ __webpack_require__.r(__webpack_exports__);
       }
     },
     checkPassword: function checkPassword() {
-      if (this.user.password == '') {
+      if (this.user.password == '' && this.user.id == null) {
         this.error.password = 'Mật khẩu là bắt buộc';
       } else {
-        if (this.user.password.length < 6) {
+        if (this.user.password.length > 0 && this.user.password.length < 6) {
           this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
         } else {
           this.error.password = '';
@@ -36635,7 +36640,18 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(5),
+                                _c("label", [
+                                  _c("b", [
+                                    _vm._v("Mật khẩu "),
+                                    _vm.user.id == null
+                                      ? _c(
+                                          "span",
+                                          { staticClass: "text-danger" },
+                                          [_vm._v("*")]
+                                        )
+                                      : _vm._e(),
+                                  ]),
+                                ]),
                                 _vm._v(" "),
                                 _c("input", {
                                   directives: [
@@ -36680,7 +36696,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(6),
+                                _vm._m(5),
                                 _vm._v(" "),
                                 _c("input", {
                                   directives: [
@@ -36725,7 +36741,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(7),
+                                _vm._m(6),
                                 _vm._v(" "),
                                 _c("input", {
                                   directives: [
@@ -36770,7 +36786,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(8),
+                                _vm._m(7),
                                 _vm._v(" "),
                                 _c("input", {
                                   directives: [
@@ -36806,7 +36822,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(9),
+                                _vm._m(8),
                                 _c("br"),
                                 _vm._v(" "),
                                 _c(
@@ -36940,7 +36956,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(10),
+                                _vm._m(9),
                                 _c("br"),
                                 _vm._v(" "),
                                 _c(
@@ -37045,7 +37061,7 @@ var render = function () {
                                 { staticClass: "col-md-6 col-sm-12 col-12" },
                                 [
                                   _c("div", { staticClass: "form-group" }, [
-                                    _vm._m(11),
+                                    _vm._m(10),
                                     _vm._v(" "),
                                     _c(
                                       "select",
@@ -37134,7 +37150,7 @@ var render = function () {
                             { staticClass: "col-md-6 col-sm-12 col-12" },
                             [
                               _c("div", { staticClass: "form-group" }, [
-                                _vm._m(12),
+                                _vm._m(11),
                                 _vm._v(" "),
                                 _c(
                                   "button",
@@ -37258,7 +37274,7 @@ var render = function () {
                   },
                 },
                 [
-                  _vm._m(13),
+                  _vm._m(12),
                   _vm._v(" "),
                   _vm.$root.isAdmin()
                     ? _c("div", { staticClass: "modal-body" }, [
@@ -37285,7 +37301,7 @@ var render = function () {
                       ])
                     : _vm._e(),
                   _vm._v(" "),
-                  _vm._m(14),
+                  _vm._m(13),
                 ]
               ),
             ]),
@@ -37299,7 +37315,7 @@ var render = function () {
         [
           _c("div", { staticClass: "modal-dialog modal-dialog-scrollable" }, [
             _c("div", { staticClass: "modal-content" }, [
-              _vm._m(15),
+              _vm._m(14),
               _vm._v(" "),
               _vm.user_show_detail
                 ? _c("div", { staticClass: "modal-body" }, [
@@ -37430,7 +37446,7 @@ var render = function () {
                   ])
                 : _vm._e(),
               _vm._v(" "),
-              _vm._m(16),
+              _vm._m(15),
             ]),
           ]),
         ]
@@ -37524,17 +37540,6 @@ var staticRenderFns = [
     return _c("label", [
       _c("b", [
         _vm._v("Tên đăng nhập "),
-        _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
-      ]),
-    ])
-  },
-  function () {
-    var _vm = this
-    var _h = _vm.$createElement
-    var _c = _vm._self._c || _h
-    return _c("label", [
-      _c("b", [
-        _vm._v("Mật khẩu "),
         _c("span", { staticClass: "text-danger" }, [_vm._v("*")]),
       ]),
     ])

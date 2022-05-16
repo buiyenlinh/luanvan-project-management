@@ -82,7 +82,6 @@ export default {
       this.checkEmail();
       this.checkPhone();
       if (this.user.username && this.user.phone && this.user.email && this.error.active == '' && this.error.role == '') {
-        this.loading_add = true;
         let formData = new FormData();
         formData.append('username', this.user.username);
         formData.append('fullname', this.user.fullname);
@@ -95,6 +94,7 @@ export default {
 
         // Tạo user
         if (this.user.id == null) {
+          this.loading_add = true;
           if (this.user.password) {
             formData.append('password', this.user.password);
             formData.append('avatar', this.user.avatar);
@@ -113,27 +113,30 @@ export default {
             })
           }
         } else {
-          if (this.user.password) {
-            formData.append('password', this.user.password);
-          }
-          if (this.user.avatar) {
-            formData.append('avatar', this.user.avatar);
-          }
-          formData.append('id', this.user.id);
-          this.loading_add = true;
-          this.$root.api.post('user/update', formData).then(res => {
-            this.loading_add = false;
-            if (res.data.status == "OK") {
-              this.$notify(res.data.message, 'success');
-              $('#user_modal').modal('hide');
-              this.changePage(this.current_page);
-            } else {
-              this.$alert(res.data.error, '', 'error');
+          if (this.user.password.length == 0 || this.user.password.length >= 6) {
+            this.loading_add = true;
+            if (this.user.password.length >= 6) {
+              formData.append('password', this.user.password);
             }
-          }).catch(err => {
-            this.loading_add = false;
-            this.$root.showError(err);
-          })
+            if (this.user.avatar) {
+              formData.append('avatar', this.user.avatar);
+            }
+            formData.append('id', this.user.id);
+            this.loading_add = true;
+            this.$root.api.post('user/update', formData).then(res => {
+              this.loading_add = false;
+              if (res.data.status == "OK") {
+                this.$notify(res.data.message, 'success');
+                $('#user_modal').modal('hide');
+                this.changePage(this.current_page);
+              } else {
+                this.$alert(res.data.error, '', 'error');
+              }
+            }).catch(err => {
+              this.loading_add = false;
+              this.$root.showError(err);
+            })
+          }
         }
       }
     },
@@ -164,10 +167,10 @@ export default {
       }
     },
     checkPassword() {
-      if (this.user.password == '') {
+      if (this.user.password == '' && this.user.id == null) {
         this.error.password = 'Mật khẩu là bắt buộc';
       } else {
-        if(this.user.password.length < 6) {
+        if(this.user.password.length > 0 && this.user.password.length < 6) {
           this.error.password = 'Mật khẩu phải ít nhất 6 kí tự';
         } else {
           this.error.password = '';
@@ -441,7 +444,7 @@ export default {
                 </div>
                 <div class="col-md-6 col-sm-12 col-12">
                   <div class="form-group">
-                    <label><b>Mật khẩu <span class="text-danger">*</span></b></label>
+                    <label><b>Mật khẩu <span class="text-danger" v-if="user.id == null">*</span></b></label>
                     <input type="password" class="form-control" v-model="user.password">
                     <div class="error text-danger font-italic">{{ error.password }}</div>
                   </div>
