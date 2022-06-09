@@ -26465,7 +26465,7 @@ var render = function () {
                                 ),
                                 _c("br"),
                                 _vm._v(" "),
-                                _c("b", [_vm._v("Trưởng phòng: ")]),
+                                _c("b", [_vm._v("Trưởng nhóm: ")]),
                                 _vm._v(
                                   _vm._s(
                                     item.leader.fullname || item.leader.username
