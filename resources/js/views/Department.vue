@@ -287,7 +287,7 @@ export default {
               <p><i class="fas fa-folder"></i>&nbsp; <b>{{ item.name }}</b></p>
               <p style="font-size: 12px; margin-bottom: 0px">
                 <b>Người tạo: </b>{{item.created_by.fullname || item.created_by.username}} <br>
-                <b>Trưởng phòng: </b>{{item.leader.fullname || item.leader.username}} <br>
+                <b>Trưởng nhóm: </b>{{item.leader.fullname || item.leader.username}} <br>
                 <b>Tạo lúc: </b>{{item.created_at}} <br>
                 <b>Thành viên:</b> <br>
               </p>
